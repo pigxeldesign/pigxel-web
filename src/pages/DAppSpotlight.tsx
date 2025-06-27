@@ -12,9 +12,7 @@ import {
   Play,
   BookOpen,
   MessageCircle,
-  FileText,
-  Loader2,
-  ArrowLeft
+  Loader2
 } from 'lucide-react';
 
 interface DApp {
@@ -34,16 +32,7 @@ interface DApp {
   twitterUrl?: string;
   documentationUrl?: string;
   discordUrl?: string;
-  integrations: Integration[];
   flows: Flow[];
-  metadata: DAppMetadata;
-}
-
-interface Integration {
-  id: string;
-  name: string;
-  logo: string;
-  description: string;
 }
 
 interface Flow {
@@ -55,21 +44,10 @@ interface Flow {
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
 }
 
-interface DAppMetadata {
-  founded: string;
-  team: string;
-  totalValueLocked?: string;
-  dailyActiveUsers?: string;
-  transactions?: string;
-  audits: string[];
-  licenses: string[];
-}
-
 const DAppSpotlight: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [dapp, setDApp] = useState<DApp | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
 
   // Mock data - in real app, this would come from Supabase
   const mockDApp: DApp = {
@@ -89,44 +67,6 @@ const DAppSpotlight: React.FC = () => {
     twitterUrl: 'https://twitter.com/Uniswap',
     documentationUrl: 'https://docs.uniswap.org',
     discordUrl: 'https://discord.gg/uniswap',
-    integrations: [
-      {
-        id: '1',
-        name: 'MetaMask',
-        logo: '🦊',
-        description: 'Connect your MetaMask wallet'
-      },
-      {
-        id: '2',
-        name: 'WalletConnect',
-        logo: '🔗',
-        description: 'Connect with WalletConnect'
-      },
-      {
-        id: '3',
-        name: 'Coinbase Wallet',
-        logo: '🔷',
-        description: 'Connect your Coinbase Wallet'
-      },
-      {
-        id: '4',
-        name: 'Rainbow',
-        logo: '🌈',
-        description: 'Connect with Rainbow wallet'
-      },
-      {
-        id: '5',
-        name: 'Ledger',
-        logo: '📱',
-        description: 'Hardware wallet support'
-      },
-      {
-        id: '6',
-        name: 'Gnosis Safe',
-        logo: '🔒',
-        description: 'Multi-sig wallet integration'
-      }
-    ],
     flows: [
       {
         id: '1',
@@ -176,16 +116,7 @@ const DAppSpotlight: React.FC = () => {
         duration: '4 min',
         difficulty: 'Intermediate'
       }
-    ],
-    metadata: {
-      founded: '2018',
-      team: 'Uniswap Labs',
-      totalValueLocked: '$4.2B',
-      dailyActiveUsers: '180K',
-      transactions: '1.2B+',
-      audits: ['Trail of Bits', 'ConsenSys Diligence', 'ABDK'],
-      licenses: ['GPL-3.0', 'MIT']
-    }
+    ]
   };
 
   useEffect(() => {
@@ -302,7 +233,7 @@ const DAppSpotlight: React.FC = () => {
                 </div>
               </div>
 
-              {/* Action Buttons */}
+              {/* Action Buttons and Links */}
               <div className="flex flex-col gap-3 min-w-[200px]">
                 <a
                   href={dapp.liveUrl}
@@ -316,35 +247,64 @@ const DAppSpotlight: React.FC = () => {
                 <button className="px-6 py-3 bg-gray-800 border border-gray-700 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors">
                   Add to Favorites
                 </button>
+                
+                {/* Links & Community Icons */}
+                <div className="flex items-center justify-center gap-3 pt-4 border-t border-gray-700">
+                  {dapp.githubUrl && (
+                    <a
+                      href={dapp.githubUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
+                      title="GitHub"
+                    >
+                      <Github className="w-5 h-5" />
+                    </a>
+                  )}
+                  {dapp.twitterUrl && (
+                    <a
+                      href={dapp.twitterUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
+                      title="Twitter"
+                    >
+                      <Twitter className="w-5 h-5" />
+                    </a>
+                  )}
+                  {dapp.documentationUrl && (
+                    <a
+                      href={dapp.documentationUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
+                      title="Documentation"
+                    >
+                      <BookOpen className="w-5 h-5" />
+                    </a>
+                  )}
+                  {dapp.discordUrl && (
+                    <a
+                      href={dapp.discordUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
+                      title="Discord"
+                    >
+                      <MessageCircle className="w-5 h-5" />
+                    </a>
+                  )}
+                  <a
+                    href={dapp.liveUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
+                    title="Website"
+                  >
+                    <Globe className="w-5 h-5" />
+                  </a>
+                </div>
               </div>
-            </div>
-          </motion.div>
-
-          {/* Integration Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="mb-8"
-          >
-            <h2 className="text-2xl font-bold text-white mb-6">Works With</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {dapp.integrations.map((integration, index) => (
-                <motion.div
-                  key={integration.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.3, delay: 0.1 + index * 0.05 }}
-                  whileHover={{ scale: 1.05, y: -4 }}
-                  className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 text-center hover:bg-gray-800/70 hover:border-gray-600 transition-all duration-300 cursor-pointer group"
-                >
-                  <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">
-                    {integration.logo}
-                  </div>
-                  <h3 className="text-white font-medium text-sm mb-1">{integration.name}</h3>
-                  <p className="text-gray-400 text-xs">{integration.description}</p>
-                </motion.div>
-              ))}
             </div>
           </motion.div>
 
@@ -352,7 +312,7 @@ const DAppSpotlight: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
             className="mb-8"
           >
             <div className="flex items-center justify-between mb-6">
@@ -370,7 +330,7 @@ const DAppSpotlight: React.FC = () => {
                   key={flow.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2 + index * 0.05 }}
+                  transition={{ duration: 0.5, delay: 0.1 + index * 0.05 }}
                   whileHover={{ y: -8, scale: 1.02 }}
                   className="group bg-gray-800/50 border border-gray-700 rounded-xl overflow-hidden hover:bg-gray-800/70 hover:border-gray-600 hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-300 cursor-pointer"
                 >
@@ -414,154 +374,6 @@ const DAppSpotlight: React.FC = () => {
                   </Link>
                 </motion.div>
               ))}
-            </div>
-          </motion.div>
-
-          {/* Metadata Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="grid grid-cols-1 lg:grid-cols-2 gap-8"
-          >
-            {/* Technical Details */}
-            <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
-              <h3 className="text-xl font-bold text-white mb-6">Technical Details</h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Founded</span>
-                  <span className="text-white font-medium">{dapp.metadata.founded}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Team</span>
-                  <span className="text-white font-medium">{dapp.metadata.team}</span>
-                </div>
-                {dapp.metadata.totalValueLocked && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Total Value Locked</span>
-                    <span className="text-white font-medium">{dapp.metadata.totalValueLocked}</span>
-                  </div>
-                )}
-                {dapp.metadata.dailyActiveUsers && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Daily Active Users</span>
-                    <span className="text-white font-medium">{dapp.metadata.dailyActiveUsers}</span>
-                  </div>
-                )}
-                {dapp.metadata.transactions && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Total Transactions</span>
-                    <span className="text-white font-medium">{dapp.metadata.transactions}</span>
-                  </div>
-                )}
-                
-                <div className="pt-4 border-t border-gray-700">
-                  <h4 className="text-white font-medium mb-3">Security Audits</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {dapp.metadata.audits.map((audit) => (
-                      <span
-                        key={audit}
-                        className="px-3 py-1 bg-green-600/20 text-green-300 text-sm rounded-full"
-                      >
-                        {audit}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-gray-700">
-                  <h4 className="text-white font-medium mb-3">Licenses</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {dapp.metadata.licenses.map((license) => (
-                      <span
-                        key={license}
-                        className="px-3 py-1 bg-blue-600/20 text-blue-300 text-sm rounded-full"
-                      >
-                        {license}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Links and Community */}
-            <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
-              <h3 className="text-xl font-bold text-white mb-6">Links & Community</h3>
-              <div className="space-y-4">
-                <a
-                  href={dapp.liveUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-between p-3 bg-gray-700/50 hover:bg-gray-700 rounded-lg transition-colors group"
-                >
-                  <div className="flex items-center">
-                    <Globe className="w-5 h-5 text-purple-400 mr-3" />
-                    <span className="text-white">Official Website</span>
-                  </div>
-                  <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" />
-                </a>
-
-                {dapp.githubUrl && (
-                  <a
-                    href={dapp.githubUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between p-3 bg-gray-700/50 hover:bg-gray-700 rounded-lg transition-colors group"
-                  >
-                    <div className="flex items-center">
-                      <Github className="w-5 h-5 text-purple-400 mr-3" />
-                      <span className="text-white">GitHub Repository</span>
-                    </div>
-                    <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" />
-                  </a>
-                )}
-
-                {dapp.documentationUrl && (
-                  <a
-                    href={dapp.documentationUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between p-3 bg-gray-700/50 hover:bg-gray-700 rounded-lg transition-colors group"
-                  >
-                    <div className="flex items-center">
-                      <BookOpen className="w-5 h-5 text-purple-400 mr-3" />
-                      <span className="text-white">Documentation</span>
-                    </div>
-                    <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" />
-                  </a>
-                )}
-
-                {dapp.twitterUrl && (
-                  <a
-                    href={dapp.twitterUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between p-3 bg-gray-700/50 hover:bg-gray-700 rounded-lg transition-colors group"
-                  >
-                    <div className="flex items-center">
-                      <Twitter className="w-5 h-5 text-purple-400 mr-3" />
-                      <span className="text-white">Twitter</span>
-                    </div>
-                    <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" />
-                  </a>
-                )}
-
-                {dapp.discordUrl && (
-                  <a
-                    href={dapp.discordUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between p-3 bg-gray-700/50 hover:bg-gray-700 rounded-lg transition-colors group"
-                  >
-                    <div className="flex items-center">
-                      <MessageCircle className="w-5 h-5 text-purple-400 mr-3" />
-                      <span className="text-white">Discord Community</span>
-                    </div>
-                    <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" />
-                  </a>
-                )}
-              </div>
             </div>
           </motion.div>
         </div>
