@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage';
 import SearchResults from './pages/SearchResults';
 import DAppSpotlight from './pages/DAppSpotlight';
 import FlowViewer from './pages/FlowViewer';
+import CategoryListing from './pages/CategoryListing';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/search" element={<SearchResults />} />
+            <Route path="/category/:slug" element={<CategoryListing />} />
             <Route path="/dapp/:id" element={<DAppSpotlight />} />
             <Route path="/flow/:id" element={<FlowViewer />} />
           </Routes>

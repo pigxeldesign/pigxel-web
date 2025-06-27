@@ -9,37 +9,43 @@ const HomePage: React.FC = () => {
       title: "Getting Started with Web3",
       description: "Learn the basics of decentralized applications and digital ownership",
       icon: GraduationCap,
-      color: "from-blue-500 to-cyan-600"
+      color: "from-blue-500 to-cyan-600",
+      slug: "getting-started"
     },
     {
       title: "Managing Your Digital Assets",
       description: "Learn how to own, trade, and grow your digital property",
       icon: Wallet,
-      color: "from-green-500 to-emerald-600"
+      color: "from-green-500 to-emerald-600",
+      slug: "digital-assets"
     },
     {
       title: "Participating in Decentralized Communities",
       description: "Join and contribute to community-driven organizations",
       icon: Users,
-      color: "from-purple-500 to-violet-600"
+      color: "from-purple-500 to-violet-600",
+      slug: "communities"
     },
     {
       title: "Creative & Publishing",
       description: "Monetize your creative work through decentralized platforms",
       icon: Palette,
-      color: "from-pink-500 to-rose-600"
+      color: "from-pink-500 to-rose-600",
+      slug: "creative-publishing"
     },
     {
       title: "Data & Infrastructure",
       description: "Build and use decentralized data storage and computing",
       icon: Database,
-      color: "from-orange-500 to-red-600"
+      color: "from-orange-500 to-red-600",
+      slug: "data-infrastructure"
     },
     {
       title: "Real-World Applications",
       description: "Solve everyday problems with blockchain technology",
       icon: Globe,
-      color: "from-teal-500 to-cyan-600"
+      color: "from-teal-500 to-cyan-600",
+      slug: "real-world-apps"
     }
   ];
 
@@ -119,6 +125,7 @@ const HomePage: React.FC = () => {
                 icon={category.icon}
                 color={category.color}
                 index={index}
+                slug={category.slug}
               />
             ))}
           </div>
