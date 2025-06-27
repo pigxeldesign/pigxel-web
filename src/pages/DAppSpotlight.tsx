@@ -661,6 +661,32 @@ const DAppSpotlight: React.FC = () => {
                 </motion.div>
               ))}
             </div>
+
+            {/* CTA Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="mt-12 bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-2xl p-8 lg:p-12 border border-purple-500/20"
+            >
+              <div className="text-center">
+                <h3 className="text-2xl lg:text-3xl font-bold text-white mb-4">
+                  Ready to Build on Web3?
+                </h3>
+                <p className="text-gray-300 mb-8 max-w-2xl mx-auto">
+                  Join thousands of developers and users exploring the decentralized web. 
+                  Start your journey today with our curated selection of tools and resources.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <button className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors">
+                    Get Started
+                  </button>
+                  <button className="px-8 py-3 bg-transparent border border-gray-600 hover:border-gray-500 text-white rounded-lg font-medium transition-colors">
+                    Learn More
+                  </button>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
         </div>
       </div>
