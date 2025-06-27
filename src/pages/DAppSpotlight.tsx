@@ -15,6 +15,7 @@ import {
   MessageCircle,
   Loader2
 } from 'lucide-react';
+import FlowDetailModal from '../components/FlowDetailModal';
 
 interface DApp {
   id: string;
@@ -50,6 +51,7 @@ interface FlowScreen {
   id: string;
   thumbnail: string;
   title: string;
+  description?: string;
 }
 
 const DAppSpotlight: React.FC = () => {
@@ -57,6 +59,9 @@ const DAppSpotlight: React.FC = () => {
   const [dapp, setDApp] = useState<DApp | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentSlides, setCurrentSlides] = useState<Record<string, number>>({});
+  const [selectedFlow, setSelectedFlow] = useState<Flow | null>(null);
+  const [selectedScreenIndex, setSelectedScreenIndex] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Mock data with multiple screens per flow
   const mockDApp: DApp = {
@@ -80,63 +85,173 @@ const DAppSpotlight: React.FC = () => {
       {
         id: '1',
         title: 'Token Swapping',
-        description: 'Complete guide to swapping tokens on Uniswap',
+        description: 'Complete guide to swapping tokens on Uniswap. Learn how to connect your wallet, select tokens, set amounts, and execute swaps safely.',
         duration: '3 min',
         difficulty: 'Beginner',
         screenCount: 5,
         screens: [
-          { id: '1-1', thumbnail: 'https://images.pexels.com/photos/730547/pexels-photo-730547.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Connect Wallet' },
-          { id: '1-2', thumbnail: 'https://images.pexels.com/photos/844124/pexels-photo-844124.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Select Tokens' },
-          { id: '1-3', thumbnail: 'https://images.pexels.com/photos/1181298/pexels-photo-1181298.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Enter Amount' },
-          { id: '1-4', thumbnail: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Review Swap' },
-          { id: '1-5', thumbnail: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Confirm Transaction' }
+          { 
+            id: '1-1', 
+            thumbnail: 'https://images.pexels.com/photos/730547/pexels-photo-730547.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Connect Wallet',
+            description: 'Start by connecting your Web3 wallet to access Uniswap'
+          },
+          { 
+            id: '1-2', 
+            thumbnail: 'https://images.pexels.com/photos/844124/pexels-photo-844124.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Select Tokens',
+            description: 'Choose the tokens you want to swap from and to'
+          },
+          { 
+            id: '1-3', 
+            thumbnail: 'https://images.pexels.com/photos/1181298/pexels-photo-1181298.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Enter Amount',
+            description: 'Specify the amount you want to trade'
+          },
+          { 
+            id: '1-4', 
+            thumbnail: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Review Swap',
+            description: 'Check the swap details, fees, and price impact'
+          },
+          { 
+            id: '1-5', 
+            thumbnail: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Confirm Transaction',
+            description: 'Approve and execute the swap transaction'
+          }
         ]
       },
       {
         id: '2',
         title: 'Providing Liquidity',
-        description: 'Learn how to provide liquidity and earn fees',
+        description: 'Learn how to provide liquidity and earn fees. Understand price ranges, impermanent loss, and position management.',
         duration: '5 min',
         difficulty: 'Intermediate',
         screenCount: 6,
         screens: [
-          { id: '2-1', thumbnail: 'https://images.pexels.com/photos/1181316/pexels-photo-1181316.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Pool Selection' },
-          { id: '2-2', thumbnail: 'https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Add Liquidity' },
-          { id: '2-3', thumbnail: 'https://images.pexels.com/photos/730547/pexels-photo-730547.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Set Price Range' },
-          { id: '2-4', thumbnail: 'https://images.pexels.com/photos/844124/pexels-photo-844124.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Deposit Amounts' },
-          { id: '2-5', thumbnail: 'https://images.pexels.com/photos/1181298/pexels-photo-1181298.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Approve Tokens' },
-          { id: '2-6', thumbnail: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Add Position' }
+          { 
+            id: '2-1', 
+            thumbnail: 'https://images.pexels.com/photos/1181316/pexels-photo-1181316.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Pool Selection',
+            description: 'Choose the liquidity pool you want to provide to'
+          },
+          { 
+            id: '2-2', 
+            thumbnail: 'https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Add Liquidity',
+            description: 'Navigate to the add liquidity interface'
+          },
+          { 
+            id: '2-3', 
+            thumbnail: 'https://images.pexels.com/photos/730547/pexels-photo-730547.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Set Price Range',
+            description: 'Define the price range for your liquidity position'
+          },
+          { 
+            id: '2-4', 
+            thumbnail: 'https://images.pexels.com/photos/844124/pexels-photo-844124.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Deposit Amounts',
+            description: 'Enter the amounts of each token to deposit'
+          },
+          { 
+            id: '2-5', 
+            thumbnail: 'https://images.pexels.com/photos/1181298/pexels-photo-1181298.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Approve Tokens',
+            description: 'Approve the smart contract to spend your tokens'
+          },
+          { 
+            id: '2-6', 
+            thumbnail: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Add Position',
+            description: 'Confirm and create your liquidity position'
+          }
         ]
       },
       {
         id: '3',
         title: 'Understanding Fees',
-        description: 'Learn about gas fees and slippage',
+        description: 'Learn about gas fees and slippage. Master the art of optimizing transaction costs and timing.',
         duration: '4 min',
         difficulty: 'Beginner',
         screenCount: 4,
         screens: [
-          { id: '3-1', thumbnail: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Gas Settings' },
-          { id: '3-2', thumbnail: 'https://images.pexels.com/photos/1181316/pexels-photo-1181316.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Slippage Tolerance' },
-          { id: '3-3', thumbnail: 'https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Transaction Preview' },
-          { id: '3-4', thumbnail: 'https://images.pexels.com/photos/730547/pexels-photo-730547.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Fee Breakdown' }
+          { 
+            id: '3-1', 
+            thumbnail: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Gas Settings',
+            description: 'Understand and adjust gas fees for your transactions'
+          },
+          { 
+            id: '3-2', 
+            thumbnail: 'https://images.pexels.com/photos/1181316/pexels-photo-1181316.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Slippage Tolerance',
+            description: 'Set appropriate slippage tolerance for your trades'
+          },
+          { 
+            id: '3-3', 
+            thumbnail: 'https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Transaction Preview',
+            description: 'Review all fees and costs before confirming'
+          },
+          { 
+            id: '3-4', 
+            thumbnail: 'https://images.pexels.com/photos/730547/pexels-photo-730547.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Fee Breakdown',
+            description: 'Understand the different types of fees involved'
+          }
         ]
       },
       {
         id: '4',
         title: 'Advanced Trading',
-        description: 'Advanced techniques for experienced traders',
+        description: 'Advanced techniques for experienced traders. Learn about MEV protection, limit orders, and portfolio optimization.',
         duration: '8 min',
         difficulty: 'Advanced',
         screenCount: 7,
         screens: [
-          { id: '4-1', thumbnail: 'https://images.pexels.com/photos/844124/pexels-photo-844124.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Market Analysis' },
-          { id: '4-2', thumbnail: 'https://images.pexels.com/photos/1181298/pexels-photo-1181298.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Price Charts' },
-          { id: '4-3', thumbnail: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Limit Orders' },
-          { id: '4-4', thumbnail: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'MEV Protection' },
-          { id: '4-5', thumbnail: 'https://images.pexels.com/photos/1181316/pexels-photo-1181316.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Multi-hop Swaps' },
-          { id: '4-6', thumbnail: 'https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Portfolio Tracking' },
-          { id: '4-7', thumbnail: 'https://images.pexels.com/photos/730547/pexels-photo-730547.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Risk Management' }
+          { 
+            id: '4-1', 
+            thumbnail: 'https://images.pexels.com/photos/844124/pexels-photo-844124.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Market Analysis',
+            description: 'Analyze market conditions and trading opportunities'
+          },
+          { 
+            id: '4-2', 
+            thumbnail: 'https://images.pexels.com/photos/1181298/pexels-photo-1181298.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Price Charts',
+            description: 'Read and interpret price charts and indicators'
+          },
+          { 
+            id: '4-3', 
+            thumbnail: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Limit Orders',
+            description: 'Set up limit orders for better price execution'
+          },
+          { 
+            id: '4-4', 
+            thumbnail: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'MEV Protection',
+            description: 'Protect your trades from MEV attacks'
+          },
+          { 
+            id: '4-5', 
+            thumbnail: 'https://images.pexels.com/photos/1181316/pexels-photo-1181316.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Multi-hop Swaps',
+            description: 'Execute complex multi-step trading strategies'
+          },
+          { 
+            id: '4-6', 
+            thumbnail: 'https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Portfolio Tracking',
+            description: 'Monitor and analyze your trading performance'
+          },
+          { 
+            id: '4-7', 
+            thumbnail: 'https://images.pexels.com/photos/730547/pexels-photo-730547.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Risk Management',
+            description: 'Implement proper risk management strategies'
+          }
         ]
       }
     ]
@@ -169,6 +284,18 @@ const DAppSpotlight: React.FC = () => {
       ...prev,
       [flowId]: Math.max(prev[flowId] - 1, 0)
     }));
+  };
+
+  const handleScreenClick = (flow: Flow, screenIndex: number) => {
+    setSelectedFlow({ ...flow, dappName: dapp?.name });
+    setSelectedScreenIndex(screenIndex);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedFlow(null);
+    setSelectedScreenIndex(0);
   };
 
   if (loading) {
@@ -431,10 +558,7 @@ const DAppSpotlight: React.FC = () => {
                             className="flex-shrink-0 cursor-pointer group"
                             style={{ width: `${100 / flow.screens.length}%` }}
                             whileHover={{ scale: 1.02 }}
-                            onClick={() => {
-                              // Navigate to flow viewer with specific screen
-                              window.location.href = `/flow/${flow.id}?screen=${screenIndex}`;
-                            }}
+                            onClick={() => handleScreenClick(flow, screenIndex)}
                           >
                             <div className="relative aspect-[4/3] rounded-lg overflow-hidden border border-gray-600 group-hover:border-purple-500 transition-colors">
                               <img
@@ -472,6 +596,14 @@ const DAppSpotlight: React.FC = () => {
           </motion.div>
         </div>
       </div>
+
+      {/* Flow Detail Modal */}
+      <FlowDetailModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        flow={selectedFlow}
+        initialScreenIndex={selectedScreenIndex}
+      />
     </div>
   );
 };
