@@ -208,12 +208,17 @@ const HomePage: React.FC = () => {
             className="text-center"
           >
             <h1 className="text-5xl lg:text-7xl xl:text-8xl font-bold text-white mb-8 leading-tight">
-              <span className="bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent">
-                Web3
-              </span>
-              <span className="text-white ml-4">
-                Design Flows & Utilities
-              </span>
+              <div className="flex flex-col items-center">
+                <span className="bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent">
+                  Web3
+                </span>
+                <span className="text-white">
+                  Design Flows
+                </span>
+                <span className="text-white">
+                  & Utilities
+                </span>
+              </div>
             </h1>
             <p className="text-xl lg:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed font-light">
               Explore curated decentralized apps, analyze real-world user flows,
