@@ -208,20 +208,19 @@ const HomePage: React.FC = () => {
             className="text-center"
           >
             <h1 className="text-5xl lg:text-7xl xl:text-8xl font-bold text-white mb-8 leading-tight">
-              The World's
-              <br />
               <span className="bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent">
-                Best dApps
+                Web3
               </span>
-              <br />
-              Are On Web3 Directory
+              <span className="text-white ml-4">
+                Design Flows & Utilities
+              </span>
             </h1>
             <p className="text-xl lg:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed font-light">
-              A comprehensive platform to help users and developers
+              Explore curated decentralized apps, analyze real-world user flows,
               <br />
-              navigate the decentralized world from discovering inspiration,
+              screen libraries and join the revolution of digital ownership
               <br />
-              to connecting with one another
+              and community governance.
             </p>
           </motion.div>
         </div>
