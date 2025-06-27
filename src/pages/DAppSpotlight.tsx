@@ -9,6 +9,7 @@ import {
   Twitter, 
   ExternalLink, 
   ChevronRight,
+  ChevronLeft,
   Play,
   BookOpen,
   MessageCircle,
@@ -38,18 +39,26 @@ interface DApp {
 interface Flow {
   id: string;
   title: string;
-  thumbnail: string;
+  screens: FlowScreen[];
   description: string;
   duration: string;
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  screenCount: number;
+}
+
+interface FlowScreen {
+  id: string;
+  thumbnail: string;
+  title: string;
 }
 
 const DAppSpotlight: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [dapp, setDApp] = useState<DApp | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentSlides, setCurrentSlides] = useState<Record<string, number>>({});
 
-  // Mock data - in real app, this would come from Supabase
+  // Mock data with multiple screens per flow
   const mockDApp: DApp = {
     id: id || '1',
     name: 'Uniswap',
@@ -70,51 +79,65 @@ const DAppSpotlight: React.FC = () => {
     flows: [
       {
         id: '1',
-        title: 'How to Swap Tokens',
-        thumbnail: 'https://images.pexels.com/photos/730547/pexels-photo-730547.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&fit=crop',
-        description: 'Learn how to swap tokens on Uniswap',
+        title: 'Token Swapping',
+        description: 'Complete guide to swapping tokens on Uniswap',
         duration: '3 min',
-        difficulty: 'Beginner'
+        difficulty: 'Beginner',
+        screenCount: 5,
+        screens: [
+          { id: '1-1', thumbnail: 'https://images.pexels.com/photos/730547/pexels-photo-730547.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Connect Wallet' },
+          { id: '1-2', thumbnail: 'https://images.pexels.com/photos/844124/pexels-photo-844124.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Select Tokens' },
+          { id: '1-3', thumbnail: 'https://images.pexels.com/photos/1181298/pexels-photo-1181298.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Enter Amount' },
+          { id: '1-4', thumbnail: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Review Swap' },
+          { id: '1-5', thumbnail: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Confirm Transaction' }
+        ]
       },
       {
         id: '2',
         title: 'Providing Liquidity',
-        thumbnail: 'https://images.pexels.com/photos/844124/pexels-photo-844124.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&fit=crop',
-        description: 'Earn fees by providing liquidity',
+        description: 'Learn how to provide liquidity and earn fees',
         duration: '5 min',
-        difficulty: 'Intermediate'
+        difficulty: 'Intermediate',
+        screenCount: 6,
+        screens: [
+          { id: '2-1', thumbnail: 'https://images.pexels.com/photos/1181316/pexels-photo-1181316.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Pool Selection' },
+          { id: '2-2', thumbnail: 'https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Add Liquidity' },
+          { id: '2-3', thumbnail: 'https://images.pexels.com/photos/730547/pexels-photo-730547.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Set Price Range' },
+          { id: '2-4', thumbnail: 'https://images.pexels.com/photos/844124/pexels-photo-844124.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Deposit Amounts' },
+          { id: '2-5', thumbnail: 'https://images.pexels.com/photos/1181298/pexels-photo-1181298.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Approve Tokens' },
+          { id: '2-6', thumbnail: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Add Position' }
+        ]
       },
       {
         id: '3',
-        title: 'Understanding Slippage',
-        thumbnail: 'https://images.pexels.com/photos/1181298/pexels-photo-1181298.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&fit=crop',
-        description: 'Learn about slippage and how to manage it',
+        title: 'Understanding Fees',
+        description: 'Learn about gas fees and slippage',
         duration: '4 min',
-        difficulty: 'Beginner'
+        difficulty: 'Beginner',
+        screenCount: 4,
+        screens: [
+          { id: '3-1', thumbnail: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Gas Settings' },
+          { id: '3-2', thumbnail: 'https://images.pexels.com/photos/1181316/pexels-photo-1181316.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Slippage Tolerance' },
+          { id: '3-3', thumbnail: 'https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Transaction Preview' },
+          { id: '3-4', thumbnail: 'https://images.pexels.com/photos/730547/pexels-photo-730547.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Fee Breakdown' }
+        ]
       },
       {
         id: '4',
-        title: 'Advanced Trading Strategies',
-        thumbnail: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&fit=crop',
+        title: 'Advanced Trading',
         description: 'Advanced techniques for experienced traders',
         duration: '8 min',
-        difficulty: 'Advanced'
-      },
-      {
-        id: '5',
-        title: 'Yield Farming Basics',
-        thumbnail: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&fit=crop',
-        description: 'Introduction to yield farming strategies',
-        duration: '6 min',
-        difficulty: 'Intermediate'
-      },
-      {
-        id: '6',
-        title: 'Gas Optimization Tips',
-        thumbnail: 'https://images.pexels.com/photos/1181316/pexels-photo-1181316.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&fit=crop',
-        description: 'Save money on transaction fees',
-        duration: '4 min',
-        difficulty: 'Intermediate'
+        difficulty: 'Advanced',
+        screenCount: 7,
+        screens: [
+          { id: '4-1', thumbnail: 'https://images.pexels.com/photos/844124/pexels-photo-844124.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Market Analysis' },
+          { id: '4-2', thumbnail: 'https://images.pexels.com/photos/1181298/pexels-photo-1181298.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Price Charts' },
+          { id: '4-3', thumbnail: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Limit Orders' },
+          { id: '4-4', thumbnail: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'MEV Protection' },
+          { id: '4-5', thumbnail: 'https://images.pexels.com/photos/1181316/pexels-photo-1181316.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Multi-hop Swaps' },
+          { id: '4-6', thumbnail: 'https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Portfolio Tracking' },
+          { id: '4-7', thumbnail: 'https://images.pexels.com/photos/730547/pexels-photo-730547.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', title: 'Risk Management' }
+        ]
       }
     ]
   };
@@ -124,9 +147,29 @@ const DAppSpotlight: React.FC = () => {
     setLoading(true);
     setTimeout(() => {
       setDApp(mockDApp);
+      // Initialize slide positions
+      const initialSlides: Record<string, number> = {};
+      mockDApp.flows.forEach(flow => {
+        initialSlides[flow.id] = 0;
+      });
+      setCurrentSlides(initialSlides);
       setLoading(false);
     }, 1000);
   }, [id]);
+
+  const nextSlide = (flowId: string, maxSlides: number) => {
+    setCurrentSlides(prev => ({
+      ...prev,
+      [flowId]: Math.min(prev[flowId] + 1, maxSlides - 3)
+    }));
+  };
+
+  const prevSlide = (flowId: string) => {
+    setCurrentSlides(prev => ({
+      ...prev,
+      [flowId]: Math.max(prev[flowId] - 1, 0)
+    }));
+  };
 
   if (loading) {
     return (
@@ -324,54 +367,105 @@ const DAppSpotlight: React.FC = () => {
                 View All Flows →
               </Link>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            <div className="space-y-8">
               {dapp.flows.map((flow, index) => (
                 <motion.div
                   key={flow.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.1 + index * 0.05 }}
-                  whileHover={{ y: -8, scale: 1.02 }}
-                  className="group bg-gray-800/50 border border-gray-700 rounded-xl overflow-hidden hover:bg-gray-800/70 hover:border-gray-600 hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-300 cursor-pointer"
+                  transition={{ duration: 0.5, delay: 0.1 + index * 0.1 }}
+                  className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 hover:bg-gray-800/70 hover:border-gray-600 transition-all duration-300"
                 >
-                  <Link to={`/flow/${flow.id}`} className="block">
-                    {/* Thumbnail */}
-                    <div className="relative w-full h-40 overflow-hidden">
-                      <img
-                        src={flow.thumbnail}
-                        alt={flow.title}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                      
-                      {/* Play Button */}
-                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <div className="w-12 h-12 bg-purple-600/90 rounded-full flex items-center justify-center backdrop-blur-sm">
-                          <Play className="w-5 h-5 text-white ml-1" />
-                        </div>
-                      </div>
-
-                      {/* Duration and Difficulty */}
-                      <div className="absolute top-3 left-3 flex gap-2">
-                        <span className="px-2 py-1 bg-black/70 text-white text-xs rounded backdrop-blur-sm">
-                          {flow.duration}
-                        </span>
-                        <span className={`px-2 py-1 text-xs rounded backdrop-blur-sm ${getDifficultyColor(flow.difficulty)}`}>
-                          {flow.difficulty}
-                        </span>
-                      </div>
+                  {/* Flow Header */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-4">
+                      <h3 className="text-xl font-bold text-white">{flow.title}</h3>
+                      <span className="text-sm text-gray-400">from {flow.title}</span>
                     </div>
-
-                    {/* Content */}
-                    <div className="p-4">
-                      <h3 className="text-lg font-bold text-white mb-2 group-hover:text-purple-300 transition-colors">
-                        {flow.title}
-                      </h3>
-                      <p className="text-gray-400 text-sm line-clamp-2">
-                        {flow.description}
-                      </p>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-gray-400">{flow.screenCount} screens</span>
+                      <span className="px-2 py-1 bg-black/50 text-white text-xs rounded">
+                        {flow.duration}
+                      </span>
+                      <span className={`px-2 py-1 text-xs rounded ${getDifficultyColor(flow.difficulty)}`}>
+                        {flow.difficulty}
+                      </span>
                     </div>
-                  </Link>
+                  </div>
+
+                  {/* Carousel Container */}
+                  <div className="relative">
+                    {/* Navigation Buttons */}
+                    {currentSlides[flow.id] > 0 && (
+                      <button
+                        onClick={() => prevSlide(flow.id)}
+                        className="absolute left-2 top-1/2 transform -translate-y-1/2 z-10 w-8 h-8 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center transition-colors"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                    )}
+                    
+                    {currentSlides[flow.id] < flow.screens.length - 3 && (
+                      <button
+                        onClick={() => nextSlide(flow.id, flow.screens.length)}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 z-10 w-8 h-8 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center transition-colors"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    )}
+
+                    {/* Screens Carousel */}
+                    <div className="overflow-hidden rounded-lg">
+                      <motion.div
+                        className="flex gap-4"
+                        animate={{
+                          x: `${-currentSlides[flow.id] * (100 / 3)}%`
+                        }}
+                        transition={{ duration: 0.3, ease: 'easeInOut' }}
+                        style={{ width: `${(flow.screens.length / 3) * 100}%` }}
+                      >
+                        {flow.screens.map((screen, screenIndex) => (
+                          <motion.div
+                            key={screen.id}
+                            className="flex-shrink-0 cursor-pointer group"
+                            style={{ width: `${100 / flow.screens.length}%` }}
+                            whileHover={{ scale: 1.02 }}
+                            onClick={() => {
+                              // Navigate to flow viewer with specific screen
+                              window.location.href = `/flow/${flow.id}?screen=${screenIndex}`;
+                            }}
+                          >
+                            <div className="relative aspect-[4/3] rounded-lg overflow-hidden border border-gray-600 group-hover:border-purple-500 transition-colors">
+                              <img
+                                src={screen.thumbnail}
+                                alt={screen.title}
+                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                              
+                              {/* Play Button Overlay */}
+                              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <div className="w-10 h-10 bg-purple-600/90 rounded-full flex items-center justify-center backdrop-blur-sm">
+                                  <Play className="w-4 h-4 text-white ml-0.5" />
+                                </div>
+                              </div>
+
+                              {/* Screen Title */}
+                              <div className="absolute bottom-2 left-2 right-2">
+                                <p className="text-white text-sm font-medium truncate">
+                                  {screen.title}
+                                </p>
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </motion.div>
+                    </div>
+                  </div>
+
+                  {/* Flow Description */}
+                  <p className="text-gray-400 text-sm mt-4">{flow.description}</p>
                 </motion.div>
               ))}
             </div>
