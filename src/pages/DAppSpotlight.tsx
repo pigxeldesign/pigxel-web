@@ -253,6 +253,80 @@ const DAppSpotlight: React.FC = () => {
             description: 'Implement proper risk management strategies'
           }
         ]
+      },
+      {
+        id: '5',
+        title: 'Yield Farming Basics',
+        description: 'Introduction to yield farming strategies. Learn how to maximize returns while managing risks in DeFi protocols.',
+        duration: '6 min',
+        difficulty: 'Intermediate',
+        screenCount: 5,
+        screens: [
+          { 
+            id: '5-1', 
+            thumbnail: 'https://images.pexels.com/photos/730547/pexels-photo-730547.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Farm Selection',
+            description: 'Choose the best yield farming opportunities'
+          },
+          { 
+            id: '5-2', 
+            thumbnail: 'https://images.pexels.com/photos/844124/pexels-photo-844124.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Stake LP Tokens',
+            description: 'Stake your liquidity provider tokens to earn rewards'
+          },
+          { 
+            id: '5-3', 
+            thumbnail: 'https://images.pexels.com/photos/1181298/pexels-photo-1181298.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Monitor Rewards',
+            description: 'Track your farming rewards and APY changes'
+          },
+          { 
+            id: '5-4', 
+            thumbnail: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Claim Rewards',
+            description: 'Harvest your earned tokens and compound returns'
+          },
+          { 
+            id: '5-5', 
+            thumbnail: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Exit Strategy',
+            description: 'Plan your exit and unstake when needed'
+          }
+        ]
+      },
+      {
+        id: '6',
+        title: 'Gas Optimization Tips',
+        description: 'Save money on transaction fees with these proven strategies. Learn when to transact and how to optimize gas usage.',
+        duration: '4 min',
+        difficulty: 'Intermediate',
+        screenCount: 4,
+        screens: [
+          { 
+            id: '6-1', 
+            thumbnail: 'https://images.pexels.com/photos/1181316/pexels-photo-1181316.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Gas Tracker',
+            description: 'Monitor network congestion and gas prices'
+          },
+          { 
+            id: '6-2', 
+            thumbnail: 'https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Timing Strategies',
+            description: 'Learn the best times to make transactions'
+          },
+          { 
+            id: '6-3', 
+            thumbnail: 'https://images.pexels.com/photos/730547/pexels-photo-730547.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Batch Transactions',
+            description: 'Combine multiple operations to save gas'
+          },
+          { 
+            id: '6-4', 
+            thumbnail: 'https://images.pexels.com/photos/844124/pexels-photo-844124.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
+            title: 'Layer 2 Solutions',
+            description: 'Use L2 networks for cheaper transactions'
+          }
+        ]
       }
     ]
   };
@@ -485,14 +559,8 @@ const DAppSpotlight: React.FC = () => {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="mb-8"
           >
-            <div className="flex items-center justify-between mb-6">
+            <div className="mb-6">
               <h2 className="text-2xl font-bold text-white">User Flows & Tutorials</h2>
-              <Link 
-                to={`/dapp/${dapp.id}/flows`} 
-                className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
-              >
-                View All Flows →
-              </Link>
             </div>
             
             <div className="space-y-8">
