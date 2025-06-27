@@ -165,23 +165,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                 })}
               </div>
             </div>
-
-            {/* Quick Actions */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.8 }}
-              className="mt-8 pt-6 border-t border-gray-800"
-            >
-              <div className="space-y-3">
-                <button className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg font-medium transition-all duration-200 transform hover:scale-105">
-                  Submit dApp
-                </button>
-                <button className="w-full px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border border-gray-700 hover:border-gray-600 rounded-lg font-medium transition-all duration-200">
-                  Request Feature
-                </button>
-              </div>
-            </motion.div>
           </div>
         </div>
       </motion.aside>
