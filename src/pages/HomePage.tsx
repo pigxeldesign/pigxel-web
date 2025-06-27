@@ -149,31 +149,87 @@ const HomePage: React.FC = () => {
     }
   ];
 
+  // Floating images for hero background
+  const floatingImages = [
+    { src: 'https://images.pexels.com/photos/730547/pexels-photo-730547.jpeg?auto=compress&cs=tinysrgb&w=200&h=150&fit=crop', position: 'top-20 left-10', delay: 0 },
+    { src: 'https://images.pexels.com/photos/844124/pexels-photo-844124.jpeg?auto=compress&cs=tinysrgb&w=180&h=120&fit=crop', position: 'top-32 right-16', delay: 0.2 },
+    { src: 'https://images.pexels.com/photos/1181298/pexels-photo-1181298.jpeg?auto=compress&cs=tinysrgb&w=160&h=120&fit=crop', position: 'top-60 left-20', delay: 0.4 },
+    { src: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=200&h=140&fit=crop', position: 'bottom-40 right-10', delay: 0.6 },
+    { src: 'https://images.pexels.com/photos/1181263/pexels-photo-1181263.jpeg?auto=compress&cs=tinysrgb&w=180&h=130&fit=crop', position: 'bottom-20 left-16', delay: 0.8 },
+    { src: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=170&h=110&fit=crop', position: 'top-40 right-32', delay: 1.0 },
+    { src: 'https://images.pexels.com/photos/1181316/pexels-photo-1181316.jpeg?auto=compress&cs=tinysrgb&w=190&h=140&fit=crop', position: 'bottom-60 right-40', delay: 1.2 },
+    { src: 'https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=160&h=120&fit=crop', position: 'top-80 left-32', delay: 1.4 },
+  ];
+
   return (
     <div className="pt-16 min-h-screen">
       {/* Hero Section */}
-      <section className="px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
-        <div className="max-w-7xl mx-auto">
+      <section className="relative px-4 sm:px-6 lg:px-8 py-20 lg:py-32 overflow-hidden">
+        {/* Background floating images */}
+        <div className="absolute inset-0 pointer-events-none">
+          {floatingImages.map((image, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, scale: 0.8, rotate: -10 }}
+              animate={{ 
+                opacity: 0.6, 
+                scale: 1, 
+                rotate: 0,
+                y: [0, -20, 0],
+              }}
+              transition={{ 
+                duration: 0.8, 
+                delay: image.delay,
+                y: {
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }
+              }}
+              className={`absolute ${image.position} hidden lg:block`}
+            >
+              <div className="relative">
+                <img
+                  src={image.src}
+                  alt=""
+                  className="rounded-xl shadow-2xl border border-gray-700/50"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-purple-900/20 to-transparent rounded-xl" />
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="max-w-7xl mx-auto relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="text-center mb-16"
+            className="text-center"
           >
-            <h1 className="text-4xl lg:text-6xl font-bold text-white mb-6">
+            <h1 className="text-5xl lg:text-7xl xl:text-8xl font-bold text-white mb-8 leading-tight">
+              The World's
+              <br />
               <span className="bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent">
-                Web3
+                Best dApps
               </span>
-              <span className="text-white ml-4">
-                Design Flows & Utilities
-              </span>
+              <br />
+              Are On Web3 Directory
             </h1>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-              Explore curated decentralized apps, analyze real-world user flows, screen libraries and join the revolution of digital ownership and community governance.
+            <p className="text-xl lg:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed font-light">
+              A comprehensive platform to help users and developers
+              <br />
+              navigate the decentralized world from discovering inspiration,
+              <br />
+              to connecting with one another
             </p>
           </motion.div>
+        </div>
+      </section>
 
-          {/* Stats */}
+      {/* Stats */}
+      <section className="px-4 sm:px-6 lg:px-8 pb-20">
+        <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -355,7 +411,7 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Featured Section */}
+      {/* CTA Section */}
       <section className="px-4 sm:px-6 lg:px-8 pb-20">
         <div className="max-w-7xl mx-auto">
           <motion.div
@@ -372,14 +428,6 @@ const HomePage: React.FC = () => {
                 Join thousands of developers and users exploring the decentralized web. 
                 Start your journey today with our curated selection of tools and resources.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors">
-                  Get Started
-                </button>
-                <button className="px-8 py-3 bg-transparent border border-gray-600 hover:border-gray-500 text-white rounded-lg font-medium transition-colors">
-                  Learn More
-                </button>
-              </div>
             </div>
           </motion.div>
         </div>
