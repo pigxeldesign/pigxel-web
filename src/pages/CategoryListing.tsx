@@ -27,6 +27,7 @@ interface DApp {
   description: string;
   problemSolved: string;
   logo: string;
+  thumbnail: string;
   category: string;
   subCategory: string;
   blockchains: string[];
@@ -110,7 +111,7 @@ const CategoryListing: React.FC = () => {
 
   const currentCategory = categories[slug || ''];
 
-  // Mock data - in real app, this would come from Supabase
+  // Mock data with thumbnails - in real app, this would come from Supabase
   const mockDApps: DApp[] = [
     {
       id: '1',
@@ -118,6 +119,7 @@ const CategoryListing: React.FC = () => {
       description: 'A crypto wallet & gateway to blockchain apps. Start exploring blockchain applications in seconds.',
       problemSolved: 'Simplifies Web3 onboarding and wallet management for beginners',
       logo: '🦊',
+      thumbnail: 'https://images.pexels.com/photos/730547/pexels-photo-730547.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop',
       category: slug || '',
       subCategory: 'Wallets',
       blockchains: ['Ethereum', 'Polygon', 'BSC'],
@@ -131,6 +133,7 @@ const CategoryListing: React.FC = () => {
       description: 'Your key to the decentralized web. Coinbase Wallet is a self-custody wallet that gives you complete control.',
       problemSolved: 'Provides secure self-custody with user-friendly interface',
       logo: '🔷',
+      thumbnail: 'https://images.pexels.com/photos/844124/pexels-photo-844124.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop',
       category: slug || '',
       subCategory: 'Wallets',
       blockchains: ['Ethereum', 'Bitcoin', 'Polygon'],
@@ -144,6 +147,7 @@ const CategoryListing: React.FC = () => {
       description: 'Learn to use crypto protocols by completing on-chain tasks and earning rewards.',
       problemSolved: 'Gamifies learning Web3 protocols through hands-on experience',
       logo: '🐰',
+      thumbnail: 'https://images.pexels.com/photos/1181298/pexels-photo-1181298.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop',
       category: slug || '',
       subCategory: 'Educational',
       blockchains: ['Ethereum', 'Arbitrum', 'Optimism'],
@@ -157,6 +161,7 @@ const CategoryListing: React.FC = () => {
       description: 'Learn by building cool stuff. Join thousands of developers building the future of the internet.',
       problemSolved: 'Provides structured learning paths for Web3 development',
       logo: '🚀',
+      thumbnail: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop',
       category: slug || '',
       subCategory: 'Educational',
       blockchains: ['Ethereum', 'Solana', 'Polygon'],
@@ -170,6 +175,7 @@ const CategoryListing: React.FC = () => {
       description: 'Swap, earn, and build on the leading decentralized crypto trading protocol.',
       problemSolved: 'Enables permissionless token trading without intermediaries',
       logo: '🦄',
+      thumbnail: 'https://images.pexels.com/photos/1181263/pexels-photo-1181263.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop',
       category: slug || '',
       subCategory: 'DeFi',
       blockchains: ['Ethereum', 'Polygon', 'Arbitrum'],
@@ -183,12 +189,41 @@ const CategoryListing: React.FC = () => {
       description: 'Earn interest, borrow assets, and build applications on the largest decentralized lending protocol.',
       problemSolved: 'Provides decentralized lending and borrowing without traditional banks',
       logo: '👻',
+      thumbnail: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop',
       category: slug || '',
       subCategory: 'Lending',
       blockchains: ['Ethereum', 'Polygon', 'Avalanche'],
       rating: 4.7,
       userCount: '800K+',
       isFeatured: true
+    },
+    {
+      id: '7',
+      name: 'OpenSea',
+      description: 'The world\'s first and largest digital marketplace for crypto collectibles and non-fungible tokens.',
+      problemSolved: 'Democratizes access to NFT trading and discovery',
+      logo: '🌊',
+      thumbnail: 'https://images.pexels.com/photos/1181316/pexels-photo-1181316.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop',
+      category: slug || '',
+      subCategory: 'NFT Marketplaces',
+      blockchains: ['Ethereum', 'Polygon', 'Klaytn'],
+      rating: 4.5,
+      userCount: '2M+',
+      isFeatured: true
+    },
+    {
+      id: '8',
+      name: 'Foundation',
+      description: 'A platform where artists and collectors can create, discover, and collect digital art NFTs.',
+      problemSolved: 'Empowers artists to monetize digital art through NFTs',
+      logo: '🎨',
+      thumbnail: 'https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop',
+      category: slug || '',
+      subCategory: 'Art Platforms',
+      blockchains: ['Ethereum'],
+      rating: 4.6,
+      userCount: '150K+',
+      isNew: true
     }
   ];
 
@@ -486,15 +521,20 @@ const CategoryListing: React.FC = () => {
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {[...Array(8)].map((_, index) => (
-                <div key={index} className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 animate-pulse">
-                  <div className="w-16 h-16 bg-gray-700 rounded-lg mb-4"></div>
-                  <div className="h-6 bg-gray-700 rounded mb-2"></div>
-                  <div className="h-4 bg-gray-700 rounded mb-4"></div>
-                  <div className="flex gap-2 mb-4">
-                    <div className="h-6 w-16 bg-gray-700 rounded"></div>
-                    <div className="h-6 w-20 bg-gray-700 rounded"></div>
+                <div key={index} className="bg-gray-800/50 border border-gray-700 rounded-xl overflow-hidden animate-pulse">
+                  <div className="w-full h-48 bg-gray-700"></div>
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="w-8 h-8 bg-gray-700 rounded-lg"></div>
+                      <div className="h-6 w-16 bg-gray-700 rounded"></div>
+                    </div>
+                    <div className="h-6 bg-gray-700 rounded mb-2"></div>
+                    <div className="h-4 bg-gray-700 rounded mb-3"></div>
+                    <div className="flex gap-2">
+                      <div className="h-6 w-16 bg-gray-700 rounded"></div>
+                      <div className="h-6 w-20 bg-gray-700 rounded"></div>
+                    </div>
                   </div>
-                  <div className="h-10 bg-gray-700 rounded"></div>
                 </div>
               ))}
             </div>
@@ -532,77 +572,84 @@ const CategoryListing: React.FC = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: index * 0.05 }}
                   whileHover={{ y: -8, scale: 1.02 }}
-                  className="group bg-gray-800/50 border border-gray-700 rounded-xl p-6 hover:bg-gray-800/70 hover:border-gray-600 hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-300 cursor-pointer"
+                  className="group bg-gray-800/50 border border-gray-700 rounded-xl overflow-hidden hover:bg-gray-800/70 hover:border-gray-600 hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-300 cursor-pointer"
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="w-16 h-16 bg-gray-700 rounded-lg flex items-center justify-center text-2xl">
-                      {dapp.logo}
+                  <Link to={`/dapp/${dapp.id}`} className="block">
+                    {/* Thumbnail Image */}
+                    <div className="relative w-full h-48 overflow-hidden">
+                      <img
+                        src={dapp.thumbnail}
+                        alt={dapp.name}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                      
+                      {/* Status badges */}
+                      <div className="absolute top-3 right-3 flex flex-col gap-1">
+                        {dapp.isFeatured && (
+                          <span className="px-2 py-1 bg-yellow-600/90 text-yellow-100 text-xs rounded-full backdrop-blur-sm">
+                            Featured
+                          </span>
+                        )}
+                        {dapp.isNew && (
+                          <span className="px-2 py-1 bg-green-600/90 text-green-100 text-xs rounded-full backdrop-blur-sm">
+                            New
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex flex-col gap-1">
-                      {dapp.isFeatured && (
-                        <span className="px-2 py-1 bg-yellow-600/20 text-yellow-300 text-xs rounded-full">
-                          Featured
+
+                    {/* Content */}
+                    <div className="p-4">
+                      {/* Logo and Title */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-gray-700 rounded-lg flex items-center justify-center text-lg">
+                            {dapp.logo}
+                          </div>
+                          <h3 className="text-lg font-bold text-white group-hover:text-purple-300 transition-colors truncate">
+                            {dapp.name}
+                          </h3>
+                        </div>
+                        <div className="flex items-center text-xs text-gray-400">
+                          <Star className="w-3 h-3 text-yellow-500 mr-1" />
+                          {dapp.rating}
+                        </div>
+                      </div>
+
+                      {/* Problem Solved */}
+                      <p className="text-sm text-purple-400 mb-3 line-clamp-2">
+                        {dapp.problemSolved}
+                      </p>
+
+                      {/* Sub-category and User Count */}
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="px-2 py-1 bg-purple-600/20 text-purple-300 text-xs rounded-full">
+                          {dapp.subCategory}
                         </span>
-                      )}
-                      {dapp.isNew && (
-                        <span className="px-2 py-1 bg-green-600/20 text-green-300 text-xs rounded-full">
-                          New
-                        </span>
-                      )}
+                        <div className="flex items-center text-xs text-gray-500">
+                          <Users className="w-3 h-3 mr-1" />
+                          {dapp.userCount}
+                        </div>
+                      </div>
+
+                      {/* Blockchains */}
+                      <div className="flex flex-wrap gap-1">
+                        {dapp.blockchains.slice(0, 3).map((blockchain) => (
+                          <span
+                            key={blockchain}
+                            className="px-2 py-1 bg-gray-700 text-gray-300 text-xs rounded"
+                          >
+                            {blockchain}
+                          </span>
+                        ))}
+                        {dapp.blockchains.length > 3 && (
+                          <span className="px-2 py-1 bg-gray-700 text-gray-300 text-xs rounded">
+                            +{dapp.blockchains.length - 3}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-
-                  <h3 className="text-xl font-bold text-white mb-2 group-hover:text-purple-300 transition-colors">
-                    {dapp.name}
-                  </h3>
-
-                  <p className="text-sm text-purple-400 mb-3 line-clamp-2">
-                    {dapp.problemSolved}
-                  </p>
-
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="px-2 py-1 bg-purple-600/20 text-purple-300 text-xs rounded-full">
-                      {dapp.subCategory}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-wrap gap-1 mb-4">
-                    {dapp.blockchains.slice(0, 3).map((blockchain) => (
-                      <span
-                        key={blockchain}
-                        className="px-2 py-1 bg-gray-700 text-gray-300 text-xs rounded"
-                      >
-                        {blockchain}
-                      </span>
-                    ))}
-                    {dapp.blockchains.length > 3 && (
-                      <span className="px-2 py-1 bg-gray-700 text-gray-300 text-xs rounded">
-                        +{dapp.blockchains.length - 3} more
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="text-gray-400 text-sm mb-4 line-clamp-3">
-                    {dapp.description}
-                  </p>
-
-                  <div className="flex items-center justify-between mb-4 text-sm text-gray-500">
-                    <div className="flex items-center">
-                      <Star className="w-4 h-4 text-yellow-500 mr-1" />
-                      {dapp.rating}
-                    </div>
-                    <div className="flex items-center">
-                      <Users className="w-4 h-4 mr-1" />
-                      {dapp.userCount}
-                    </div>
-                  </div>
-
-                  <Link
-                    to={`/dapp/${dapp.id}`}
-                    className="flex items-center justify-center w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors group-hover:bg-purple-700"
-                  >
-                    Learn More
-                    <ExternalLink className="w-4 h-4 ml-2" />
                   </Link>
                 </motion.div>
               ))}
