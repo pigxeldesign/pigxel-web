@@ -65,24 +65,24 @@ const FlowDetailModal: React.FC<FlowDetailModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="full">
-      {/* Single Column Layout - Full Width */}
-      <div className="flex flex-col h-[95vh]">
-        {/* Flow Header */}
-        <div className="p-6 border-b border-gray-700">
-          <div className="flex items-center justify-between mb-4">
+      {/* Single Column Layout - Full Width with Fixed Height */}
+      <div className="flex flex-col h-[95vh] max-h-[95vh]">
+        {/* Flow Header - Fixed Height */}
+        <div className="flex-shrink-0 p-4 border-b border-gray-700">
+          <div className="flex items-center justify-between mb-3">
             <div>
-              <h1 className="text-2xl font-bold text-white mb-1">{flow.title}</h1>
+              <h1 className="text-xl font-bold text-white mb-1">{flow.title}</h1>
               {flow.dappName && (
-                <p className="text-purple-400">from {flow.dappName}</p>
+                <p className="text-purple-400 text-sm">from {flow.dappName}</p>
               )}
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsPlaying(!isPlaying)}
-                className="flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                className="flex items-center px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm"
               >
-                {isPlaying ? <Pause className="w-4 h-4 mr-2" /> : <Play className="w-4 h-4 mr-2" />}
-                {isPlaying ? 'Pause' : 'Play'} Flow
+                {isPlaying ? <Pause className="w-4 h-4 mr-1" /> : <Play className="w-4 h-4 mr-1" />}
+                {isPlaying ? 'Pause' : 'Play'}
               </button>
               <button className="p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors">
                 <RotateCcw className="w-4 h-4" />
@@ -100,9 +100,9 @@ const FlowDetailModal: React.FC<FlowDetailModalProps> = ({
           </div>
 
           {/* Progress Bar */}
-          <div className="w-full bg-gray-700 rounded-full h-2 mb-4">
+          <div className="w-full bg-gray-700 rounded-full h-1.5 mb-3">
             <div 
-              className="bg-purple-600 h-2 rounded-full transition-all duration-300"
+              className="bg-purple-600 h-1.5 rounded-full transition-all duration-300"
               style={{ width: `${((currentScreenIndex + 1) / flow.screens.length) * 100}%` }}
             />
           </div>
@@ -114,60 +114,60 @@ const FlowDetailModal: React.FC<FlowDetailModalProps> = ({
           </div>
         </div>
 
-        {/* Main Screen Display */}
-        <div className="flex-1 flex items-center justify-center p-6 bg-gray-800/30">
-          <div className="relative max-w-6xl w-full">
+        {/* Main Screen Display - Flexible Height */}
+        <div className="flex-1 flex items-center justify-center p-4 bg-gray-800/30 min-h-0">
+          <div className="relative w-full h-full max-w-5xl">
             <motion.div
               key={currentScreenIndex}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3 }}
-              className="relative aspect-[16/10] rounded-xl overflow-hidden border border-gray-600 shadow-2xl"
+              className="relative w-full h-full rounded-xl overflow-hidden border border-gray-600 shadow-2xl"
             >
               <img
                 src={currentScreen.thumbnail}
                 alt={currentScreen.title}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain bg-gray-900"
               />
               
               {/* Navigation Arrows */}
               {currentScreenIndex > 0 && (
                 <button
                   onClick={prevScreen}
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center transition-colors"
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center transition-colors"
                 >
-                  <ChevronLeft className="w-6 h-6" />
+                  <ChevronLeft className="w-5 h-5" />
                 </button>
               )}
               
               {currentScreenIndex < flow.screens.length - 1 && (
                 <button
                   onClick={nextScreen}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center transition-colors"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center transition-colors"
                 >
-                  <ChevronRight className="w-6 h-6" />
+                  <ChevronRight className="w-5 h-5" />
                 </button>
               )}
 
               {/* Screen Title Overlay */}
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
-                <h3 className="text-2xl font-bold text-white mb-2">{currentScreen.title}</h3>
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                <h3 className="text-xl font-bold text-white mb-1">{currentScreen.title}</h3>
                 {currentScreen.description && (
-                  <p className="text-gray-300">{currentScreen.description}</p>
+                  <p className="text-gray-300 text-sm">{currentScreen.description}</p>
                 )}
               </div>
             </motion.div>
           </div>
         </div>
 
-        {/* Screen Navigation Thumbnails */}
-        <div className="p-6 border-t border-gray-700">
-          <div className="flex gap-3 overflow-x-auto pb-2 justify-center">
+        {/* Screen Navigation Thumbnails - Fixed Height */}
+        <div className="flex-shrink-0 p-4 border-t border-gray-700">
+          <div className="flex gap-2 overflow-x-auto pb-2 justify-center">
             {flow.screens.map((screen, index) => (
               <button
                 key={screen.id}
                 onClick={() => goToScreen(index)}
-                className={`flex-shrink-0 relative w-24 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                className={`flex-shrink-0 relative w-20 h-14 rounded-lg overflow-hidden border-2 transition-all ${
                   index === currentScreenIndex 
                     ? 'border-purple-500 ring-2 ring-purple-500/30' 
                     : 'border-gray-600 hover:border-gray-500'
@@ -179,8 +179,8 @@ const FlowDetailModal: React.FC<FlowDetailModalProps> = ({
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-black/20" />
-                <div className="absolute bottom-1 left-1 right-1 text-center">
-                  <span className="text-xs text-white font-medium bg-black/60 px-2 py-1 rounded">
+                <div className="absolute bottom-0.5 left-0.5 right-0.5 text-center">
+                  <span className="text-xs text-white font-medium bg-black/60 px-1.5 py-0.5 rounded">
                     {index + 1}
                   </span>
                 </div>
