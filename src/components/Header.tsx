@@ -2,21 +2,25 @@ import React, { useState } from 'react';
 import { Search, Menu, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  onToggleSidebar: () => void;
+  isSidebarOpen: boolean;
+}
+
+const Header: React.FC<HeaderProps> = ({ onToggleSidebar, isSidebarOpen }) => {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
+          {/* Logo and Mobile Menu */}
           <div className="flex items-center">
             <button
               className="lg:hidden p-2 text-gray-400 hover:text-white transition-colors"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              onClick={onToggleSidebar}
             >
-              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
             <div className="flex items-center ml-2 lg:ml-0">
               <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-600 rounded-lg flex items-center justify-center">

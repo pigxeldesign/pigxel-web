@@ -1,77 +1,210 @@
-import React from 'react';
-import { Home, Star, Zap, Filter, TrendingUp } from 'lucide-react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { Home, Star, Zap, Filter, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isCollapsed: boolean;
+  onToggle: () => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
+  const location = useLocation();
+
   const navItems = [
-    { icon: Home, label: 'Home', active: true },
-    { icon: Star, label: 'Featured', count: 12 },
-    { icon: TrendingUp, label: 'Trending', count: 24 },
-    { icon: Zap, label: 'New', count: 8 },
-    { icon: Filter, label: 'All Categories' },
+    { icon: Home, label: 'Home', path: '/', active: location.pathname === '/' },
+    { icon: Star, label: 'Featured', path: '/featured', count: 12 },
+    { icon: TrendingUp, label: 'Trending', path: '/trending', count: 24 },
+    { icon: Zap, label: 'New', path: '/new', count: 8 },
+    { icon: Filter, label: 'All Categories', path: '/categories' },
   ];
 
   const categories = [
-    { name: 'Getting Started', count: 15 },
-    { name: 'Digital Assets', count: 32 },
-    { name: 'Communities', count: 18 },
-    { name: 'Creative & Publishing', count: 24 },
-    { name: 'Data & Infrastructure', count: 12 },
-    { name: 'Real-World Apps', count: 28 },
+    { name: 'Getting Started', slug: 'getting-started', count: 15 },
+    { name: 'Digital Assets', slug: 'digital-assets', count: 32 },
+    { name: 'Communities', slug: 'communities', count: 18 },
+    { name: 'Creative & Publishing', slug: 'creative-publishing', count: 24 },
+    { name: 'Data & Infrastructure', slug: 'data-infrastructure', count: 12 },
+    { name: 'Real-World Apps', slug: 'real-world-apps', count: 28 },
   ];
 
   return (
-    <aside className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-gray-900 border-r border-gray-800 overflow-y-auto hidden lg:block">
-      <div className="p-6">
-        {/* Navigation */}
-        <nav className="space-y-2">
-          {navItems.map((item, index) => (
-            <motion.a
-              key={item.label}
-              href="#"
-              className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors group ${
-                item.active
-                  ? 'bg-purple-600 text-white'
-                  : 'text-gray-300 hover:text-white hover:bg-gray-800'
-              }`}
-              whileHover={{ x: 4 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <div className="flex items-center">
-                <item.icon className="w-5 h-5 mr-3" />
-                {item.label}
-              </div>
-              {item.count && (
-                <span className="bg-gray-700 text-gray-300 text-xs px-2 py-1 rounded-full">
-                  {item.count}
-                </span>
-              )}
-            </motion.a>
-          ))}
-        </nav>
+    <>
+      {/* Overlay for mobile */}
+      <AnimatePresence>
+        {!isCollapsed && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            onClick={onToggle}
+          />
+        )}
+      </AnimatePresence>
 
-        {/* Categories */}
-        <div className="mt-8">
-          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
-            Categories
-          </h3>
-          <div className="space-y-1">
-            {categories.map((category, index) => (
-              <motion.a
-                key={category.name}
-                href="#"
-                className="flex items-center justify-between px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
-                whileHover={{ x: 4 }}
-                whileTap={{ scale: 0.98 }}
+      {/* Sidebar */}
+      <motion.aside
+        initial={false}
+        animate={{
+          width: isCollapsed ? 0 : 256,
+          x: isCollapsed ? -256 : 0,
+        }}
+        transition={{ duration: 0.3, ease: 'easeInOut' }}
+        className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-gray-900 border-r border-gray-800 overflow-hidden z-50 lg:z-30 ${
+          isCollapsed ? 'lg:w-0' : 'lg:w-64'
+        }`}
+      >
+        <div className="w-64 h-full overflow-y-auto">
+          {/* Toggle Button */}
+          <div className="flex justify-end p-4 lg:hidden">
+            <button
+              onClick={onToggle}
+              className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="p-6 pt-2 lg:pt-6">
+            {/* Navigation */}
+            <nav className="space-y-2">
+              {navItems.map((item, index) => {
+                const isActive = item.active || location.pathname === item.path;
+                return (
+                  <motion.div
+                    key={item.label}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                  >
+                    <Link
+                      to={item.path}
+                      className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 group ${
+                        isActive
+                          ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/25'
+                          : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                      }`}
+                      onClick={() => {
+                        // Close sidebar on mobile when navigating
+                        if (window.innerWidth < 1024) {
+                          onToggle();
+                        }
+                      }}
+                    >
+                      <div className="flex items-center">
+                        <item.icon className="w-5 h-5 mr-3" />
+                        <span>{item.label}</span>
+                      </div>
+                      {item.count && (
+                        <motion.span
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className={`text-xs px-2 py-1 rounded-full transition-colors ${
+                            isActive
+                              ? 'bg-white/20 text-white'
+                              : 'bg-gray-700 text-gray-300 group-hover:bg-gray-600'
+                          }`}
+                        >
+                          {item.count}
+                        </motion.span>
+                      )}
+                    </Link>
+                  </motion.div>
+                );
+              })}
+            </nav>
+
+            {/* Categories */}
+            <div className="mt-8">
+              <motion.h3
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3, delay: 0.3 }}
+                className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4"
               >
-                <span>{category.name}</span>
-                <span className="text-xs text-gray-500">{category.count}</span>
-              </motion.a>
-            ))}
+                Categories
+              </motion.h3>
+              <div className="space-y-1">
+                {categories.map((category, index) => {
+                  const isActive = location.pathname === `/category/${category.slug}`;
+                  return (
+                    <motion.div
+                      key={category.name}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: 0.4 + index * 0.05 }}
+                    >
+                      <Link
+                        to={`/category/${category.slug}`}
+                        className={`flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-all duration-200 group ${
+                          isActive
+                            ? 'bg-purple-600/20 text-purple-300 border border-purple-600/30'
+                            : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                        }`}
+                        onClick={() => {
+                          // Close sidebar on mobile when navigating
+                          if (window.innerWidth < 1024) {
+                            onToggle();
+                          }
+                        }}
+                      >
+                        <span className="truncate">{category.name}</span>
+                        <motion.span
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className={`text-xs transition-colors ${
+                            isActive ? 'text-purple-400' : 'text-gray-500 group-hover:text-gray-400'
+                          }`}
+                        >
+                          {category.count}
+                        </motion.span>
+                      </Link>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.8 }}
+              className="mt-8 pt-6 border-t border-gray-800"
+            >
+              <div className="space-y-3">
+                <button className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg font-medium transition-all duration-200 transform hover:scale-105">
+                  Submit dApp
+                </button>
+                <button className="w-full px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border border-gray-700 hover:border-gray-600 rounded-lg font-medium transition-all duration-200">
+                  Request Feature
+                </button>
+              </div>
+            </motion.div>
           </div>
         </div>
-      </div>
-    </aside>
+      </motion.aside>
+
+      {/* Desktop Toggle Button */}
+      <motion.button
+        initial={false}
+        animate={{
+          left: isCollapsed ? 0 : 256,
+        }}
+        transition={{ duration: 0.3, ease: 'easeInOut' }}
+        onClick={onToggle}
+        className="hidden lg:flex fixed top-20 z-40 items-center justify-center w-8 h-8 bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-gray-600 text-gray-400 hover:text-white rounded-r-lg transition-all duration-200 group"
+        title={isCollapsed ? 'Open sidebar' : 'Close sidebar'}
+      >
+        <motion.div
+          animate={{ rotate: isCollapsed ? 0 : 180 }}
+          transition={{ duration: 0.3 }}
+        >
+          <ChevronRight className="w-4 h-4" />
+        </motion.div>
+      </motion.button>
+    </>
   );
 };
 
