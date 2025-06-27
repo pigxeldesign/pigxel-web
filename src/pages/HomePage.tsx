@@ -432,6 +432,22 @@ const HomePage: React.FC = () => {
                 Join thousands of developers and users exploring the decentralized web. 
                 Start your journey today with our curated selection of tools and resources.
               </p>
+              
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <Link
+                  to="/category/getting-started"
+                  className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors shadow-lg hover:shadow-xl transform hover:scale-105 duration-200"
+                >
+                  Get Started
+                </Link>
+                <Link
+                  to="/categories"
+                  className="px-8 py-3 bg-transparent border-2 border-purple-600 text-purple-300 hover:bg-purple-600 hover:text-white rounded-lg font-medium transition-all duration-200"
+                >
+                  Learn More
+                </Link>
+              </div>
             </div>
           </motion.div>
         </div>
