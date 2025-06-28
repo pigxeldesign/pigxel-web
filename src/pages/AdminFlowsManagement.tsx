@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Plus, 
-  Edit, 
-  Trash2, 
+  Edit,
+  Trash2,
   Search,
   Filter,
   Play,
@@ -30,17 +30,14 @@ interface Flow {
   id: string;
   dapp_id: string;
   dapp_name: string;
-  dapp_logo: string;
+  dapp_logo?: string;
   title: string;
   description: string;
   duration: string;
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
   screen_count: number;
   is_premium: boolean;
-  status: 'draft' | 'published' | 'archived';
-  view_count?: number;
-  completion_rate?: number;
-  rating?: number;
+  status?: 'draft' | 'published' | 'archived';
   created_at: string;
   updated_at: string;
 }
@@ -63,8 +60,9 @@ const AdminFlowsManagement: React.FC = () => {
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('');
   const [selectedPremium, setSelectedPremium] = useState<string>('');
   const [expandedDApps, setExpandedDApps] = useState<Set<string>>(new Set());
-  const [selectedFlows, setSelectedFlows] = useState<Set<string>>(new Set());
+  const [selectedFlows, setSelectedFlows] = useState<Set<string>>(new Set()); 
   const [showFilters, setShowFilters] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Mock data
   const mockFlows: Flow[] = [
@@ -79,10 +77,7 @@ const AdminFlowsManagement: React.FC = () => {
       difficulty: 'Beginner',
       screen_count: 5,
       is_premium: false,
-      status: 'published',
-      view_count: 1250,
-      completion_rate: 87,
-      rating: 4.8,
+      status: 'published', 
       created_at: '2024-01-15T10:00:00Z',
       updated_at: '2024-06-28T14:30:00Z'
     },
@@ -97,10 +92,7 @@ const AdminFlowsManagement: React.FC = () => {
       difficulty: 'Advanced',
       screen_count: 12,
       is_premium: true,
-      status: 'published',
-      view_count: 456,
-      completion_rate: 72,
-      rating: 4.9,
+      status: 'published', 
       created_at: '2024-02-10T09:15:00Z',
       updated_at: '2024-06-27T16:45:00Z'
     },
@@ -115,10 +107,7 @@ const AdminFlowsManagement: React.FC = () => {
       difficulty: 'Beginner',
       screen_count: 8,
       is_premium: false,
-      status: 'published',
-      view_count: 2340,
-      completion_rate: 94,
-      rating: 4.7,
+      status: 'published', 
       created_at: '2024-03-05T11:30:00Z',
       updated_at: '2024-06-26T12:20:00Z'
     },
@@ -133,10 +122,7 @@ const AdminFlowsManagement: React.FC = () => {
       difficulty: 'Intermediate',
       screen_count: 9,
       is_premium: true,
-      status: 'draft',
-      view_count: 0,
-      completion_rate: 0,
-      rating: 0,
+      status: 'draft', 
       created_at: '2024-04-12T08:45:00Z',
       updated_at: '2024-06-25T10:15:00Z'
     },
@@ -151,10 +137,7 @@ const AdminFlowsManagement: React.FC = () => {
       difficulty: 'Beginner',
       screen_count: 10,
       is_premium: false,
-      status: 'published',
-      view_count: 1890,
-      completion_rate: 81,
-      rating: 4.6,
+      status: 'published', 
       created_at: '2024-05-20T13:20:00Z',
       updated_at: '2024-06-24T09:30:00Z'
     },
@@ -169,10 +152,7 @@ const AdminFlowsManagement: React.FC = () => {
       difficulty: 'Intermediate',
       screen_count: 15,
       is_premium: true,
-      status: 'archived',
-      view_count: 234,
-      completion_rate: 65,
-      rating: 4.4,
+      status: 'archived', 
       created_at: '2024-06-01T15:10:00Z',
       updated_at: '2024-06-23T14:45:00Z'
     }
@@ -180,10 +160,11 @@ const AdminFlowsManagement: React.FC = () => {
 
   useEffect(() => {
     loadFlows();
-  }, []);
+  }, []); 
 
   const loadFlows = async () => {
     setLoading(true);
+    setError(null);
     try {
       // Simulate API call
       setTimeout(() => {
@@ -208,6 +189,7 @@ const AdminFlowsManagement: React.FC = () => {
       }, 1000);
     } catch (error) {
       console.error('Error loading flows:', error);
+      setError('Failed to load flows. Please try again.');
       setLoading(false);
     }
   };
@@ -479,11 +461,24 @@ const AdminFlowsManagement: React.FC = () => {
         </AnimatePresence>
 
         {/* Results Summary */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="text-gray-400">
-            Showing {filteredFlows.length} of {flows.length} flows
+        {error ? (
+          <div className="bg-red-600/20 border border-red-600/30 rounded-lg p-4 mb-6 flex items-center">
+            <AlertCircle className="w-5 h-5 text-red-400 mr-3 flex-shrink-0" />
+            <p className="text-red-300 text-sm">{error}</p>
+            <button
+              onClick={() => setError(null)}
+              className="ml-auto text-red-400 hover:text-red-300"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
-        </div>
+        ) : (
+          <div className="flex items-center justify-between mb-4">
+            <div className="text-gray-400">
+              Showing {filteredFlows.length} of {flows.length} flows
+            </div>
+          </div>
+        )}
 
         {/* Flows List */}
         <div className="bg-gray-800/50 border border-gray-700 rounded-xl overflow-hidden">
@@ -506,8 +501,7 @@ const AdminFlowsManagement: React.FC = () => {
                     <div className="col-span-4">Flow</div>
                     <div className="col-span-2">dApp</div>
                     <div className="col-span-1">Status</div>
-                    <div className="col-span-1">Difficulty</div>
-                    <div className="col-span-2">Performance</div>
+                    <div className="col-span-2">Difficulty</div>
                     <div className="col-span-1">Updated</div>
                     <div className="col-span-1 text-right">Actions</div>
                   </div>
@@ -574,26 +568,11 @@ const AdminFlowsManagement: React.FC = () => {
                           </div>
 
                           {/* Difficulty */}
-                          <div className="col-span-1">
+                          <div className="col-span-2">
                             <span className={`px-2 py-1 text-xs font-medium rounded-full ${getDifficultyColor(flow.difficulty)}`}>
                               {flow.difficulty}
                             </span>
-                          </div>
-
-                          {/* Performance */}
-                          <div className="col-span-2">
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2 text-sm">
-                                <Users className="w-3 h-3 text-gray-400" />
-                                <span className="text-white">{flow.view_count}</span>
-                                <span className="text-gray-400">views</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-sm">
-                                <Star className="w-3 h-3 text-yellow-500" />
-                                <span className="text-white">{flow.rating}</span>
-                                <span className="text-gray-400">({flow.completion_rate}% completion)</span>
-                              </div>
-                            </div>
+                            <div className="mt-1 text-xs text-gray-400">{flow.screen_count} screens • {flow.duration}</div>
                           </div>
 
                           {/* Updated */}
@@ -605,7 +584,7 @@ const AdminFlowsManagement: React.FC = () => {
 
                           {/* Actions */}
                           <div className="col-span-1">
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity justify-end">
+                            <div className="flex items-center gap-1 justify-end">
                               <button
                                 className="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-600/20 rounded-lg transition-colors"
                                 title="Preview"
@@ -626,13 +605,10 @@ const AdminFlowsManagement: React.FC = () => {
                                 <Copy className="w-4 h-4" />
                               </button>
                               <button
-                                className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-600/20 rounded-lg transition-colors"
+                                className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-600/20 rounded-lg transition-colors" 
                                 title="Delete"
                               >
                                 <Trash2 className="w-4 h-4" />
-                              </button>
-                              <button className="p-2 text-gray-400 hover:text-gray-300 hover:bg-gray-600/20 rounded-lg transition-colors">
-                                <MoreHorizontal className="w-4 h-4" />
                               </button>
                             </div>
                           </div>
