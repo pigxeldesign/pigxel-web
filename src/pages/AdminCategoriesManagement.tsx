@@ -153,6 +153,18 @@ const AdminCategoriesManagement: React.FC = () => {
     loadCategories();
   }, []);
 
+  // Listen for dashboard quick action to open create modal
+  useEffect(() => {
+    const handleOpenCreateCategory = () => {
+      setShowCreateForm(true);
+    };
+
+    window.addEventListener('openCreateCategory', handleOpenCreateCategory);
+    return () => {
+      window.removeEventListener('openCreateCategory', handleOpenCreateCategory);
+    };
+  }, []);
+
   const loadCategories = async () => {
     setLoading(true);
     try {

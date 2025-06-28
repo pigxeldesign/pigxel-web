@@ -19,6 +19,7 @@ import {
   Star,
   Activity
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import AdminLayout from '../components/AdminLayout';
 
@@ -49,7 +50,9 @@ interface CategoryData {
 
 const AdminDashboard: React.FC = () => {
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   // Mock data - in real app, this would come from Supabase
   const metrics: MetricCard[] = [
@@ -181,32 +184,63 @@ const AdminDashboard: React.FC = () => {
 
   const quickActions = [
     {
+      id: 'add-dapp',
       label: 'Add New dApp',
       description: 'Create a new dApp listing',
       icon: Plus,
       color: 'bg-purple-600 hover:bg-purple-700',
-      action: () => console.log('Add dApp')
+      action: async () => {
+        setActionLoading('add-dapp');
+        await new Promise(resolve => setTimeout(resolve, 300)); // Small delay for UX
+        navigate('/admin/dapps/new');
+        setActionLoading(null);
+      }
     },
     {
+      id: 'create-category',
       label: 'Create Category',
       description: 'Add a new category',
       icon: Layers,
       color: 'bg-blue-600 hover:bg-blue-700',
-      action: () => console.log('Create category')
+      action: async () => {
+        setActionLoading('create-category');
+        // Navigate to categories page and trigger create modal
+        navigate('/admin/categories');
+        // We'll add a URL parameter to auto-open the create modal
+        setTimeout(() => {
+          const event = new CustomEvent('openCreateCategory');
+          window.dispatchEvent(event);
+          setActionLoading(null);
+        }, 100);
+      }
     },
     {
+      id: 'create-flow',
       label: 'Create Flow',
       description: 'Start new user flow',
       icon: FileText,
       color: 'bg-green-600 hover:bg-green-700',
-      action: () => console.log('Create flow')
+      action: async () => {
+        setActionLoading('create-flow');
+        await new Promise(resolve => setTimeout(resolve, 300));
+        navigate('/admin/flows/new');
+        setActionLoading(null);
+      }
     },
     {
+      id: 'bulk-import',
       label: 'Bulk Import',
       description: 'Mass content operations',
       icon: Upload,
       color: 'bg-orange-600 hover:bg-orange-700',
-      action: () => console.log('Bulk import')
+      action: async () => {
+        setActionLoading('bulk-import');
+        // For now, navigate to media library where bulk operations can be performed
+        // In the future, this could open a dedicated bulk import modal
+        await new Promise(resolve => setTimeout(resolve, 300));
+        navigate('/admin/media');
+        setActionLoading(null);
+      }
     }
   ];
 
@@ -346,14 +380,25 @@ const AdminDashboard: React.FC = () => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={action.action}
-                  className={`${action.color} text-white p-6 rounded-xl font-medium transition-all duration-200 text-left group`}
+                  disabled={actionLoading === action.id}
+                  className={`${action.color} text-white p-6 rounded-xl font-medium transition-all duration-200 text-left group relative overflow-hidden disabled:opacity-70 disabled:cursor-not-allowed`}
                 >
+                  {/* Loading overlay */}
+                  {actionLoading === action.id && (
+                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  )}
+                  
                   <div className="flex items-center justify-between mb-3">
-                    <Icon className="w-6 h-6" />
+                    <Icon className={`w-6 h-6 transition-transform duration-200 ${actionLoading === action.id ? 'scale-110' : 'group-hover:scale-110'}`} />
                     <div className="w-2 h-2 bg-white/30 rounded-full group-hover:bg-white/50 transition-colors"></div>
                   </div>
                   <div className="font-semibold mb-1">{action.label}</div>
-                  <div className="text-sm opacity-90">{action.description}</div>
+                  <div className="text-sm opacity-90 group-hover:opacity-100 transition-opacity">{action.description}</div>
+                  
+                  {/* Hover effect */}
+                  <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"></div>
                 </motion.button>
               );
             })}
