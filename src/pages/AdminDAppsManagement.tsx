@@ -25,7 +25,9 @@ import {
   Globe,
   Loader2
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../components/AdminLayout';
+import { supabase } from '../lib/supabase';
 
 interface DApp {
   id: string;
@@ -60,6 +62,7 @@ interface SortState {
 }
 
 const AdminDAppsManagement: React.FC = () => {
+  const navigate = useNavigate();
   const [dapps, setDApps] = useState<DApp[]>([]);
   const [filteredDApps, setFilteredDApps] = useState<DApp[]>([]);
   const [loading, setLoading] = useState(true);
@@ -373,7 +376,10 @@ const AdminDAppsManagement: React.FC = () => {
               <Upload className="w-4 h-4 mr-2" />
               Import
             </button>
-            <button className="flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors">
+            <button 
+              onClick={() => navigate('/admin/dapps/new')}
+              className="flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+            >
               <Plus className="w-4 h-4 mr-2" />
               Add dApp
             </button>
@@ -717,7 +723,10 @@ const AdminDAppsManagement: React.FC = () => {
                             <button className="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-600/20 rounded-lg transition-colors">
                               <Eye className="w-4 h-4" />
                             </button>
-                            <button className="p-2 text-gray-400 hover:text-green-400 hover:bg-green-600/20 rounded-lg transition-colors">
+                            <button 
+                              onClick={() => navigate(`/admin/dapps/edit/${dapp.id}`)}
+                              className="p-2 text-gray-400 hover:text-green-400 hover:bg-green-600/20 rounded-lg transition-colors"
+                            >
                               <Edit className="w-4 h-4" />
                             </button>
                             <button className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-600/20 rounded-lg transition-colors">

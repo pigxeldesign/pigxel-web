@@ -11,6 +11,7 @@ import CategoryListing from './pages/CategoryListing';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminDAppsManagement from './pages/AdminDAppsManagement';
+import AdminDAppForm from './pages/AdminDAppForm';
 
 function App() {
   return (
@@ -37,6 +38,26 @@ function App() {
               element={
                 <ProtectedRoute requireAdmin>
                   <AdminDAppsManagement />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Admin dApp Form - Create */}
+            <Route 
+              path="/admin/dapps/new" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminDAppForm />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Admin dApp Form - Edit */}
+            <Route 
+              path="/admin/dapps/edit/:id" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminDAppForm />
                 </ProtectedRoute>
               } 
             />
