@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Save, 
   Eye, 
-  Upload, 
   X, 
   Check, 
   AlertCircle, 
@@ -24,8 +23,7 @@ import {
   Clock,
   ChevronDown,
   Plus,
-  Trash2,
-  Image as ImageIcon
+  Trash2
 } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
 import { supabase } from '../lib/supabase';
@@ -97,8 +95,6 @@ const AdminDAppForm: React.FC = () => {
   const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'error' | null>(null);
   
   // File upload refs
-  const logoFileRef = useRef<HTMLInputElement>(null);
-  const thumbnailFileRef = useRef<HTMLInputElement>(null);
   
   // Available options
   const blockchainOptions = [
@@ -278,27 +274,6 @@ const AdminDAppForm: React.FC = () => {
     }
   };
 
-  const handleFileUpload = async (file: File, type: 'logo' | 'thumbnail') => {
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const bucketName = type === 'logo' ? 'dapp_logos' : 'dapp_thumbnails';
-      
-      const { error: uploadError } = await supabase.storage
-        .from(bucketName)
-        .upload(fileName, file);
-      
-      if (uploadError) throw uploadError;
-      
-      const { data } = supabase.storage
-        .from(bucketName)
-        .getPublicUrl(fileName);
-      
-      handleInputChange(type === 'logo' ? 'logo_url' : 'thumbnail_url', data.publicUrl);
-    } catch (error) {
-      console.error('Error uploading file:', error);
-    }
-  };
 
   const saveDApp = async (isAutoSave = false) => {
     if (!isAutoSave && !validateForm()) {
@@ -547,90 +522,56 @@ const AdminDAppForm: React.FC = () => {
                 {/* Logo Upload */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Logo
+                    Logo URL
                   </label>
-                  <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-gray-500 transition-colors">
-                    {formData.logo_url ? (
+                  <div className="space-y-3">
+                    <input
+                      type="url"
+                      value={formData.logo_url || ''}
+                      onChange={(e) => handleInputChange('logo_url', e.target.value || undefined)}
+                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
+                      placeholder="https://example.com/logo.png"
+                    />
+                    {formData.logo_url && (
                       <div className="relative">
                         <img
                           src={formData.logo_url}
                           alt="Logo preview"
-                          className="w-20 h-20 object-cover rounded-lg mx-auto mb-3"
+                          className="w-20 h-20 object-cover rounded-lg border border-gray-600"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
                         />
-                        <button
-                          onClick={() => handleInputChange('logo_url', undefined)}
-                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div>
-                        <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                        <p className="text-gray-400 text-sm mb-2">Upload logo</p>
                       </div>
                     )}
-                    <input
-                      ref={logoFileRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleFileUpload(file, 'logo');
-                      }}
-                      className="hidden"
-                    />
-                    <button
-                      onClick={() => logoFileRef.current?.click()}
-                      className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm transition-colors"
-                    >
-                      Choose File
-                    </button>
                   </div>
                 </div>
 
                 {/* Thumbnail Upload */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Thumbnail
+                    Thumbnail URL
                   </label>
-                  <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-gray-500 transition-colors">
-                    {formData.thumbnail_url ? (
+                  <div className="space-y-3">
+                    <input
+                      type="url"
+                      value={formData.thumbnail_url || ''}
+                      onChange={(e) => handleInputChange('thumbnail_url', e.target.value || undefined)}
+                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
+                      placeholder="https://example.com/thumbnail.jpg"
+                    />
+                    {formData.thumbnail_url && (
                       <div className="relative">
                         <img
                           src={formData.thumbnail_url}
                           alt="Thumbnail preview"
-                          className="w-full h-20 object-cover rounded-lg mb-3"
+                          className="w-full h-32 object-cover rounded-lg border border-gray-600"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
                         />
-                        <button
-                          onClick={() => handleInputChange('thumbnail_url', undefined)}
-                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div>
-                        <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                        <p className="text-gray-400 text-sm mb-2">Upload thumbnail</p>
                       </div>
                     )}
-                    <input
-                      ref={thumbnailFileRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleFileUpload(file, 'thumbnail');
-                      }}
-                      className="hidden"
-                    />
-                    <button
-                      onClick={() => thumbnailFileRef.current?.click()}
-                      className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm transition-colors"
-                    >
-                      Choose File
-                    </button>
                   </div>
                 </div>
               </div>
