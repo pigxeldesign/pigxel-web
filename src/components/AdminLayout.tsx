@@ -46,7 +46,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   const sidebarItems = [
     { icon: BarChart3, label: 'Dashboard Overview', path: '/admin/dashboard', active: true },
-    { icon: Layers, label: 'dApps Management', path: '/admin/dapps' },
+    { icon: Layers, label: 'dApps Management', path: '/admin/dapps', active: false },
     { icon: FileText, label: 'Categories Management', path: '/admin/categories' },
     { icon: FileText, label: 'Flows Management', path: '/admin/flows' },
     { icon: Puzzle, label: 'Integrations Management', path: '/admin/integrations' },
@@ -220,7 +220,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     >
                       <button
                         onClick={() => {
-                          // Navigate to item.path
+                          window.location.href = item.path;
                           if (window.innerWidth < 1024) {
                             setIsMobileSidebarOpen(false);
                           }

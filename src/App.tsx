@@ -10,6 +10,7 @@ import FlowViewer from './pages/FlowViewer';
 import CategoryListing from './pages/CategoryListing';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminDAppsManagement from './pages/AdminDAppsManagement';
 
 function App() {
   return (
@@ -26,6 +27,16 @@ function App() {
               element={
                 <ProtectedRoute requireAdmin>
                   <AdminDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Admin dApps Management */}
+            <Route 
+              path="/admin/dapps" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminDAppsManagement />
                 </ProtectedRoute>
               } 
             />
