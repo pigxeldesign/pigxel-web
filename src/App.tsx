@@ -12,6 +12,9 @@ import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminDAppsManagement from './pages/AdminDAppsManagement';
 import AdminDAppForm from './pages/AdminDAppForm';
+import AdminCategoriesManagement from './pages/AdminCategoriesManagement';
+import AdminFlowsManagement from './pages/AdminFlowsManagement';
+import AdminFlowForm from './pages/AdminFlowForm';
 
 function App() {
   return (
@@ -58,6 +61,46 @@ function App() {
               element={
                 <ProtectedRoute requireAdmin>
                   <AdminDAppForm />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Admin Categories Management */}
+            <Route 
+              path="/admin/categories" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminCategoriesManagement />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Admin Flows Management */}
+            <Route 
+              path="/admin/flows" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminFlowsManagement />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Admin Flow Form - Create */}
+            <Route 
+              path="/admin/flows/new" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminFlowForm />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Admin Flow Form - Edit */}
+            <Route 
+              path="/admin/flows/edit/:id" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminFlowForm />
                 </ProtectedRoute>
               } 
             />

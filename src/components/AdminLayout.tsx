@@ -16,7 +16,8 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Loader2
+  Loader2,
+  Play
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -63,7 +64,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       path: '/admin/categories' 
     },
     { 
-      icon: FileText, 
+      icon: Play, 
       label: 'Flows Management', 
       path: '/admin/flows' 
     },
@@ -106,7 +107,29 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   // Function to check if a menu item is active
   const isActiveRoute = (itemPath: string) => {
-    return location.pathname === itemPath;
+    // Handle exact matches
+    if (location.pathname === itemPath) {
+      return true;
+    }
+    
+    // Handle sub-routes (e.g., /admin/dapps/new should highlight dApps Management)
+    if (itemPath === '/admin/dapps' && location.pathname.startsWith('/admin/dapps')) {
+      return true;
+    }
+    
+    if (itemPath === '/admin/categories' && location.pathname.startsWith('/admin/categories')) {
+      return true;
+    }
+    
+    if (itemPath === '/admin/flows' && location.pathname.startsWith('/admin/flows')) {
+      return true;
+    }
+    
+    if (itemPath === '/admin/integrations' && location.pathname.startsWith('/admin/integrations')) {
+      return true;
+    }
+    
+    return false;
   };
 
   return (
