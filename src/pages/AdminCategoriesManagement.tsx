@@ -38,6 +38,8 @@ const AdminCategoriesManagement: React.FC = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [draggedCategory, setDraggedCategory] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Form state
   const [formData, setFormData] = useState<CategoryFormData>({
@@ -67,88 +69,6 @@ const AdminCategoriesManagement: React.FC = () => {
     { name: 'Yellow Sun', value: 'from-yellow-500 to-orange-600' }
   ];
 
-  // Mock data - in real app, this would come from Supabase
-  const mockCategories: Category[] = [
-    {
-      id: '1',
-      slug: 'getting-started',
-      title: 'Getting Started with Web3',
-      description: 'Learn the basics of decentralized applications and digital ownership',
-      icon_name: 'GraduationCap',
-      color_gradient: 'from-blue-500 to-cyan-600',
-      sub_categories: ['Wallets', 'Educational', 'Tutorials', 'Onboarding'],
-      dapp_count: 24,
-      is_active: true,
-      created_at: '2024-01-15T10:00:00Z',
-      updated_at: '2024-06-28T14:30:00Z'
-    },
-    {
-      id: '2',
-      slug: 'digital-assets',
-      title: 'Managing Your Digital Assets',
-      description: 'Learn how to own, trade, and grow your digital property',
-      icon_name: 'Wallet',
-      color_gradient: 'from-green-500 to-emerald-600',
-      sub_categories: ['DeFi', 'Trading', 'Lending', 'Yield Farming', 'Portfolio Management'],
-      dapp_count: 156,
-      is_active: true,
-      created_at: '2024-02-10T09:15:00Z',
-      updated_at: '2024-06-27T16:45:00Z'
-    },
-    {
-      id: '3',
-      slug: 'communities',
-      title: 'Decentralized Communities',
-      description: 'Join and contribute to community-driven organizations',
-      icon_name: 'Users',
-      color_gradient: 'from-purple-500 to-violet-600',
-      sub_categories: ['DAOs', 'Governance', 'Social Networks', 'Forums', 'Voting'],
-      dapp_count: 89,
-      is_active: true,
-      created_at: '2024-03-05T11:30:00Z',
-      updated_at: '2024-06-26T12:20:00Z'
-    },
-    {
-      id: '4',
-      slug: 'creative-publishing',
-      title: 'Creative & Publishing',
-      description: 'Monetize your creative work through decentralized platforms',
-      icon_name: 'Palette',
-      color_gradient: 'from-pink-500 to-rose-600',
-      sub_categories: ['NFT Marketplaces', 'Content Creation', 'Art Platforms', 'Music', 'Writing'],
-      dapp_count: 67,
-      is_active: true,
-      created_at: '2024-04-12T08:45:00Z',
-      updated_at: '2024-06-25T10:15:00Z'
-    },
-    {
-      id: '5',
-      slug: 'data-infrastructure',
-      title: 'Data & Infrastructure',
-      description: 'Build and use decentralized data storage and computing',
-      icon_name: 'Database',
-      color_gradient: 'from-orange-500 to-red-600',
-      sub_categories: ['Storage', 'Computing', 'Oracles', 'Analytics', 'APIs'],
-      dapp_count: 43,
-      is_active: false,
-      created_at: '2024-05-20T13:20:00Z',
-      updated_at: '2024-06-24T09:30:00Z'
-    },
-    {
-      id: '6',
-      slug: 'real-world-apps',
-      title: 'Real-World Applications',
-      description: 'Solve everyday problems with blockchain technology',
-      icon_name: 'Globe',
-      color_gradient: 'from-teal-500 to-cyan-600',
-      sub_categories: ['Identity', 'Supply Chain', 'Healthcare', 'Real Estate', 'Gaming'],
-      dapp_count: 78,
-      is_active: true,
-      created_at: '2024-06-01T15:10:00Z',
-      updated_at: '2024-06-23T14:45:00Z'
-    }
-  ];
-
   useEffect(() => {
     loadCategories();
   }, []);
@@ -167,14 +87,26 @@ const AdminCategoriesManagement: React.FC = () => {
 
   const loadCategories = async () => {
     setLoading(true);
+    setError(null);
     try {
-      // Simulate API call
-      setTimeout(() => {
-        setCategories(mockCategories);
-        setLoading(false);
-      }, 1000);
+      console.log('Loading categories from Supabase...');
+      
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
+      console.log('Categories loaded:', data);
+      setCategories(data || []);
     } catch (error) {
       console.error('Error loading categories:', error);
+      setError('Failed to load categories. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
@@ -218,40 +150,69 @@ const AdminCategoriesManagement: React.FC = () => {
       .replace(/(^-|-$)/g, '');
   };
 
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      description: '',
+      icon_name: 'Folder',
+      color_gradient: 'from-blue-500 to-cyan-600',
+      sub_categories: [],
+      is_active: true
+    });
+    setEditingCategory(null);
+    setError(null);
+  };
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaving(true);
+    setError(null);
     
     try {
       const slug = generateSlug(formData.title);
+      
+      // Filter out empty sub-categories
+      const cleanSubCategories = formData.sub_categories.filter(sub => sub.trim() !== '');
+      
       const categoryData = {
-        ...formData,
-        slug
+        slug,
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        icon_name: formData.icon_name,
+        color_gradient: formData.color_gradient,
+        sub_categories: cleanSubCategories
       };
 
       if (editingCategory) {
-        // Update existing category
         console.log('Updating category:', categoryData);
+        const { error } = await supabase
+          .from('categories')
+          .update(categoryData)
+          .eq('id', editingCategory.id);
+
+        if (error) throw error;
+        console.log('Category updated successfully');
       } else {
-        // Create new category
         console.log('Creating category:', categoryData);
+        const { error } = await supabase
+          .from('categories')
+          .insert([categoryData]);
+
+        if (error) throw error;
+        console.log('Category created successfully');
       }
 
-      // Reset form
-      setFormData({
-        title: '',
-        description: '',
-        icon_name: 'Folder',
-        color_gradient: 'from-blue-500 to-cyan-600',
-        sub_categories: [],
-        is_active: true
-      });
+      // Reset form and close modal
+      resetForm();
       setShowCreateForm(false);
-      setEditingCategory(null);
       
       // Reload categories
-      loadCategories();
-    } catch (error) {
+      await loadCategories();
+    } catch (error: any) {
       console.error('Error saving category:', error);
+      setError(error.message || 'Failed to save category. Please try again.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -269,22 +230,32 @@ const AdminCategoriesManagement: React.FC = () => {
   };
 
   const handleDelete = async (categoryId: string) => {
-    if (window.confirm('Are you sure you want to delete this category? This action cannot be undone.')) {
+    const category = categories.find(c => c.id === categoryId);
+    if (!category) return;
+
+    if (window.confirm(`Are you sure you want to delete "${category.title}"? This action cannot be undone.`)) {
       try {
         console.log('Deleting category:', categoryId);
-        loadCategories();
-      } catch (error) {
-        console.error('Error deleting category:', error);
-      }
-    }
-  };
+        const { error } = await supabase
+          .from('categories')
+          .delete()
+          .eq('id', categoryId);
 
-  const toggleActive = async (categoryId: string) => {
-    try {
-      console.log('Toggling active status for category:', categoryId);
-      loadCategories();
-    } catch (error) {
-      console.error('Error toggling category status:', error);
+        if (error) throw error;
+        
+        console.log('Category deleted successfully');
+        await loadCategories();
+        
+        // Remove from selected categories if it was selected
+        setSelectedCategories(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(categoryId);
+          return newSet;
+        });
+      } catch (error: any) {
+        console.error('Error deleting category:', error);
+        setError(error.message || 'Failed to delete category. Please try again.');
+      }
     }
   };
 
@@ -344,6 +315,24 @@ const AdminCategoriesManagement: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-red-600/20 border border-red-600/30 rounded-lg flex items-center"
+          >
+            <AlertCircle className="w-5 h-5 text-red-400 mr-3 flex-shrink-0" />
+            <p className="text-red-300 text-sm">{error}</p>
+            <button
+              onClick={() => setError(null)}
+              className="ml-auto text-red-400 hover:text-red-300"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
 
         {/* Search and Filters */}
         <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 mb-6">
@@ -434,153 +423,169 @@ const AdminCategoriesManagement: React.FC = () => {
 
               {/* Categories */}
               <div className="divide-y divide-gray-700/50">
-                {filteredCategories.map((category, index) => {
-                  const isExpanded = expandedCategories.has(category.id);
-                  const popularity = getPopularityLevel(category.dapp_count || 0);
-                  
-                  return (
-                    <motion.div
-                      key={category.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.05 }}
-                      className="hover:bg-gray-700/30 transition-colors group"
-                    >
-                      <div className="px-6 py-4">
-                        <div className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={selectedCategories.has(category.id)}
-                            onChange={() => handleSelectCategory(category.id)}
-                            className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500 mr-4"
-                          />
-                          <div className="flex-1 grid grid-cols-12 gap-4 items-center">
-                            {/* Category Info */}
-                            <div className="col-span-4">
-                              <div className="flex items-center gap-3">
-                                <button
-                                  onClick={() => toggleExpanded(category.id)}
-                                  className="p-1 hover:bg-gray-600 rounded transition-colors"
-                                >
-                                  {isExpanded ? (
-                                    <ChevronDown className="w-4 h-4 text-gray-400" />
-                                  ) : (
-                                    <ChevronRight className="w-4 h-4 text-gray-400" />
-                                  )}
-                                </button>
-                                <div className={`w-10 h-10 bg-gradient-to-br ${category.color_gradient} rounded-lg flex items-center justify-center`}>
-                                  <span className="text-white text-sm">📁</span>
-                                </div>
-                                <div>
-                                  <h3 className="font-medium text-white">{category.title}</h3>
-                                  <p className="text-sm text-gray-400 truncate max-w-xs">
-                                    {category.description}
-                                  </p>
+                {filteredCategories.length === 0 ? (
+                  <div className="text-center py-16">
+                    <div className="text-6xl mb-4">📁</div>
+                    <h3 className="text-xl font-bold text-white mb-2">
+                      {categories.length === 0 ? 'No categories yet' : 'No categories found'}
+                    </h3>
+                    <p className="text-gray-400 mb-6">
+                      {categories.length === 0 
+                        ? 'Create your first category to get started organizing dApps.'
+                        : 'Try adjusting your search terms to find categories.'
+                      }
+                    </p>
+                    {categories.length === 0 && (
+                      <button
+                        onClick={() => setShowCreateForm(true)}
+                        className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+                      >
+                        Create First Category
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  filteredCategories.map((category, index) => {
+                    const isExpanded = expandedCategories.has(category.id);
+                    const popularity = getPopularityLevel(category.dapp_count || 0);
+                    
+                    return (
+                      <motion.div
+                        key={category.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: index * 0.05 }}
+                        className="hover:bg-gray-700/30 transition-colors group"
+                      >
+                        <div className="px-6 py-4">
+                          <div className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={selectedCategories.has(category.id)}
+                              onChange={() => handleSelectCategory(category.id)}
+                              className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500 mr-4"
+                            />
+                            <div className="flex-1 grid grid-cols-12 gap-4 items-center">
+                              {/* Category Info */}
+                              <div className="col-span-4">
+                                <div className="flex items-center gap-3">
+                                  <button
+                                    onClick={() => toggleExpanded(category.id)}
+                                    className="p-1 hover:bg-gray-600 rounded transition-colors"
+                                  >
+                                    {isExpanded ? (
+                                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                                    ) : (
+                                      <ChevronRight className="w-4 h-4 text-gray-400" />
+                                    )}
+                                  </button>
+                                  <div className={`w-10 h-10 bg-gradient-to-br ${category.color_gradient} rounded-lg flex items-center justify-center`}>
+                                    <span className="text-white text-sm">📁</span>
+                                  </div>
+                                  <div>
+                                    <h3 className="font-medium text-white">{category.title}</h3>
+                                    <p className="text-sm text-gray-400 truncate max-w-xs">
+                                      {category.description}
+                                    </p>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
 
-                            {/* Sub-categories */}
-                            <div className="col-span-2">
-                              <div className="flex items-center gap-1">
-                                <span className="text-white font-medium">{category.sub_categories.length}</span>
-                                <span className="text-gray-400 text-sm">sub-categories</span>
+                              {/* Sub-categories */}
+                              <div className="col-span-2">
+                                <div className="flex items-center gap-1">
+                                  <span className="text-white font-medium">{category.sub_categories.length}</span>
+                                  <span className="text-gray-400 text-sm">sub-categories</span>
+                                </div>
                               </div>
-                            </div>
 
-                            {/* dApp Count */}
-                            <div className="col-span-2">
-                              <div className="flex items-center gap-2">
-                                <span className="text-white font-medium">{category.dapp_count}</span>
-                                <span className={`text-xs px-2 py-1 rounded-full ${
-                                  popularity.level === 'high' ? 'bg-green-600/20 text-green-300' :
-                                  popularity.level === 'medium' ? 'bg-yellow-600/20 text-yellow-300' :
-                                  'bg-gray-600/20 text-gray-400'
-                                }`}>
-                                  {popularity.label}
+                              {/* dApp Count */}
+                              <div className="col-span-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-white font-medium">{category.dapp_count || 0}</span>
+                                  <span className={`text-xs px-2 py-1 rounded-full ${
+                                    popularity.level === 'high' ? 'bg-green-600/20 text-green-300' :
+                                    popularity.level === 'medium' ? 'bg-yellow-600/20 text-yellow-300' :
+                                    'bg-gray-600/20 text-gray-400'
+                                  }`}>
+                                    {popularity.label}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Status */}
+                              <div className="col-span-1">
+                                <span className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-600/20 text-green-300">
+                                  <Eye className="w-3 h-3" />
+                                  Active
                                 </span>
                               </div>
-                            </div>
 
-                            {/* Status */}
-                            <div className="col-span-1">
-                              <button
-                                onClick={() => toggleActive(category.id)}
-                                className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors ${
-                                  category.is_active
-                                    ? 'bg-green-600/20 text-green-300 hover:bg-green-600/30'
-                                    : 'bg-gray-600/20 text-gray-400 hover:bg-gray-600/30'
-                                }`}
-                              >
-                                {category.is_active ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-                                {category.is_active ? 'Active' : 'Inactive'}
-                              </button>
-                            </div>
+                              {/* Last Updated */}
+                              <div className="col-span-2">
+                                <span className="text-gray-400 text-sm">
+                                  {new Date(category.updated_at).toLocaleDateString()}
+                                </span>
+                              </div>
 
-                            {/* Last Updated */}
-                            <div className="col-span-2">
-                              <span className="text-gray-400 text-sm">
-                                {new Date(category.updated_at).toLocaleDateString()}
-                              </span>
-                            </div>
-
-                            {/* Actions */}
-                            <div className="col-span-1">
-                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity justify-end">
-                                <button
-                                  onClick={() => handleEdit(category)}
-                                  className="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-600/20 rounded-lg transition-colors"
-                                  title="Edit"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </button>
-                                <button
-                                  className="p-2 text-gray-400 hover:text-green-400 hover:bg-green-600/20 rounded-lg transition-colors"
-                                  title="Duplicate"
-                                >
-                                  <Copy className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => handleDelete(category.id)}
-                                  className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-600/20 rounded-lg transition-colors"
-                                  title="Delete"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                                <button className="p-2 text-gray-400 hover:text-gray-300 hover:bg-gray-600/20 rounded-lg transition-colors">
-                                  <MoreHorizontal className="w-4 h-4" />
-                                </button>
+                              {/* Actions */}
+                              <div className="col-span-1">
+                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity justify-end">
+                                  <button
+                                    onClick={() => handleEdit(category)}
+                                    className="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-600/20 rounded-lg transition-colors"
+                                    title="Edit"
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    className="p-2 text-gray-400 hover:text-green-400 hover:bg-green-600/20 rounded-lg transition-colors"
+                                    title="Duplicate"
+                                  >
+                                    <Copy className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(category.id)}
+                                    className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-600/20 rounded-lg transition-colors"
+                                    title="Delete"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                  <button className="p-2 text-gray-400 hover:text-gray-300 hover:bg-gray-600/20 rounded-lg transition-colors">
+                                    <MoreHorizontal className="w-4 h-4" />
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
 
-                        {/* Expanded Sub-categories */}
-                        <AnimatePresence>
-                          {isExpanded && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: 'auto' }}
-                              exit={{ opacity: 0, height: 0 }}
-                              className="mt-4 ml-12 pl-4 border-l-2 border-gray-600"
-                            >
-                              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                                {category.sub_categories.map((subCategory, subIndex) => (
-                                  <div
-                                    key={subIndex}
-                                    className="px-3 py-2 bg-gray-700/50 rounded-lg border border-gray-600"
-                                  >
-                                    <span className="text-sm text-gray-300">{subCategory}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    </motion.div>
-                  );
-                })}
+                          {/* Expanded Sub-categories */}
+                          <AnimatePresence>
+                            {isExpanded && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="mt-4 ml-12 pl-4 border-l-2 border-gray-600"
+                              >
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                                  {category.sub_categories.map((subCategory, subIndex) => (
+                                    <div
+                                      key={subIndex}
+                                      className="px-3 py-2 bg-gray-700/50 rounded-lg border border-gray-600"
+                                    >
+                                      <span className="text-sm text-gray-300">{subCategory}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      </motion.div>
+                    );
+                  })
+                )}
               </div>
             </>
           )}
@@ -595,8 +600,10 @@ const AdminCategoriesManagement: React.FC = () => {
               exit={{ opacity: 0 }}
               className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
               onClick={() => {
-                setShowCreateForm(false);
-                setEditingCategory(null);
+                if (!saving) {
+                  setShowCreateForm(false);
+                  resetForm();
+                }
               }}
             >
               <motion.div
@@ -612,10 +619,13 @@ const AdminCategoriesManagement: React.FC = () => {
                   </h2>
                   <button
                     onClick={() => {
-                      setShowCreateForm(false);
-                      setEditingCategory(null);
+                      if (!saving) {
+                        setShowCreateForm(false);
+                        resetForm();
+                      }
                     }}
-                    className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+                    disabled={saving}
+                    className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -634,6 +644,7 @@ const AdminCategoriesManagement: React.FC = () => {
                       className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
                       placeholder="Enter category title"
                       required
+                      disabled={saving}
                     />
                     {formData.title && (
                       <p className="mt-1 text-sm text-gray-400">
@@ -653,6 +664,7 @@ const AdminCategoriesManagement: React.FC = () => {
                       className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
                       placeholder="Describe what this category contains"
                       required
+                      disabled={saving}
                     />
                   </div>
 
@@ -667,7 +679,8 @@ const AdminCategoriesManagement: React.FC = () => {
                           key={icon}
                           type="button"
                           onClick={() => setFormData(prev => ({ ...prev, icon_name: icon }))}
-                          className={`p-3 rounded-lg border transition-colors ${
+                          disabled={saving}
+                          className={`p-3 rounded-lg border transition-colors disabled:opacity-50 ${
                             formData.icon_name === icon
                               ? 'border-purple-500 bg-purple-600/20'
                               : 'border-gray-600 bg-gray-700 hover:bg-gray-600'
@@ -690,7 +703,8 @@ const AdminCategoriesManagement: React.FC = () => {
                           key={gradient.value}
                           type="button"
                           onClick={() => setFormData(prev => ({ ...prev, color_gradient: gradient.value }))}
-                          className={`p-3 rounded-lg border transition-colors ${
+                          disabled={saving}
+                          className={`p-3 rounded-lg border transition-colors disabled:opacity-50 ${
                             formData.color_gradient === gradient.value
                               ? 'border-purple-500'
                               : 'border-gray-600 hover:border-gray-500'
@@ -712,7 +726,8 @@ const AdminCategoriesManagement: React.FC = () => {
                       <button
                         type="button"
                         onClick={addSubCategory}
-                        className="flex items-center px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm transition-colors"
+                        disabled={saving}
+                        className="flex items-center px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm transition-colors disabled:opacity-50"
                       >
                         <Plus className="w-3 h-3 mr-1" />
                         Add
@@ -728,11 +743,13 @@ const AdminCategoriesManagement: React.FC = () => {
                             className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
                             placeholder="Enter sub-category name"
                             autoFocus={subCategory === ''}
+                            disabled={saving}
                           />
                           <button
                             type="button"
                             onClick={() => removeSubCategory(index)}
-                            className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-600/20 rounded transition-colors"
+                            disabled={saving}
+                            className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-600/20 rounded transition-colors disabled:opacity-50"
                             title="Remove sub-category"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -750,43 +767,35 @@ const AdminCategoriesManagement: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Status */}
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <label className="text-sm font-medium text-white">Active Status</label>
-                      <p className="text-xs text-gray-400">Category will be visible on the public site</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, is_active: !prev.is_active }))}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        formData.is_active ? 'bg-purple-600' : 'bg-gray-600'
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          formData.is_active ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
-                    </button>
-                  </div>
-
                   {/* Form Actions */}
                   <div className="flex items-center gap-3 pt-4 border-t border-gray-700">
                     <button
                       type="submit"
-                      className="flex items-center px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+                      disabled={saving || !formData.title.trim() || !formData.description.trim()}
+                      className="flex items-center px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
                     >
-                      <Check className="w-4 h-4 mr-2" />
-                      {editingCategory ? 'Update Category' : 'Create Category'}
+                      {saving ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          {editingCategory ? 'Updating...' : 'Creating...'}
+                        </>
+                      ) : (
+                        <>
+                          <Check className="w-4 h-4 mr-2" />
+                          {editingCategory ? 'Update Category' : 'Create Category'}
+                        </>
+                      )}
                     </button>
                     <button
                       type="button"
                       onClick={() => {
-                        setShowCreateForm(false);
-                        setEditingCategory(null);
+                        if (!saving) {
+                          setShowCreateForm(false);
+                          resetForm();
+                        }
                       }}
-                      className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors"
+                      disabled={saving}
+                      className="px-6 py-3 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
                     >
                       Cancel
                     </button>
