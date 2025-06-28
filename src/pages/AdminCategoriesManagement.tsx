@@ -289,19 +289,25 @@ const AdminCategoriesManagement: React.FC = () => {
   };
 
   const addSubCategory = () => {
-    const newSubCategory = prompt('Enter sub-category name:');
-    if (newSubCategory && newSubCategory.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        sub_categories: [...prev.sub_categories, newSubCategory.trim()]
-      }));
-    }
+    setFormData(prev => ({
+      ...prev,
+      sub_categories: [...prev.sub_categories, '']
+    }));
   };
 
   const removeSubCategory = (index: number) => {
     setFormData(prev => ({
       ...prev,
       sub_categories: prev.sub_categories.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateSubCategory = (index: number, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      sub_categories: prev.sub_categories.map((subCat, i) => 
+        i === index ? value : subCat
+      )
     }));
   };
 
@@ -718,22 +724,29 @@ const AdminCategoriesManagement: React.FC = () => {
                           <input
                             type="text"
                             value={subCategory}
-                            onChange={(e) => {
-                              const newSubCategories = [...formData.sub_categories];
-                              newSubCategories[index] = e.target.value;
-                              setFormData(prev => ({ ...prev, sub_categories: newSubCategories }));
-                            }}
-                            className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            onChange={(e) => updateSubCategory(index, e.target.value)}
+                            className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
+                            placeholder="Enter sub-category name"
+                            autoFocus={subCategory === ''}
                           />
                           <button
                             type="button"
                             onClick={() => removeSubCategory(index)}
                             className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-600/20 rounded transition-colors"
+                            title="Remove sub-category"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       ))}
+                      
+                      {/* Show message when no sub-categories */}
+                      {formData.sub_categories.length === 0 && (
+                        <div className="text-center py-4 border-2 border-dashed border-gray-600 rounded-lg">
+                          <p className="text-gray-400 text-sm">No sub-categories added yet</p>
+                          <p className="text-gray-500 text-xs mt-1">Click "Add" to create your first sub-category</p>
+                        </div>
+                      )}
                     </div>
                   </div>
 
