@@ -22,7 +22,7 @@ interface FlowFormData {
   dapp_id: string;
 }
 
-export function AdminFlowForm() {
+export default function AdminFlowForm() {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = Boolean(id);
