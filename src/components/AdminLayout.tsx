@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Menu, 
@@ -29,6 +30,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const { profile, signOut, loading } = useAuth();
+  const location = useLocation();
 
   // Handle responsive behavior
   useEffect(() => {
@@ -45,14 +47,46 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   }, []);
 
   const sidebarItems = [
-    { icon: BarChart3, label: 'Dashboard Overview', path: '/admin/dashboard', active: true },
-    { icon: Layers, label: 'dApps Management', path: '/admin/dapps', active: false },
-    { icon: FileText, label: 'Categories Management', path: '/admin/categories' },
-    { icon: FileText, label: 'Flows Management', path: '/admin/flows' },
-    { icon: Puzzle, label: 'Integrations Management', path: '/admin/integrations' },
-    { icon: Image, label: 'Media Library', path: '/admin/media' },
-    { icon: Shield, label: 'Audit Logs', path: '/admin/audit' },
-    { icon: Settings, label: 'Settings', path: '/admin/settings' },
+    { 
+      icon: BarChart3, 
+      label: 'Dashboard Overview', 
+      path: '/admin/dashboard'
+    },
+    { 
+      icon: Layers, 
+      label: 'dApps Management', 
+      path: '/admin/dapps'
+    },
+    { 
+      icon: FileText, 
+      label: 'Categories Management', 
+      path: '/admin/categories' 
+    },
+    { 
+      icon: FileText, 
+      label: 'Flows Management', 
+      path: '/admin/flows' 
+    },
+    { 
+      icon: Puzzle, 
+      label: 'Integrations Management', 
+      path: '/admin/integrations' 
+    },
+    { 
+      icon: Image, 
+      label: 'Media Library', 
+      path: '/admin/media' 
+    },
+    { 
+      icon: Shield, 
+      label: 'Audit Logs', 
+      path: '/admin/audit' 
+    },
+    { 
+      icon: Settings, 
+      label: 'Settings', 
+      path: '/admin/settings' 
+    },
   ];
 
   const handleSignOut = async () => {
@@ -68,6 +102,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     } finally {
       setSigningOut(false);
     }
+  };
+
+  // Function to check if a menu item is active
+  const isActiveRoute = (itemPath: string) => {
+    return location.pathname === itemPath;
   };
 
   return (
@@ -211,6 +250,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               <nav className="space-y-2">
                 {sidebarItems.map((item, index) => {
                   const Icon = item.icon;
+                  const isActive = isActiveRoute(item.path);
+                  
                   return (
                     <motion.div
                       key={item.label}
@@ -226,7 +267,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                           }
                         }}
                         className={`w-full flex items-center px-3 py-3 rounded-lg text-sm font-medium transition-all duration-200 group ${
-                          item.active
+                          isActive
                             ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/25'
                             : 'text-gray-300 hover:text-white hover:bg-gray-800'
                         }`}
