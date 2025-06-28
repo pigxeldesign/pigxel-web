@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Save, Eye, X, Check, AlertCircle, Info, Clock, Plus, Trash2, ArrowLeft, Loader2, Crown, Play, ChevronUp, ChevronDown, CircleDot as DragHandleDots2, Image as ImageIcon } from 'lucide-react';
+import { Save, Eye, X, Check, AlertCircle, Info, Clock, Plus, Trash2, ArrowLeft, Loader2, Crown, Play, ChevronUp, ChevronDown, CircleDot as DragHandleDots2, Image as ImageIcon, Search, ChevronDown as ChevronDownIcon } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
 import { supabase } from '../lib/supabase';
 
@@ -28,6 +28,8 @@ interface DApp {
   id: string;
   name: string;
   logo: string;
+  category?: string;
+  sub_category?: string;
 }
 
 interface ValidationErrors {
@@ -60,13 +62,46 @@ const AdminFlowForm: React.FC = () => {
   const [isDirty, setIsDirty] = useState(false);
   const [draggedScreen, setDraggedScreen] = useState<number | null>(null);
 
-  // Mock dApps data
+  // dApp search state
+  const [dappSearchTerm, setDappSearchTerm] = useState('');
+  const [showDappDropdown, setShowDappDropdown] = useState(false);
+  const [filteredDApps, setFilteredDApps] = useState<DApp[]>([]);
+  const [selectedDAppIndex, setSelectedDAppIndex] = useState(-1);
+  const dappDropdownRef = useRef<HTMLDivElement>(null);
+  const dappInputRef = useRef<HTMLInputElement>(null);
+
+  // Mock dApps data - expanded for demonstration
   const mockDApps: DApp[] = [
-    { id: '1', name: 'Uniswap', logo: '🦄' },
-    { id: '2', name: 'MetaMask', logo: '🦊' },
-    { id: '3', name: 'OpenSea', logo: '🌊' },
-    { id: '4', name: 'Aave', logo: '👻' },
-    { id: '5', name: 'Compound', logo: '🏛️' }
+    { id: '1', name: 'Uniswap', logo: '🦄', category: 'DeFi', sub_category: 'DEX' },
+    { id: '2', name: 'MetaMask', logo: '🦊', category: 'Wallets', sub_category: 'Browser Extension' },
+    { id: '3', name: 'OpenSea', logo: '🌊', category: 'NFTs', sub_category: 'Marketplace' },
+    { id: '4', name: 'Aave', logo: '👻', category: 'DeFi', sub_category: 'Lending' },
+    { id: '5', name: 'Compound', logo: '🏛️', category: 'DeFi', sub_category: 'Lending' },
+    { id: '6', name: 'PancakeSwap', logo: '🥞', category: 'DeFi', sub_category: 'DEX' },
+    { id: '7', name: 'SushiSwap', logo: '🍣', category: 'DeFi', sub_category: 'DEX' },
+    { id: '8', name: 'Curve Finance', logo: '🌀', category: 'DeFi', sub_category: 'DEX' },
+    { id: '9', name: 'Balancer', logo: '⚖️', category: 'DeFi', sub_category: 'DEX' },
+    { id: '10', name: 'MakerDAO', logo: '🏦', category: 'DeFi', sub_category: 'Stablecoin' },
+    { id: '11', name: 'Chainlink', logo: '🔗', category: 'Infrastructure', sub_category: 'Oracles' },
+    { id: '12', name: 'The Graph', logo: '📊', category: 'Infrastructure', sub_category: 'Indexing' },
+    { id: '13', name: 'Polygon', logo: '💜', category: 'Infrastructure', sub_category: 'Layer 2' },
+    { id: '14', name: 'Arbitrum', logo: '🔵', category: 'Infrastructure', sub_category: 'Layer 2' },
+    { id: '15', name: 'Optimism', logo: '🔴', category: 'Infrastructure', sub_category: 'Layer 2' },
+    { id: '16', name: 'Foundation', logo: '🎨', category: 'NFTs', sub_category: 'Art Platform' },
+    { id: '17', name: 'SuperRare', logo: '💎', category: 'NFTs', sub_category: 'Art Platform' },
+    { id: '18', name: 'Rarible', logo: '🎭', category: 'NFTs', sub_category: 'Marketplace' },
+    { id: '19', name: 'LooksRare', logo: '👀', category: 'NFTs', sub_category: 'Marketplace' },
+    { id: '20', name: 'Coinbase Wallet', logo: '🔷', category: 'Wallets', sub_category: 'Mobile' },
+    { id: '21', name: 'Trust Wallet', logo: '🛡️', category: 'Wallets', sub_category: 'Mobile' },
+    { id: '22', name: 'Rainbow', logo: '🌈', category: 'Wallets', sub_category: 'Mobile' },
+    { id: '23', name: 'Phantom', logo: '👻', category: 'Wallets', sub_category: 'Solana' },
+    { id: '24', name: 'Solflare', logo: '☀️', category: 'Wallets', sub_category: 'Solana' },
+    { id: '25', name: 'Yearn Finance', logo: '💰', category: 'DeFi', sub_category: 'Yield Farming' },
+    { id: '26', name: 'Convex Finance', logo: '🔺', category: 'DeFi', sub_category: 'Yield Farming' },
+    { id: '27', name: 'Synthetix', logo: '⚡', category: 'DeFi', sub_category: 'Derivatives' },
+    { id: '28', name: 'dYdX', logo: '📈', category: 'DeFi', sub_category: 'Derivatives' },
+    { id: '29', name: 'GMX', logo: '🎯', category: 'DeFi', sub_category: 'Derivatives' },
+    { id: '30', name: 'Lido', logo: '🌊', category: 'DeFi', sub_category: 'Staking' }
   ];
 
   useEffect(() => {
@@ -76,10 +111,38 @@ const AdminFlowForm: React.FC = () => {
     }
   }, [id]);
 
+  // Handle dApp search filtering
+  useEffect(() => {
+    if (dappSearchTerm.trim() === '') {
+      setFilteredDApps(dapps.slice(0, 10)); // Show first 10 by default
+    } else {
+      const filtered = dapps.filter(dapp =>
+        dapp.name.toLowerCase().includes(dappSearchTerm.toLowerCase()) ||
+        dapp.category?.toLowerCase().includes(dappSearchTerm.toLowerCase()) ||
+        dapp.sub_category?.toLowerCase().includes(dappSearchTerm.toLowerCase())
+      );
+      setFilteredDApps(filtered.slice(0, 10)); // Limit to 10 results
+    }
+    setSelectedDAppIndex(-1);
+  }, [dappSearchTerm, dapps]);
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dappDropdownRef.current && !dappDropdownRef.current.contains(event.target as Node)) {
+        setShowDappDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const loadDApps = async () => {
     try {
       // Simulate API call
       setDApps(mockDApps);
+      setFilteredDApps(mockDApps.slice(0, 10));
     } catch (error) {
       console.error('Error loading dApps:', error);
     }
@@ -125,6 +188,13 @@ const AdminFlowForm: React.FC = () => {
           ]
         };
         setFormData(mockFlow);
+        
+        // Set the search term to the selected dApp name
+        const selectedDApp = mockDApps.find(dapp => dapp.id === mockFlow.dapp_id);
+        if (selectedDApp) {
+          setDappSearchTerm(selectedDApp.name);
+        }
+        
         setLoading(false);
       }, 1000);
     } catch (error) {
@@ -185,6 +255,61 @@ const AdminFlowForm: React.FC = () => {
         delete newErrors[field];
         return newErrors;
       });
+    }
+  };
+
+  const handleDAppSelect = (dapp: DApp) => {
+    setFormData(prev => ({ ...prev, dapp_id: dapp.id }));
+    setDappSearchTerm(dapp.name);
+    setShowDappDropdown(false);
+    setIsDirty(true);
+    
+    // Clear validation error
+    if (validationErrors.dapp_id) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.dapp_id;
+        return newErrors;
+      });
+    }
+  };
+
+  const handleDAppSearchChange = (value: string) => {
+    setDappSearchTerm(value);
+    setShowDappDropdown(true);
+    
+    // If the search term doesn't match any dApp exactly, clear the selection
+    const exactMatch = dapps.find(dapp => dapp.name.toLowerCase() === value.toLowerCase());
+    if (!exactMatch && formData.dapp_id) {
+      setFormData(prev => ({ ...prev, dapp_id: '' }));
+      setIsDirty(true);
+    }
+  };
+
+  const handleDAppKeyDown = (e: React.KeyboardEvent) => {
+    if (!showDappDropdown || filteredDApps.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedDAppIndex(prev => 
+          prev < filteredDApps.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedDAppIndex(prev => prev > 0 ? prev - 1 : -1);
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (selectedDAppIndex >= 0 && selectedDAppIndex < filteredDApps.length) {
+          handleDAppSelect(filteredDApps[selectedDAppIndex]);
+        }
+        break;
+      case 'Escape':
+        setShowDappDropdown(false);
+        setSelectedDAppIndex(-1);
+        break;
     }
   };
 
@@ -350,30 +475,119 @@ const AdminFlowForm: React.FC = () => {
               <h2 className="text-xl font-bold text-white mb-6">Basic Information</h2>
               
               <div className="space-y-6">
-                {/* dApp Selection */}
+                {/* dApp Selection with Search */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Associated dApp *
                   </label>
-                  <select
-                    value={formData.dapp_id}
-                    onChange={(e) => handleInputChange('dapp_id', e.target.value)}
-                    className={`w-full px-4 py-3 bg-gray-700 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${
-                      validationErrors.dapp_id ? 'border-red-500' : 'border-gray-600'
-                    }`}
-                  >
-                    <option value="">Select a dApp</option>
-                    {dapps.map((dapp) => (
-                      <option key={dapp.id} value={dapp.id}>
-                        {dapp.logo} {dapp.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative" ref={dappDropdownRef}>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        ref={dappInputRef}
+                        type="text"
+                        value={dappSearchTerm}
+                        onChange={(e) => handleDAppSearchChange(e.target.value)}
+                        onFocus={() => setShowDappDropdown(true)}
+                        onKeyDown={handleDAppKeyDown}
+                        className={`w-full pl-10 pr-10 py-3 bg-gray-700 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${
+                          validationErrors.dapp_id ? 'border-red-500' : 'border-gray-600'
+                        }`}
+                        placeholder="Search for a dApp..."
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowDappDropdown(!showDappDropdown)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                      >
+                        <ChevronDownIcon className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    {/* Dropdown */}
+                    <AnimatePresence>
+                      {showDappDropdown && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="absolute z-50 w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-xl max-h-60 overflow-y-auto"
+                        >
+                          {filteredDApps.length > 0 ? (
+                            <div className="py-1">
+                              {filteredDApps.map((dapp, index) => (
+                                <button
+                                  key={dapp.id}
+                                  type="button"
+                                  onClick={() => handleDAppSelect(dapp)}
+                                  className={`w-full px-4 py-3 text-left hover:bg-gray-700 transition-colors flex items-center gap-3 ${
+                                    index === selectedDAppIndex ? 'bg-gray-700' : ''
+                                  } ${
+                                    formData.dapp_id === dapp.id ? 'bg-purple-600/20 text-purple-300' : 'text-white'
+                                  }`}
+                                >
+                                  <span className="text-lg">{dapp.logo}</span>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-medium">{dapp.name}</div>
+                                    {dapp.category && (
+                                      <div className="text-sm text-gray-400">
+                                        {dapp.category} • {dapp.sub_category}
+                                      </div>
+                                    )}
+                                  </div>
+                                  {formData.dapp_id === dapp.id && (
+                                    <Check className="w-4 h-4 text-purple-400" />
+                                  )}
+                                </button>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="px-4 py-3 text-gray-400 text-center">
+                              {dappSearchTerm ? 'No dApps found' : 'Start typing to search...'}
+                            </div>
+                          )}
+                          
+                          {dappSearchTerm && filteredDApps.length === 0 && (
+                            <div className="px-4 py-3 border-t border-gray-700">
+                              <button
+                                type="button"
+                                className="w-full text-left text-purple-400 hover:text-purple-300 text-sm transition-colors"
+                                onClick={() => {
+                                  // Handle creating new dApp
+                                  console.log('Create new dApp:', dappSearchTerm);
+                                }}
+                              >
+                                + Create "{dappSearchTerm}" as new dApp
+                              </button>
+                            </div>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                  
                   {validationErrors.dapp_id && (
                     <p className="mt-1 text-sm text-red-400 flex items-center">
                       <AlertCircle className="w-4 h-4 mr-1" />
                       {validationErrors.dapp_id}
                     </p>
+                  )}
+                  
+                  {/* Selected dApp Display */}
+                  {selectedDApp && (
+                    <div className="mt-2 p-3 bg-purple-600/10 border border-purple-600/30 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <span className="text-lg">{selectedDApp.logo}</span>
+                        <div>
+                          <div className="text-white font-medium">{selectedDApp.name}</div>
+                          {selectedDApp.category && (
+                            <div className="text-sm text-purple-300">
+                              {selectedDApp.category} • {selectedDApp.sub_category}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
 
