@@ -1,25 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Save, 
-  Eye, 
-  X, 
-  Check, 
-  AlertCircle, 
-  Info, 
-  Clock,
-  Plus,
-  Trash2,
-  ArrowLeft,
-  Loader2,
-  Crown,
-  Play,
-  ChevronUp,
-  ChevronDown,
-  DragHandleDots2,
-  Image as ImageIcon
-} from 'lucide-react';
+import { Save, Eye, X, Check, AlertCircle, Info, Clock, Plus, Trash2, ArrowLeft, Loader2, Crown, Play, ChevronUp, ChevronDown, CircleDot as DragHandleDots2, Image as ImageIcon } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
 import { supabase } from '../lib/supabase';
 
