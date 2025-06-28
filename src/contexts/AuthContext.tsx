@@ -31,44 +31,93 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initializing, setInitializing] = useState(true);
 
   const isAdmin = profile?.user_type === 'admin';
 
   useEffect(() => {
+    console.log('AuthProvider: Initializing...');
+    
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
+    const initializeAuth = async () => {
+      try {
+        console.log('AuthProvider: Getting initial session...');
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('AuthProvider: Error getting session:', error);
+        } else {
+          console.log('AuthProvider: Initial session:', session?.user?.email || 'No session');
+        }
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          console.log('AuthProvider: User found, fetching profile...');
+          await fetchProfile(session.user.id);
+        } else {
+          console.log('AuthProvider: No user found');
+          setProfile(null);
+        }
+      } catch (error) {
+        console.error('AuthProvider: Error during initialization:', error);
+      } finally {
+        console.log('AuthProvider: Initialization complete');
         setLoading(false);
+        setInitializing(false);
       }
-    });
+    };
+
+    initializeAuth();
 
     // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.email);
+      console.log('AuthProvider: Auth state changed:', event, session?.user?.email || 'No user');
       
+      // Don't process events during initial load
+      if (initializing) {
+        console.log('AuthProvider: Skipping event during initialization');
+        return;
+      }
+      
+      setLoading(true);
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
+        console.log('AuthProvider: Fetching profile for user:', session.user.email);
         await fetchProfile(session.user.id);
       } else {
+        console.log('AuthProvider: No user, clearing profile');
         setProfile(null);
-        setLoading(false);
       }
+      
+      setLoading(false);
+      console.log('AuthProvider: Auth state change complete');
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log('AuthProvider: Cleaning up subscription');
+      subscription.unsubscribe();
+    };
   }, []);
+
+  // Update initializing state after first render
+  useEffect(() => {
+    if (initializing) {
+      const timer = setTimeout(() => {
+        setInitializing(false);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [initializing]);
 
   const fetchProfile = async (userId: string) => {
     try {
-      setLoading(true);
+      console.log('AuthProvider: Fetching profile for user ID:', userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -76,66 +125,80 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         .single();
 
       if (error) {
-        console.error('Error fetching profile:', error);
-        // If profile doesn't exist, create one
+        console.error('AuthProvider: Error fetching profile:', error);
         if (error.code === 'PGRST116') {
-          console.log('Profile not found, will be created by trigger');
+          console.log('AuthProvider: Profile not found, will be created by trigger');
         }
+        setProfile(null);
       } else {
+        console.log('AuthProvider: Profile fetched successfully:', data.email, data.user_type);
         setProfile(data);
       }
     } catch (error) {
-      console.error('Error fetching profile:', error);
-    } finally {
-      setLoading(false);
+      console.error('AuthProvider: Unexpected error fetching profile:', error);
+      setProfile(null);
     }
   };
 
   const signIn = async (email: string, password: string) => {
-    setLoading(true);
+    console.log('AuthProvider: Starting sign in for:', email);
+    
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
+      
+      if (error) {
+        console.error('AuthProvider: Sign in error:', error);
+      } else {
+        console.log('AuthProvider: Sign in successful');
+      }
+      
       return { error };
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error('AuthProvider: Unexpected sign in error:', error);
+      return { error };
     }
   };
 
   const signOut = async () => {
+    console.log('AuthProvider: Starting sign out...');
+    
     try {
+      // Set loading state immediately
       setLoading(true);
-      console.log('Signing out...');
       
-      // Clear local state first
+      // Clear local state first to provide immediate feedback
+      console.log('AuthProvider: Clearing local state...');
       setUser(null);
       setProfile(null);
       setSession(null);
       
       // Sign out from Supabase
+      console.log('AuthProvider: Calling Supabase signOut...');
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        console.error('Error signing out:', error);
-        throw error;
+        console.error('AuthProvider: Supabase signOut error:', error);
+        // Don't throw here, still redirect
+      } else {
+        console.log('AuthProvider: Supabase signOut successful');
       }
       
-      console.log('Successfully signed out');
-      
-      // Force redirect to home page
+      // Force redirect regardless of any errors
+      console.log('AuthProvider: Redirecting to home...');
       window.location.href = '/';
       
     } catch (error) {
-      console.error('Sign out error:', error);
-      // Even if there's an error, clear local state and redirect
+      console.error('AuthProvider: Unexpected signOut error:', error);
+      
+      // Even if there's an error, clear state and redirect
       setUser(null);
       setProfile(null);
       setSession(null);
-      window.location.href = '/';
-    } finally {
       setLoading(false);
+      window.location.href = '/';
     }
   };
 
