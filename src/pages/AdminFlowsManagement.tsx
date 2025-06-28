@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Plus, 
   Edit,
-  Trash2,
+  Trash2, 
   Search,
   Filter,
   Play,
@@ -13,14 +13,15 @@ import {
   ChevronRight,
   Clock,
   Users,
-  Star,
+  Star, 
   Crown,
-  Loader2,
+  Loader2, 
   Copy,
   Archive,
   BarChart3,
-  Settings,
-  X
+  Settings, 
+  X,
+  AlertCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../components/AdminLayout';
@@ -31,6 +32,11 @@ interface Flow {
   dapp_id: string;
   dapp_name: string;
   dapp_logo?: string;
+  dapp?: {
+    id: string;
+    name: string;
+    logo_url?: string;
+  };
   title: string;
   description: string;
   duration: string;
@@ -63,100 +69,7 @@ const AdminFlowsManagement: React.FC = () => {
   const [selectedFlows, setSelectedFlows] = useState<Set<string>>(new Set()); 
   const [showFilters, setShowFilters] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Mock data
-  const mockFlows: Flow[] = [
-    {
-      id: '1',
-      dapp_id: '1',
-      dapp_name: 'Uniswap',
-      dapp_logo: '🦄',
-      title: 'Token Swapping Basics',
-      description: 'Learn how to swap tokens on Uniswap with step-by-step guidance',
-      duration: '3 min',
-      difficulty: 'Beginner',
-      screen_count: 5,
-      is_premium: false,
-      status: 'published', 
-      created_at: '2024-01-15T10:00:00Z',
-      updated_at: '2024-06-28T14:30:00Z'
-    },
-    {
-      id: '2',
-      dapp_id: '1',
-      dapp_name: 'Uniswap',
-      dapp_logo: '🦄',
-      title: 'Advanced Liquidity Provision',
-      description: 'Master liquidity provision strategies and risk management',
-      duration: '8 min',
-      difficulty: 'Advanced',
-      screen_count: 12,
-      is_premium: true,
-      status: 'published', 
-      created_at: '2024-02-10T09:15:00Z',
-      updated_at: '2024-06-27T16:45:00Z'
-    },
-    {
-      id: '3',
-      dapp_id: '2',
-      dapp_name: 'MetaMask',
-      dapp_logo: '🦊',
-      title: 'Wallet Setup Guide',
-      description: 'Complete guide to setting up and securing your MetaMask wallet',
-      duration: '5 min',
-      difficulty: 'Beginner',
-      screen_count: 8,
-      is_premium: false,
-      status: 'published', 
-      created_at: '2024-03-05T11:30:00Z',
-      updated_at: '2024-06-26T12:20:00Z'
-    },
-    {
-      id: '4',
-      dapp_id: '2',
-      dapp_name: 'MetaMask',
-      dapp_logo: '🦊',
-      title: 'Advanced Security Features',
-      description: 'Learn about hardware wallet integration and advanced security',
-      duration: '6 min',
-      difficulty: 'Intermediate',
-      screen_count: 9,
-      is_premium: true,
-      status: 'draft', 
-      created_at: '2024-04-12T08:45:00Z',
-      updated_at: '2024-06-25T10:15:00Z'
-    },
-    {
-      id: '5',
-      dapp_id: '3',
-      dapp_name: 'OpenSea',
-      dapp_logo: '🌊',
-      title: 'NFT Trading Fundamentals',
-      description: 'Learn how to buy, sell, and trade NFTs safely on OpenSea',
-      duration: '7 min',
-      difficulty: 'Beginner',
-      screen_count: 10,
-      is_premium: false,
-      status: 'published', 
-      created_at: '2024-05-20T13:20:00Z',
-      updated_at: '2024-06-24T09:30:00Z'
-    },
-    {
-      id: '6',
-      dapp_id: '3',
-      dapp_name: 'OpenSea',
-      dapp_logo: '🌊',
-      title: 'Creating Your First NFT Collection',
-      description: 'Step-by-step guide to minting and listing your NFT collection',
-      duration: '12 min',
-      difficulty: 'Intermediate',
-      screen_count: 15,
-      is_premium: true,
-      status: 'archived', 
-      created_at: '2024-06-01T15:10:00Z',
-      updated_at: '2024-06-23T14:45:00Z'
-    }
-  ];
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
     loadFlows();
@@ -164,33 +77,65 @@ const AdminFlowsManagement: React.FC = () => {
 
   const loadFlows = async () => {
     setLoading(true);
-    setError(null);
+    setError(null); 
     try {
-      // Simulate API call
-      setTimeout(() => {
-        setFlows(mockFlows);
-        
-        // Group flows by dApp
-        const dappMap = new Map<string, DApp>();
-        mockFlows.forEach(flow => {
-          if (!dappMap.has(flow.dapp_id)) {
-            dappMap.set(flow.dapp_id, {
-              id: flow.dapp_id,
-              name: flow.dapp_name,
-              logo: flow.dapp_logo,
-              flows: []
-            });
-          }
-          dappMap.get(flow.dapp_id)!.flows.push(flow);
-        });
-        
-        setDApps(Array.from(dappMap.values()));
-        setLoading(false);
-      }, 1000);
+      console.log('Loading flows from Supabase...');
+      
+      const { data, error } = await supabase
+        .from('flows')
+        .select(`
+          *,
+          dapp:dapps(id, name, logo_url)
+        `)
+        .order('updated_at', { ascending: false });
+
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
+      console.log('Flows loaded:', data);
+      
+      // Transform data to match our Flow interface
+      const transformedFlows: Flow[] = (data || []).map(flow => ({
+        id: flow.id,
+        dapp_id: flow.dapp_id,
+        dapp_name: flow.dapp?.name || 'Unknown dApp',
+        dapp_logo: flow.dapp?.logo_url,
+        dapp: flow.dapp,
+        title: flow.title,
+        description: flow.description,
+        duration: flow.duration,
+        difficulty: flow.difficulty,
+        screen_count: flow.screen_count,
+        is_premium: flow.is_premium,
+        status: flow.status || 'draft',
+        created_at: flow.created_at,
+        updated_at: flow.updated_at
+      }));
+      
+      setFlows(transformedFlows);
+      
+      // Group flows by dApp
+      const dappMap = new Map<string, DApp>();
+      transformedFlows.forEach(flow => {
+        if (!dappMap.has(flow.dapp_id)) {
+          dappMap.set(flow.dapp_id, {
+            id: flow.dapp_id,
+            name: flow.dapp_name,
+            logo: flow.dapp_logo || '',
+            flows: []
+          });
+        }
+        dappMap.get(flow.dapp_id)!.flows.push(flow);
+      });
+      
+      setDApps(Array.from(dappMap.values()));
     } catch (error) {
       console.error('Error loading flows:', error);
-      setError('Failed to load flows. Please try again.');
-      setLoading(false);
+      setError('Failed to load flows. Please try again.'); 
+    } finally {
+      setLoading(false); 
     }
   };
 
@@ -249,6 +194,49 @@ const AdminFlowsManagement: React.FC = () => {
         return 'bg-gray-600/20 text-gray-400';
       default:
         return 'bg-gray-600/20 text-gray-300';
+    }
+  };
+
+  const handleDelete = async (flowId: string) => {
+    const flow = flows.find(f => f.id === flowId);
+    if (!flow) return;
+
+    if (window.confirm(`Are you sure you want to delete "${flow.title}"? This action cannot be undone.`)) {
+      try {
+        setDeleting(flowId);
+        console.log('Deleting flow:', flowId);
+        
+        // First delete all screens
+        const { error: screenError } = await supabase
+          .from('flow_screens')
+          .delete()
+          .eq('flow_id', flowId);
+
+        if (screenError) throw screenError;
+        
+        // Then delete the flow
+        const { error } = await supabase
+          .from('flows')
+          .delete()
+          .eq('id', flowId);
+
+        if (error) throw error;
+        
+        console.log('Flow deleted successfully');
+        await loadFlows();
+        
+        // Remove from selected flows if it was selected
+        setSelectedFlows(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(flowId);
+          return newSet;
+        });
+      } catch (error: any) {
+        console.error('Error deleting flow:', error);
+        setError(error.message || 'Failed to delete flow. Please try again.');
+      } finally {
+        setDeleting(null);
+      }
     }
   };
 
@@ -599,16 +587,22 @@ const AdminFlowsManagement: React.FC = () => {
                                 <Edit className="w-4 h-4" />
                               </button>
                               <button
-                                className="p-2 text-gray-400 hover:text-purple-400 hover:bg-purple-600/20 rounded-lg transition-colors"
+                                className="p-2 text-gray-400 hover:text-purple-400 hover:bg-purple-600/20 rounded-lg transition-colors" 
                                 title="Duplicate"
                               >
                                 <Copy className="w-4 h-4" />
                               </button>
                               <button
-                                className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-600/20 rounded-lg transition-colors" 
+                                onClick={() => handleDelete(flow.id)}
+                                disabled={deleting === flow.id}
+                                className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-600/20 rounded-lg transition-colors disabled:opacity-50" 
                                 title="Delete"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                {deleting === flow.id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-4 h-4" />
+                                )}
                               </button>
                             </div>
                           </div>

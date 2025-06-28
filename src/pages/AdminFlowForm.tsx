@@ -6,7 +6,7 @@ import AdminLayout from '../components/AdminLayout';
 import { supabase } from '../lib/supabase';
 
 interface FlowFormData {
-  dapp_id: string;
+  dapp_id: string | null;
   title: string;
   description: string;
   duration: string;
@@ -26,8 +26,8 @@ interface FlowScreen {
 
 interface DApp {
   id: string;
-  name: string;
-  logo: string;
+  name: string; 
+  logo_url?: string;
   category?: string;
   sub_category?: string;
 }
@@ -43,7 +43,7 @@ const AdminFlowForm: React.FC = () => {
   
   // Form state
   const [formData, setFormData] = useState<FlowFormData>({
-    dapp_id: '',
+    dapp_id: null,
     title: '',
     description: '',
     duration: '',
@@ -63,46 +63,13 @@ const AdminFlowForm: React.FC = () => {
   const [draggedScreen, setDraggedScreen] = useState<number | null>(null);
 
   // dApp search state
-  const [dappSearchTerm, setDappSearchTerm] = useState('');
+  const [dappSearchTerm, setDappSearchTerm] = useState<string>('');
   const [showDappDropdown, setShowDappDropdown] = useState(false);
   const [filteredDApps, setFilteredDApps] = useState<DApp[]>([]);
   const [selectedDAppIndex, setSelectedDAppIndex] = useState(-1);
   const dappDropdownRef = useRef<HTMLDivElement>(null);
   const dappInputRef = useRef<HTMLInputElement>(null);
-
-  // Mock dApps data - expanded for demonstration
-  const mockDApps: DApp[] = [
-    { id: '1', name: 'Uniswap', logo: '🦄', category: 'DeFi', sub_category: 'DEX' },
-    { id: '2', name: 'MetaMask', logo: '🦊', category: 'Wallets', sub_category: 'Browser Extension' },
-    { id: '3', name: 'OpenSea', logo: '🌊', category: 'NFTs', sub_category: 'Marketplace' },
-    { id: '4', name: 'Aave', logo: '👻', category: 'DeFi', sub_category: 'Lending' },
-    { id: '5', name: 'Compound', logo: '🏛️', category: 'DeFi', sub_category: 'Lending' },
-    { id: '6', name: 'PancakeSwap', logo: '🥞', category: 'DeFi', sub_category: 'DEX' },
-    { id: '7', name: 'SushiSwap', logo: '🍣', category: 'DeFi', sub_category: 'DEX' },
-    { id: '8', name: 'Curve Finance', logo: '🌀', category: 'DeFi', sub_category: 'DEX' },
-    { id: '9', name: 'Balancer', logo: '⚖️', category: 'DeFi', sub_category: 'DEX' },
-    { id: '10', name: 'MakerDAO', logo: '🏦', category: 'DeFi', sub_category: 'Stablecoin' },
-    { id: '11', name: 'Chainlink', logo: '🔗', category: 'Infrastructure', sub_category: 'Oracles' },
-    { id: '12', name: 'The Graph', logo: '📊', category: 'Infrastructure', sub_category: 'Indexing' },
-    { id: '13', name: 'Polygon', logo: '💜', category: 'Infrastructure', sub_category: 'Layer 2' },
-    { id: '14', name: 'Arbitrum', logo: '🔵', category: 'Infrastructure', sub_category: 'Layer 2' },
-    { id: '15', name: 'Optimism', logo: '🔴', category: 'Infrastructure', sub_category: 'Layer 2' },
-    { id: '16', name: 'Foundation', logo: '🎨', category: 'NFTs', sub_category: 'Art Platform' },
-    { id: '17', name: 'SuperRare', logo: '💎', category: 'NFTs', sub_category: 'Art Platform' },
-    { id: '18', name: 'Rarible', logo: '🎭', category: 'NFTs', sub_category: 'Marketplace' },
-    { id: '19', name: 'LooksRare', logo: '👀', category: 'NFTs', sub_category: 'Marketplace' },
-    { id: '20', name: 'Coinbase Wallet', logo: '🔷', category: 'Wallets', sub_category: 'Mobile' },
-    { id: '21', name: 'Trust Wallet', logo: '🛡️', category: 'Wallets', sub_category: 'Mobile' },
-    { id: '22', name: 'Rainbow', logo: '🌈', category: 'Wallets', sub_category: 'Mobile' },
-    { id: '23', name: 'Phantom', logo: '👻', category: 'Wallets', sub_category: 'Solana' },
-    { id: '24', name: 'Solflare', logo: '☀️', category: 'Wallets', sub_category: 'Solana' },
-    { id: '25', name: 'Yearn Finance', logo: '💰', category: 'DeFi', sub_category: 'Yield Farming' },
-    { id: '26', name: 'Convex Finance', logo: '🔺', category: 'DeFi', sub_category: 'Yield Farming' },
-    { id: '27', name: 'Synthetix', logo: '⚡', category: 'DeFi', sub_category: 'Derivatives' },
-    { id: '28', name: 'dYdX', logo: '📈', category: 'DeFi', sub_category: 'Derivatives' },
-    { id: '29', name: 'GMX', logo: '🎯', category: 'DeFi', sub_category: 'Derivatives' },
-    { id: '30', name: 'Lido', logo: '🌊', category: 'DeFi', sub_category: 'Staking' }
-  ];
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadDApps();
@@ -114,7 +81,7 @@ const AdminFlowForm: React.FC = () => {
   // Handle dApp search filtering
   useEffect(() => {
     if (dappSearchTerm.trim() === '') {
-      setFilteredDApps(dapps.slice(0, 10)); // Show first 10 by default
+      setFilteredDApps(dapps.slice(0, 10));
     } else {
       const filtered = dapps.filter(dapp =>
         dapp.name.toLowerCase().includes(dappSearchTerm.toLowerCase()) ||
@@ -139,12 +106,26 @@ const AdminFlowForm: React.FC = () => {
   }, []);
 
   const loadDApps = async () => {
+    setError(null);
     try {
-      // Simulate API call
-      setDApps(mockDApps);
-      setFilteredDApps(mockDApps.slice(0, 10));
+      console.log('Loading dApps from Supabase...');
+      
+      const { data, error } = await supabase
+        .from('dapps')
+        .select('id, name, logo_url, category:categories(title), sub_category')
+        .order('name');
+      
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
+      console.log('dApps loaded:', data);
+      setDApps(data || []);
+      setFilteredDApps((data || []).slice(0, 10));
     } catch (error) {
       console.error('Error loading dApps:', error);
+      setError('Failed to load dApps. Please try again.');
     }
   };
 
@@ -152,53 +133,57 @@ const AdminFlowForm: React.FC = () => {
     if (!id) return;
     
     setLoading(true);
+    setError(null);
     try {
-      // Simulate API call
-      setTimeout(() => {
-        const mockFlow = {
-          dapp_id: '1',
-          title: 'Token Swapping Basics',
-          description: 'Learn how to swap tokens on Uniswap with step-by-step guidance',
-          duration: '3 min',
-          difficulty: 'Beginner' as const,
-          is_premium: false,
-          status: 'published' as const,
-          screens: [
-            {
-              id: '1',
-              order_index: 0,
-              thumbnail_url: 'https://images.pexels.com/photos/730547/pexels-photo-730547.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop',
-              title: 'Connect Wallet',
-              description: 'Start by connecting your Web3 wallet to access Uniswap'
-            },
-            {
-              id: '2',
-              order_index: 1,
-              thumbnail_url: 'https://images.pexels.com/photos/844124/pexels-photo-844124.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop',
-              title: 'Select Tokens',
-              description: 'Choose the tokens you want to swap from and to'
-            },
-            {
-              id: '3',
-              order_index: 2,
-              thumbnail_url: 'https://images.pexels.com/photos/1181298/pexels-photo-1181298.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop',
-              title: 'Enter Amount',
-              description: 'Specify the amount you want to trade'
-            }
-          ]
-        };
-        setFormData(mockFlow);
-        
-        // Set the search term to the selected dApp name
-        const selectedDApp = mockDApps.find(dapp => dapp.id === mockFlow.dapp_id);
-        if (selectedDApp) {
-          setDappSearchTerm(selectedDApp.name);
-        }
-        
-        setLoading(false);
-      }, 1000);
+      console.log('Loading flow data for ID:', id);
+      
+      // First get the flow data
+      const { data: flowData, error: flowError } = await supabase
+        .from('flows')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (flowError) throw flowError;
+      
+      if (!flowData) {
+        throw new Error('Flow not found');
+      }
+      
+      console.log('Flow data loaded:', flowData);
+      
+      // Then get the screens for this flow
+      const { data: screenData, error: screenError } = await supabase
+        .from('flow_screens')
+        .select('*')
+        .eq('flow_id', id)
+        .order('order_index');
+      
+      if (screenError) throw screenError;
+      
+      console.log('Flow screens loaded:', screenData);
+      
+      // Set form data
+      setFormData({
+        dapp_id: flowData.dapp_id,
+        title: flowData.title,
+        description: flowData.description,
+        duration: flowData.duration,
+        difficulty: flowData.difficulty,
+        is_premium: flowData.is_premium,
+        status: flowData.status || 'draft',
+        screens: screenData || []
+      });
+      
+      // Set the search term to the selected dApp name
+      const selectedDApp = dapps.find(dapp => dapp.id === flowData.dapp_id);
+      if (selectedDApp) {
+        setDappSearchTerm(selectedDApp.name);
+      }
     } catch (error) {
       console.error('Error loading flow:', error);
+      setError(error.message || 'Failed to load flow data. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
@@ -281,7 +266,7 @@ const AdminFlowForm: React.FC = () => {
     // If the search term doesn't match any dApp exactly, clear the selection
     const exactMatch = dapps.find(dapp => dapp.name.toLowerCase() === value.toLowerCase());
     if (!exactMatch && formData.dapp_id) {
-      setFormData(prev => ({ ...prev, dapp_id: '' }));
+      setFormData(prev => ({ ...prev, dapp_id: null }));
       setIsDirty(true);
     }
   };
@@ -379,23 +364,100 @@ const AdminFlowForm: React.FC = () => {
 
   const saveFlow = async () => {
     if (!validateForm()) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
     
     setSaving(true);
+    setError(null);
     try {
-      const flowData = { ...formData };
+      // Prepare data for saving
+      const flowData = {
+        dapp_id: formData.dapp_id,
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        duration: formData.duration.trim(),
+        difficulty: formData.difficulty,
+        is_premium: formData.is_premium,
+        status: formData.status || 'draft'
+      };
       
       if (isEditing) {
-        console.log('Updating flow:', flowData);
+        console.log('Updating flow:', id, flowData);
+        
+        // Update the flow
+        const { error: flowError } = await supabase
+          .from('flows')
+          .update(flowData)
+          .eq('id', id);
+        
+        if (flowError) throw flowError;
+        
+        // Handle screens - first delete existing screens
+        const { error: deleteError } = await supabase
+          .from('flow_screens')
+          .delete()
+          .eq('flow_id', id);
+        
+        if (deleteError) throw deleteError;
+        
+        // Then insert new screens if there are any
+        if (formData.screens.length > 0) {
+          const screensToInsert = formData.screens.map((screen, index) => ({
+            flow_id: id,
+            order_index: index,
+            thumbnail_url: screen.thumbnail_url.trim(),
+            title: screen.title.trim(),
+            description: screen.description?.trim() || null
+          }));
+          
+          const { error: insertError } = await supabase
+            .from('flow_screens')
+            .insert(screensToInsert);
+          
+          if (insertError) throw insertError;
+        }
+        
+        console.log('Flow updated successfully');
       } else {
         console.log('Creating flow:', flowData);
+        
+        // Insert the flow
+        const { data: newFlow, error: flowError } = await supabase
+          .from('flows')
+          .insert([flowData])
+          .select()
+          .single();
+        
+        if (flowError) throw flowError;
+        
+        console.log('New flow created:', newFlow);
+        
+        // Insert screens if there are any
+        if (formData.screens.length > 0 && newFlow) {
+          const screensToInsert = formData.screens.map((screen, index) => ({
+            flow_id: newFlow.id,
+            order_index: index,
+            thumbnail_url: screen.thumbnail_url.trim(),
+            title: screen.title.trim(),
+            description: screen.description?.trim() || null
+          }));
+          
+          const { error: insertError } = await supabase
+            .from('flow_screens')
+            .insert(screensToInsert);
+          
+          if (insertError) throw insertError;
+        }
+        
+        console.log('Flow created successfully with screens');
       }
       
       setIsDirty(false);
       navigate('/admin/flows');
     } catch (error) {
       console.error('Error saving flow:', error);
+      setError(error.message || 'Failed to save flow. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -467,6 +529,24 @@ const AdminFlowForm: React.FC = () => {
           </div>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-red-600/20 border border-red-600/30 rounded-lg flex items-center"
+          >
+            <AlertCircle className="w-5 h-5 text-red-400 mr-3 flex-shrink-0" />
+            <p className="text-red-300 text-sm">{error}</p>
+            <button
+              onClick={() => setError(null)}
+              className="ml-auto text-red-400 hover:text-red-300"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Form */}
           <div className="lg:col-span-2 space-y-8">
@@ -529,13 +609,23 @@ const AdminFlowForm: React.FC = () => {
                                   <span className="text-lg">{dapp.logo}</span>
                                   <div className="flex-1 min-w-0">
                                     <div className="font-medium">{dapp.name}</div>
-                                    {dapp.category && (
-                                      <div className="text-sm text-gray-400">
-                                        {dapp.category} • {dapp.sub_category}
+                              <div className="flex items-center gap-3"> 
+                                <div className="w-8 h-8 bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
+                                  {selectedDApp.logo_url ? (
+                                    <img 
+                                      src={selectedDApp.logo_url} 
+                                      alt={selectedDApp.name}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <span className="text-gray-400">📱</span>
+                                  )}
+                                </div>
+                                        {dapp.category.title} • {dapp.sub_category}
                                       </div>
-                                    )}
+                                  {selectedDApp.category?.title && (
                                   </div>
-                                  {formData.dapp_id === dapp.id && (
+                                      {selectedDApp.category.title} • {selectedDApp.sub_category}
                                     <Check className="w-4 h-4 text-purple-400" />
                                   )}
                                 </button>
@@ -888,7 +978,17 @@ const AdminFlowForm: React.FC = () => {
                 
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">{selectedDApp.logo}</span>
+                    <div className="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
+                      {selectedDApp.logo_url ? (
+                        <img 
+                          src={selectedDApp.logo_url} 
+                          alt={selectedDApp.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-gray-400">📱</span>
+                      )}
+                    </div>
                     <div>
                       <p className="text-white font-medium">{selectedDApp.name}</p>
                       <p className="text-gray-400 text-sm">Associated dApp</p>
