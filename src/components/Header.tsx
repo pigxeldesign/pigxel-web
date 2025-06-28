@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Search, Menu, X } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Search, Menu, X, User, LogOut } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../contexts/AuthContext';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -9,6 +10,13 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ onToggleSidebar, isSidebarOpen }) => {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const { user, profile, isAdmin, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    setShowUserMenu(false);
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
@@ -53,9 +61,68 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, isSidebarOpen }) => {
 
           {/* Right Side Actions */}
           <div className="flex items-center space-x-4">
-            <button className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors">
-              Connect Wallet
-            </button>
+            {user ? (
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center space-x-2 px-3 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                >
+                  <User className="w-4 h-4" />
+                  <span className="hidden sm:block">
+                    {isAdmin ? 'Admin' : 'User'}
+                  </span>
+                </button>
+
+                <AnimatePresence>
+                  {showUserMenu && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50"
+                    >
+                      <div className="p-3 border-b border-gray-700">
+                        <p className="text-sm text-gray-400">Signed in as</p>
+                        <p className="text-white font-medium truncate">{profile?.email}</p>
+                        {isAdmin && (
+                          <span className="inline-block mt-1 px-2 py-1 bg-purple-600/20 text-purple-300 text-xs rounded-full">
+                            Admin
+                          </span>
+                        )}
+                      </div>
+                      <div className="p-1">
+                        {isAdmin && (
+                          <button
+                            onClick={() => {
+                              window.location.href = '/admin/dashboard';
+                              setShowUserMenu(false);
+                            }}
+                            className="w-full text-left px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded transition-colors"
+                          >
+                            Admin Dashboard
+                          </button>
+                        )}
+                        <button
+                          onClick={handleSignOut}
+                          className="w-full text-left px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded transition-colors flex items-center"
+                        >
+                          <LogOut className="w-4 h-4 mr-2" />
+                          Sign Out
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <button
+                onClick={() => window.location.href = '/admin/login'}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+              >
+                Admin Login
+              </button>
+            )}
           </div>
         </div>
       </div>
