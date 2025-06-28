@@ -129,6 +129,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       return true;
     }
     
+    if (itemPath === '/admin/media' && location.pathname.startsWith('/admin/media')) {
+      return true;
+    }
+    
     return false;
   };
 

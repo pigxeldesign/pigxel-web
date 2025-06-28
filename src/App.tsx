@@ -15,6 +15,8 @@ import AdminDAppForm from './pages/AdminDAppForm';
 import AdminCategoriesManagement from './pages/AdminCategoriesManagement';
 import AdminFlowsManagement from './pages/AdminFlowsManagement';
 import AdminFlowForm from './pages/AdminFlowForm';
+import AdminMediaLibrary from './pages/AdminMediaLibrary';
+import AdminIntegrationsManagement from './pages/AdminIntegrationsManagement';
 
 function App() {
   return (
@@ -101,6 +103,26 @@ function App() {
               element={
                 <ProtectedRoute requireAdmin>
                   <AdminFlowForm />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Admin Media Library */}
+            <Route 
+              path="/admin/media" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminMediaLibrary />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Admin Integrations Management */}
+            <Route 
+              path="/admin/integrations" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminIntegrationsManagement />
                 </ProtectedRoute>
               } 
             />
