@@ -32,27 +32,27 @@ interface DAppFormData {
   name: string;
   description: string;
   problem_solved: string;
-  logo_url?: string;
-  thumbnail_url?: string;
-  category_id?: string;
+  logo_url: string;
+  thumbnail_url: string;
+  category_id: string;
   sub_category: string;
   blockchains: string[];
-  rating?: number;
-  user_count?: string;
+  rating: number | null;
+  user_count: string;
   is_new: boolean;
   is_featured: boolean;
   live_url: string;
-  github_url?: string;
-  twitter_url?: string;
-  documentation_url?: string;
-  discord_url?: string;
-  founded?: string;
-  team?: string;
-  total_value_locked?: string;
-  daily_active_users?: string;
-  transactions?: string;
-  audits?: string[];
-  licenses?: string[];
+  github_url: string;
+  twitter_url: string;
+  documentation_url: string;
+  discord_url: string;
+  founded: string;
+  team: string;
+  total_value_locked: string;
+  daily_active_users: string;
+  transactions: string;
+  audits: string[];
+  licenses: string[];
 }
 
 interface Category {
@@ -76,11 +76,25 @@ const AdminDAppForm: React.FC = () => {
     name: '',
     description: '',
     problem_solved: '',
+    logo_url: '',
+    thumbnail_url: '',
+    category_id: '',
     sub_category: '',
     blockchains: [],
+    rating: null,
+    user_count: '',
     is_new: false,
     is_featured: false,
     live_url: '',
+    github_url: '',
+    twitter_url: '',
+    documentation_url: '',
+    discord_url: '',
+    founded: '',
+    team: '',
+    total_value_locked: '',
+    daily_active_users: '',
+    transactions: '',
     audits: [],
     licenses: []
   });
@@ -93,8 +107,7 @@ const AdminDAppForm: React.FC = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'error' | null>(null);
-  
-  // File upload refs
+  const [error, setError] = useState<string | null>(null);
   
   // Available options
   const blockchainOptions = [
@@ -126,15 +139,18 @@ const AdminDAppForm: React.FC = () => {
 
   const loadCategories = async () => {
     try {
+      console.log('Loading categories...');
       const { data, error } = await supabase
         .from('categories')
         .select('id, slug, title, sub_categories')
         .order('title');
       
       if (error) throw error;
+      console.log('Categories loaded:', data);
       setCategories(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading categories:', error);
+      setError('Failed to load categories. Please try again.');
     }
   };
 
@@ -142,7 +158,9 @@ const AdminDAppForm: React.FC = () => {
     if (!id) return;
     
     setLoading(true);
+    setError(null);
     try {
+      console.log('Loading dApp data for ID:', id);
       const { data, error } = await supabase
         .from('dapps')
         .select('*')
@@ -152,35 +170,37 @@ const AdminDAppForm: React.FC = () => {
       if (error) throw error;
       
       if (data) {
+        console.log('dApp data loaded:', data);
         setFormData({
           name: data.name || '',
           description: data.description || '',
           problem_solved: data.problem_solved || '',
-          logo_url: data.logo_url,
-          thumbnail_url: data.thumbnail_url,
-          category_id: data.category_id,
+          logo_url: data.logo_url || '',
+          thumbnail_url: data.thumbnail_url || '',
+          category_id: data.category_id || '',
           sub_category: data.sub_category || '',
           blockchains: data.blockchains || [],
           rating: data.rating,
-          user_count: data.user_count,
+          user_count: data.user_count || '',
           is_new: data.is_new || false,
           is_featured: data.is_featured || false,
           live_url: data.live_url || '',
-          github_url: data.github_url,
-          twitter_url: data.twitter_url,
-          documentation_url: data.documentation_url,
-          discord_url: data.discord_url,
-          founded: data.founded,
-          team: data.team,
-          total_value_locked: data.total_value_locked,
-          daily_active_users: data.daily_active_users,
-          transactions: data.transactions,
+          github_url: data.github_url || '',
+          twitter_url: data.twitter_url || '',
+          documentation_url: data.documentation_url || '',
+          discord_url: data.discord_url || '',
+          founded: data.founded || '',
+          team: data.team || '',
+          total_value_locked: data.total_value_locked || '',
+          daily_active_users: data.daily_active_users || '',
+          transactions: data.transactions || '',
           audits: data.audits || [],
           licenses: data.licenses || []
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading dApp:', error);
+      setError('Failed to load dApp data. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -220,6 +240,10 @@ const AdminDAppForm: React.FC = () => {
       errors.problem_solved = 'Problem solved description is required';
     }
     
+    if (!formData.category_id) {
+      errors.category_id = 'Category is required';
+    }
+    
     if (!formData.sub_category.trim()) {
       errors.sub_category = 'Sub-category is required';
     }
@@ -245,6 +269,14 @@ const AdminDAppForm: React.FC = () => {
     
     if (formData.discord_url && !isValidUrl(formData.discord_url)) {
       errors.discord_url = 'Please enter a valid Discord URL';
+    }
+    
+    if (formData.logo_url && !isValidUrl(formData.logo_url)) {
+      errors.logo_url = 'Please enter a valid logo URL';
+    }
+    
+    if (formData.thumbnail_url && !isValidUrl(formData.thumbnail_url)) {
+      errors.thumbnail_url = 'Please enter a valid thumbnail URL';
     }
     
     setValidationErrors(errors);
@@ -274,41 +306,93 @@ const AdminDAppForm: React.FC = () => {
     }
   };
 
-
   const saveDApp = async (isAutoSave = false) => {
     if (!isAutoSave && !validateForm()) {
       return;
     }
     
     setSaving(true);
+    setError(null);
     try {
-      const dataToSave = { ...formData };
+      // Prepare data for saving
+      const dataToSave = {
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        problem_solved: formData.problem_solved.trim(),
+        logo_url: formData.logo_url.trim() || null,
+        thumbnail_url: formData.thumbnail_url.trim() || null,
+        category_id: formData.category_id || null,
+        sub_category: formData.sub_category.trim(),
+        blockchains: formData.blockchains,
+        rating: formData.rating,
+        user_count: formData.user_count.trim() || null,
+        is_new: formData.is_new,
+        is_featured: formData.is_featured,
+        live_url: formData.live_url.trim(),
+        github_url: formData.github_url.trim() || null,
+        twitter_url: formData.twitter_url.trim() || null,
+        documentation_url: formData.documentation_url.trim() || null,
+        discord_url: formData.discord_url.trim() || null,
+        founded: formData.founded.trim() || null,
+        team: formData.team.trim() || null,
+        total_value_locked: formData.total_value_locked.trim() || null,
+        daily_active_users: formData.daily_active_users.trim() || null,
+        transactions: formData.transactions.trim() || null,
+        audits: formData.audits.filter(audit => audit.trim() !== ''),
+        licenses: formData.licenses.filter(license => license.trim() !== '')
+      };
       
       if (isEditing) {
+        console.log('Updating dApp:', dataToSave);
         const { error } = await supabase
           .from('dapps')
           .update(dataToSave)
           .eq('id', id);
         
         if (error) throw error;
+        console.log('dApp updated successfully');
       } else {
+        console.log('Creating dApp:', dataToSave);
         const { error } = await supabase
           .from('dapps')
           .insert([dataToSave]);
         
         if (error) throw error;
+        console.log('dApp created successfully');
       }
       
       if (!isAutoSave) {
         setIsDirty(false);
         navigate('/admin/dapps');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving dApp:', error);
+      setError(error.message || 'Failed to save dApp. Please try again.');
       throw error;
     } finally {
       setSaving(false);
     }
+  };
+
+  const addAudit = () => {
+    setFormData(prev => ({
+      ...prev,
+      audits: [...prev.audits, '']
+    }));
+  };
+
+  const removeAudit = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      audits: prev.audits.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateAudit = (index: number, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      audits: prev.audits.map((audit, i) => i === index ? value : audit)
+    }));
   };
 
   const selectedCategory = categories.find(cat => cat.id === formData.category_id);
@@ -401,6 +485,24 @@ const AdminDAppForm: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-red-600/20 border border-red-600/30 rounded-lg flex items-center"
+          >
+            <AlertCircle className="w-5 h-5 text-red-400 mr-3 flex-shrink-0" />
+            <p className="text-red-300 text-sm">{error}</p>
+            <button
+              onClick={() => setError(null)}
+              className="ml-auto text-red-400 hover:text-red-300"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Form */}
@@ -514,7 +616,7 @@ const AdminDAppForm: React.FC = () => {
               </div>
             </div>
 
-            {/* Media Upload */}
+            {/* Media Assets */}
             <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
               <h2 className="text-xl font-bold text-white mb-6">Media Assets</h2>
               
@@ -527,11 +629,16 @@ const AdminDAppForm: React.FC = () => {
                   <div className="space-y-3">
                     <input
                       type="url"
-                      value={formData.logo_url || ''}
-                      onChange={(e) => handleInputChange('logo_url', e.target.value || undefined)}
-                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
+                      value={formData.logo_url}
+                      onChange={(e) => handleInputChange('logo_url', e.target.value)}
+                      className={`w-full px-4 py-3 bg-gray-700 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${
+                        validationErrors.logo_url ? 'border-red-500' : 'border-gray-600'
+                      }`}
                       placeholder="https://example.com/logo.png"
                     />
+                    {validationErrors.logo_url && (
+                      <p className="mt-1 text-sm text-red-400">{validationErrors.logo_url}</p>
+                    )}
                     {formData.logo_url && (
                       <div className="relative">
                         <img
@@ -555,11 +662,16 @@ const AdminDAppForm: React.FC = () => {
                   <div className="space-y-3">
                     <input
                       type="url"
-                      value={formData.thumbnail_url || ''}
-                      onChange={(e) => handleInputChange('thumbnail_url', e.target.value || undefined)}
-                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
+                      value={formData.thumbnail_url}
+                      onChange={(e) => handleInputChange('thumbnail_url', e.target.value)}
+                      className={`w-full px-4 py-3 bg-gray-700 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${
+                        validationErrors.thumbnail_url ? 'border-red-500' : 'border-gray-600'
+                      }`}
                       placeholder="https://example.com/thumbnail.jpg"
                     />
+                    {validationErrors.thumbnail_url && (
+                      <p className="mt-1 text-sm text-red-400">{validationErrors.thumbnail_url}</p>
+                    )}
                     {formData.thumbnail_url && (
                       <div className="relative">
                         <img
@@ -585,12 +697,18 @@ const AdminDAppForm: React.FC = () => {
                 {/* Primary Category */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Primary Category
+                    Primary Category *
                   </label>
                   <select
-                    value={formData.category_id || ''}
-                    onChange={(e) => handleInputChange('category_id', e.target.value || undefined)}
-                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    value={formData.category_id}
+                    onChange={(e) => {
+                      handleInputChange('category_id', e.target.value);
+                      // Reset sub-category when category changes
+                      handleInputChange('sub_category', '');
+                    }}
+                    className={`w-full px-4 py-3 bg-gray-700 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                      validationErrors.category_id ? 'border-red-500' : 'border-gray-600'
+                    }`}
                   >
                     <option value="">Select a category</option>
                     {categories.map((category) => (
@@ -599,6 +717,12 @@ const AdminDAppForm: React.FC = () => {
                       </option>
                     ))}
                   </select>
+                  {validationErrors.category_id && (
+                    <p className="mt-1 text-sm text-red-400 flex items-center">
+                      <AlertCircle className="w-4 h-4 mr-1" />
+                      {validationErrors.category_id}
+                    </p>
+                  )}
                 </div>
 
                 {/* Sub-category */}
@@ -625,6 +749,11 @@ const AdminDAppForm: React.FC = () => {
                     <p className="mt-1 text-sm text-red-400 flex items-center">
                       <AlertCircle className="w-4 h-4 mr-1" />
                       {validationErrors.sub_category}
+                    </p>
+                  )}
+                  {!selectedCategory && (
+                    <p className="mt-1 text-sm text-gray-400">
+                      Please select a category first
                     </p>
                   )}
                 </div>
@@ -674,8 +803,8 @@ const AdminDAppForm: React.FC = () => {
                     <Github className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                       type="url"
-                      value={formData.github_url || ''}
-                      onChange={(e) => handleInputChange('github_url', e.target.value || undefined)}
+                      value={formData.github_url}
+                      onChange={(e) => handleInputChange('github_url', e.target.value)}
                       className={`w-full pl-10 pr-4 py-3 bg-gray-700 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${
                         validationErrors.github_url ? 'border-red-500' : 'border-gray-600'
                       }`}
@@ -699,8 +828,8 @@ const AdminDAppForm: React.FC = () => {
                     <Twitter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                       type="url"
-                      value={formData.twitter_url || ''}
-                      onChange={(e) => handleInputChange('twitter_url', e.target.value || undefined)}
+                      value={formData.twitter_url}
+                      onChange={(e) => handleInputChange('twitter_url', e.target.value)}
                       className={`w-full pl-10 pr-4 py-3 bg-gray-700 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${
                         validationErrors.twitter_url ? 'border-red-500' : 'border-gray-600'
                       }`}
@@ -724,8 +853,8 @@ const AdminDAppForm: React.FC = () => {
                     <BookOpen className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                       type="url"
-                      value={formData.documentation_url || ''}
-                      onChange={(e) => handleInputChange('documentation_url', e.target.value || undefined)}
+                      value={formData.documentation_url}
+                      onChange={(e) => handleInputChange('documentation_url', e.target.value)}
                       className={`w-full pl-10 pr-4 py-3 bg-gray-700 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${
                         validationErrors.documentation_url ? 'border-red-500' : 'border-gray-600'
                       }`}
@@ -749,8 +878,8 @@ const AdminDAppForm: React.FC = () => {
                     <MessageCircle className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                       type="url"
-                      value={formData.discord_url || ''}
-                      onChange={(e) => handleInputChange('discord_url', e.target.value || undefined)}
+                      value={formData.discord_url}
+                      onChange={(e) => handleInputChange('discord_url', e.target.value)}
                       className={`w-full pl-10 pr-4 py-3 bg-gray-700 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${
                         validationErrors.discord_url ? 'border-red-500' : 'border-gray-600'
                       }`}
@@ -778,8 +907,8 @@ const AdminDAppForm: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    value={formData.founded || ''}
-                    onChange={(e) => handleInputChange('founded', e.target.value || undefined)}
+                    value={formData.founded}
+                    onChange={(e) => handleInputChange('founded', e.target.value)}
                     className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
                     placeholder="2023"
                   />
@@ -791,8 +920,8 @@ const AdminDAppForm: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    value={formData.user_count || ''}
-                    onChange={(e) => handleInputChange('user_count', e.target.value || undefined)}
+                    value={formData.user_count}
+                    onChange={(e) => handleInputChange('user_count', e.target.value)}
                     className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
                     placeholder="1M+"
                   />
@@ -804,8 +933,8 @@ const AdminDAppForm: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    value={formData.total_value_locked || ''}
-                    onChange={(e) => handleInputChange('total_value_locked', e.target.value || undefined)}
+                    value={formData.total_value_locked}
+                    onChange={(e) => handleInputChange('total_value_locked', e.target.value)}
                     className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
                     placeholder="$100M"
                   />
@@ -817,10 +946,39 @@ const AdminDAppForm: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    value={formData.daily_active_users || ''}
-                    onChange={(e) => handleInputChange('daily_active_users', e.target.value || undefined)}
+                    value={formData.daily_active_users}
+                    onChange={(e) => handleInputChange('daily_active_users', e.target.value)}
                     className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
                     placeholder="50K"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Rating (0-5)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="5"
+                    step="0.1"
+                    value={formData.rating || ''}
+                    onChange={(e) => handleInputChange('rating', e.target.value ? parseFloat(e.target.value) : null)}
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    placeholder="4.5"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Transactions
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.transactions}
+                    onChange={(e) => handleInputChange('transactions', e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    placeholder="1M+ transactions"
                   />
                 </div>
               </div>
@@ -830,12 +988,78 @@ const AdminDAppForm: React.FC = () => {
                   Team Information
                 </label>
                 <textarea
-                  value={formData.team || ''}
-                  onChange={(e) => handleInputChange('team', e.target.value || undefined)}
+                  value={formData.team}
+                  onChange={(e) => handleInputChange('team', e.target.value)}
                   rows={3}
                   className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
                   placeholder="Information about the team behind this dApp"
                 />
+              </div>
+
+              {/* Audits */}
+              <div className="mt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-300">
+                    Security Audits
+                  </label>
+                  <button
+                    type="button"
+                    onClick={addAudit}
+                    className="flex items-center px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm transition-colors"
+                  >
+                    <Plus className="w-3 h-3 mr-1" />
+                    Add
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {formData.audits.map((audit, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={audit}
+                        onChange={(e) => updateAudit(index, e.target.value)}
+                        className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        placeholder="Audit firm or report URL"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeAudit(index)}
+                        className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-600/20 rounded transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Licenses */}
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Licenses
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {licenseOptions.map((license) => (
+                    <label
+                      key={license}
+                      className="flex items-center p-3 bg-gray-700 hover:bg-gray-600 rounded-lg cursor-pointer transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.licenses.includes(license)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            handleInputChange('licenses', [...formData.licenses, license]);
+                          } else {
+                            handleInputChange('licenses', formData.licenses.filter(l => l !== license));
+                          }
+                        }}
+                        className="w-4 h-4 text-purple-600 bg-gray-600 border-gray-500 rounded focus:ring-purple-500"
+                      />
+                      <span className="ml-2 text-sm text-white">{license}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

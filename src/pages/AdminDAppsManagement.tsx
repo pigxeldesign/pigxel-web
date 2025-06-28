@@ -23,7 +23,8 @@ import {
   Calendar,
   Users,
   Globe,
-  Loader2
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../components/AdminLayout';
@@ -33,17 +34,33 @@ interface DApp {
   id: string;
   name: string;
   description: string;
+  problem_solved: string;
   logo_url?: string;
   thumbnail_url?: string;
-  category: string;
+  category_id?: string;
+  category?: {
+    id: string;
+    title: string;
+    slug: string;
+  };
   sub_category: string;
   blockchains: string[];
-  rating: number;
-  user_count: string;
+  rating?: number;
+  user_count?: string;
   is_new: boolean;
   is_featured: boolean;
-  status: 'published' | 'draft';
   live_url: string;
+  github_url?: string;
+  twitter_url?: string;
+  documentation_url?: string;
+  discord_url?: string;
+  founded?: string;
+  team?: string;
+  total_value_locked?: string;
+  daily_active_users?: string;
+  transactions?: string;
+  audits?: string[];
+  licenses?: string[];
   created_at: string;
   updated_at: string;
 }
@@ -51,9 +68,8 @@ interface DApp {
 interface FilterState {
   category: string;
   blockchains: string[];
-  status: string;
-  dateRange: string;
   featured: string;
+  isNew: string;
 }
 
 interface SortState {
@@ -66,6 +82,7 @@ const AdminDAppsManagement: React.FC = () => {
   const [dapps, setDApps] = useState<DApp[]>([]);
   const [filteredDApps, setFilteredDApps] = useState<DApp[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDApps, setSelectedDApps] = useState<Set<string>>(new Set());
   const [showFilters, setShowFilters] = useState(false);
@@ -77,140 +94,57 @@ const AdminDAppsManagement: React.FC = () => {
   const [filters, setFilters] = useState<FilterState>({
     category: '',
     blockchains: [],
-    status: '',
-    dateRange: '',
-    featured: ''
+    featured: '',
+    isNew: ''
   });
 
-  // Mock data - in real app, this would come from Supabase
-  const mockDApps: DApp[] = [
-    {
-      id: '1',
-      name: 'Uniswap',
-      description: 'Leading decentralized trading protocol',
-      logo_url: '🦄',
-      thumbnail_url: 'https://images.pexels.com/photos/1181263/pexels-photo-1181263.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop',
-      category: 'DeFi',
-      sub_category: 'DEX',
-      blockchains: ['Ethereum', 'Polygon', 'Arbitrum'],
-      rating: 4.8,
-      user_count: '4.2M',
-      is_new: false,
-      is_featured: true,
-      status: 'published',
-      live_url: 'https://app.uniswap.org',
-      created_at: '2024-01-15T10:00:00Z',
-      updated_at: '2024-06-28T14:30:00Z'
-    },
-    {
-      id: '2',
-      name: 'MetaMask',
-      description: 'Popular Web3 wallet browser extension',
-      logo_url: '🦊',
-      thumbnail_url: 'https://images.pexels.com/photos/730547/pexels-photo-730547.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop',
-      category: 'Wallets',
-      sub_category: 'Browser Extension',
-      blockchains: ['Ethereum', 'Polygon', 'BSC'],
-      rating: 4.7,
-      user_count: '30M',
-      is_new: false,
-      is_featured: true,
-      status: 'published',
-      live_url: 'https://metamask.io',
-      created_at: '2024-02-10T09:15:00Z',
-      updated_at: '2024-06-27T16:45:00Z'
-    },
-    {
-      id: '3',
-      name: 'OpenSea',
-      description: 'World\'s largest NFT marketplace',
-      logo_url: '🌊',
-      thumbnail_url: 'https://images.pexels.com/photos/1181316/pexels-photo-1181316.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop',
-      category: 'NFTs',
-      sub_category: 'Marketplace',
-      blockchains: ['Ethereum', 'Polygon', 'Klaytn'],
-      rating: 4.5,
-      user_count: '2.1M',
-      is_new: false,
-      is_featured: true,
-      status: 'published',
-      live_url: 'https://opensea.io',
-      created_at: '2024-03-05T11:30:00Z',
-      updated_at: '2024-06-26T12:20:00Z'
-    },
-    {
-      id: '4',
-      name: 'Aave',
-      description: 'Decentralized lending and borrowing protocol',
-      logo_url: '👻',
-      thumbnail_url: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop',
-      category: 'DeFi',
-      sub_category: 'Lending',
-      blockchains: ['Ethereum', 'Polygon', 'Avalanche'],
-      rating: 4.6,
-      user_count: '800K',
-      is_new: false,
-      is_featured: false,
-      status: 'published',
-      live_url: 'https://aave.com',
-      created_at: '2024-04-12T08:45:00Z',
-      updated_at: '2024-06-25T10:15:00Z'
-    },
-    {
-      id: '5',
-      name: 'Compound',
-      description: 'Algorithmic money market protocol',
-      logo_url: '🏛️',
-      thumbnail_url: 'https://images.pexels.com/photos/844124/pexels-photo-844124.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop',
-      category: 'DeFi',
-      sub_category: 'Lending',
-      blockchains: ['Ethereum'],
-      rating: 4.4,
-      user_count: '650K',
-      is_new: false,
-      is_featured: false,
-      status: 'draft',
-      live_url: 'https://compound.finance',
-      created_at: '2024-05-20T13:20:00Z',
-      updated_at: '2024-06-24T09:30:00Z'
-    },
-    {
-      id: '6',
-      name: 'Rabbithole',
-      description: 'Learn Web3 by completing on-chain tasks',
-      logo_url: '🐰',
-      thumbnail_url: 'https://images.pexels.com/photos/1181298/pexels-photo-1181298.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop',
-      category: 'Education',
-      sub_category: 'Learning',
-      blockchains: ['Ethereum', 'Arbitrum', 'Optimism'],
-      rating: 4.7,
-      user_count: '500K',
-      is_new: true,
-      is_featured: true,
-      status: 'published',
-      live_url: 'https://rabbithole.gg',
-      created_at: '2024-06-01T15:10:00Z',
-      updated_at: '2024-06-23T14:45:00Z'
-    }
-  ];
-
-  const categories = ['All', 'DeFi', 'NFTs', 'Wallets', 'Education', 'Gaming', 'Social'];
+  // Available filter options
   const blockchains = ['Ethereum', 'Polygon', 'BSC', 'Arbitrum', 'Optimism', 'Avalanche', 'Solana'];
-  const statusOptions = ['All', 'Published', 'Draft'];
   const featuredOptions = ['All', 'Featured', 'Not Featured'];
-  const dateRanges = ['All Time', 'Last 7 days', 'Last 30 days', 'Last 90 days', 'Custom'];
+  const newOptions = ['All', 'New', 'Established'];
 
   useEffect(() => {
-    // Simulate API call
-    setLoading(true);
-    setTimeout(() => {
-      setDApps(mockDApps);
-      setFilteredDApps(mockDApps);
-      setLoading(false);
-    }, 1000);
+    loadDApps();
   }, []);
 
   useEffect(() => {
+    filterAndSortDApps();
+  }, [dapps, searchTerm, filters, sortState]);
+
+  useEffect(() => {
+    setShowBulkActions(selectedDApps.size > 0);
+  }, [selectedDApps]);
+
+  const loadDApps = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      console.log('Loading dApps from Supabase...');
+      
+      const { data, error } = await supabase
+        .from('dapps')
+        .select(`
+          *,
+          category:categories(id, title, slug)
+        `)
+        .order('updated_at', { ascending: false });
+
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
+      console.log('dApps loaded:', data);
+      setDApps(data || []);
+    } catch (error: any) {
+      console.error('Error loading dApps:', error);
+      setError('Failed to load dApps. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filterAndSortDApps = () => {
     let filtered = [...dapps];
 
     // Search filter
@@ -219,14 +153,15 @@ const AdminDAppsManagement: React.FC = () => {
       filtered = filtered.filter(dapp => 
         dapp.name.toLowerCase().includes(term) ||
         dapp.description.toLowerCase().includes(term) ||
-        dapp.category.toLowerCase().includes(term) ||
+        dapp.problem_solved.toLowerCase().includes(term) ||
+        dapp.category?.title.toLowerCase().includes(term) ||
         dapp.blockchains.some(blockchain => blockchain.toLowerCase().includes(term))
       );
     }
 
     // Category filter
-    if (filters.category && filters.category !== 'All') {
-      filtered = filtered.filter(dapp => dapp.category === filters.category);
+    if (filters.category) {
+      filtered = filtered.filter(dapp => dapp.category_id === filters.category);
     }
 
     // Blockchain filter
@@ -236,15 +171,16 @@ const AdminDAppsManagement: React.FC = () => {
       );
     }
 
-    // Status filter
-    if (filters.status && filters.status !== 'All') {
-      filtered = filtered.filter(dapp => dapp.status === filters.status.toLowerCase());
-    }
-
     // Featured filter
     if (filters.featured && filters.featured !== 'All') {
       const isFeatured = filters.featured === 'Featured';
       filtered = filtered.filter(dapp => dapp.is_featured === isFeatured);
+    }
+
+    // New filter
+    if (filters.isNew && filters.isNew !== 'All') {
+      const isNew = filters.isNew === 'New';
+      filtered = filtered.filter(dapp => dapp.is_new === isNew);
     }
 
     // Sort
@@ -255,6 +191,9 @@ const AdminDAppsManagement: React.FC = () => {
       if (sortState.field === 'updated_at' || sortState.field === 'created_at') {
         aValue = new Date(aValue).getTime();
         bValue = new Date(bValue).getTime();
+      } else if (sortState.field === 'category') {
+        aValue = a.category?.title || '';
+        bValue = b.category?.title || '';
       } else if (typeof aValue === 'string') {
         aValue = aValue.toLowerCase();
         bValue = bValue.toLowerCase();
@@ -269,7 +208,7 @@ const AdminDAppsManagement: React.FC = () => {
 
     setFilteredDApps(filtered);
     setCurrentPage(1); // Reset to first page when filters change
-  }, [dapps, searchTerm, filters, sortState]);
+  };
 
   const handleSort = (field: string) => {
     setSortState(prev => ({
@@ -307,13 +246,42 @@ const AdminDAppsManagement: React.FC = () => {
     });
   };
 
+  const handleDelete = async (dappId: string) => {
+    const dapp = dapps.find(d => d.id === dappId);
+    if (!dapp) return;
+
+    if (window.confirm(`Are you sure you want to delete "${dapp.name}"? This action cannot be undone.`)) {
+      try {
+        console.log('Deleting dApp:', dappId);
+        const { error } = await supabase
+          .from('dapps')
+          .delete()
+          .eq('id', dappId);
+
+        if (error) throw error;
+        
+        console.log('dApp deleted successfully');
+        await loadDApps();
+        
+        // Remove from selected dApps if it was selected
+        setSelectedDApps(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(dappId);
+          return newSet;
+        });
+      } catch (error: any) {
+        console.error('Error deleting dApp:', error);
+        setError(error.message || 'Failed to delete dApp. Please try again.');
+      }
+    }
+  };
+
   const clearFilters = () => {
     setFilters({
       category: '',
       blockchains: [],
-      status: '',
-      dateRange: '',
-      featured: ''
+      featured: '',
+      isNew: ''
     });
     setSearchTerm('');
   };
@@ -331,15 +299,6 @@ const AdminDAppsManagement: React.FC = () => {
     return sortState.direction === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />;
   };
 
-  const getStatusBadge = (status: string) => {
-    const baseClasses = "px-2 py-1 text-xs font-medium rounded-full";
-    if (status === 'published') {
-      return `${baseClasses} bg-green-600/20 text-green-300`;
-    } else {
-      return `${baseClasses} bg-yellow-600/20 text-yellow-300`;
-    }
-  };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -352,9 +311,14 @@ const AdminDAppsManagement: React.FC = () => {
     Array.isArray(value) ? value.length > 0 : value && value !== 'All'
   ).length + (searchTerm ? 1 : 0);
 
-  useEffect(() => {
-    setShowBulkActions(selectedDApps.size > 0);
-  }, [selectedDApps]);
+  // Get unique categories for filter dropdown
+  const categories = Array.from(
+    new Map(
+      dapps
+        .filter(dapp => dapp.category)
+        .map(dapp => [dapp.category!.id, dapp.category!])
+    ).values()
+  );
 
   return (
     <AdminLayout>
@@ -385,6 +349,24 @@ const AdminDAppsManagement: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-red-600/20 border border-red-600/30 rounded-lg flex items-center"
+          >
+            <AlertCircle className="w-5 h-5 text-red-400 mr-3 flex-shrink-0" />
+            <p className="text-red-300 text-sm">{error}</p>
+            <button
+              onClick={() => setError(null)}
+              className="ml-auto text-red-400 hover:text-red-300"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
 
         {/* Search and Filters */}
         <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 mb-6">
@@ -438,7 +420,7 @@ const AdminDAppsManagement: React.FC = () => {
                 exit={{ opacity: 0, height: 0 }}
                 className="border-t border-gray-700 pt-4"
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                   {/* Category Filter */}
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">Category</label>
@@ -447,25 +429,10 @@ const AdminDAppsManagement: React.FC = () => {
                       onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
                       className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                     >
+                      <option value="">All Categories</option>
                       {categories.map(category => (
-                        <option key={category} value={category === 'All' ? '' : category}>
-                          {category}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Status Filter */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>
-                    <select
-                      value={filters.status}
-                      onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    >
-                      {statusOptions.map(status => (
-                        <option key={status} value={status === 'All' ? '' : status}>
-                          {status}
+                        <option key={category.id} value={category.id}>
+                          {category.title}
                         </option>
                       ))}
                     </select>
@@ -487,17 +454,17 @@ const AdminDAppsManagement: React.FC = () => {
                     </select>
                   </div>
 
-                  {/* Date Range Filter */}
+                  {/* New Filter */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Date Range</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>
                     <select
-                      value={filters.dateRange}
-                      onChange={(e) => setFilters(prev => ({ ...prev, dateRange: e.target.value }))}
+                      value={filters.isNew}
+                      onChange={(e) => setFilters(prev => ({ ...prev, isNew: e.target.value }))}
                       className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                     >
-                      {dateRanges.map(range => (
-                        <option key={range} value={range === 'All Time' ? '' : range}>
-                          {range}
+                      {newOptions.map(option => (
+                        <option key={option} value={option === 'All' ? '' : option}>
+                          {option}
                         </option>
                       ))}
                     </select>
@@ -515,7 +482,7 @@ const AdminDAppsManagement: React.FC = () => {
                 </div>
 
                 {/* Blockchain Filter */}
-                <div className="mt-4">
+                <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Blockchains</label>
                   <div className="flex flex-wrap gap-2">
                     {blockchains.map(blockchain => (
@@ -560,14 +527,11 @@ const AdminDAppsManagement: React.FC = () => {
                     {selectedDApps.size} dApp{selectedDApps.size !== 1 ? 's' : ''} selected
                   </span>
                   <div className="flex items-center gap-2">
-                    <button className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-sm transition-colors">
-                      Publish
-                    </button>
-                    <button className="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white rounded text-sm transition-colors">
-                      Draft
-                    </button>
                     <button className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm transition-colors">
                       Feature
+                    </button>
+                    <button className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-sm transition-colors">
+                      Mark New
                     </button>
                     <button className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition-colors">
                       Delete
@@ -646,16 +610,8 @@ const AdminDAppsManagement: React.FC = () => {
                           {getSortIcon('category')}
                         </button>
                       </th>
-                      <th className="text-left px-4 py-3 text-gray-300 font-medium">
-                        <button
-                          onClick={() => handleSort('status')}
-                          className="flex items-center gap-2 hover:text-white transition-colors"
-                        >
-                          Status
-                          {getSortIcon('status')}
-                        </button>
-                      </th>
-                      <th className="text-left px-4 py-3 text-gray-300 font-medium">Featured</th>
+                      <th className="text-left px-4 py-3 text-gray-300 font-medium">Status</th>
+                      <th className="text-left px-4 py-3 text-gray-300 font-medium">Rating</th>
                       <th className="text-left px-4 py-3 text-gray-300 font-medium">
                         <button
                           onClick={() => handleSort('updated_at')}
@@ -687,49 +643,96 @@ const AdminDAppsManagement: React.FC = () => {
                         </td>
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center text-lg">
-                              {dapp.logo_url}
+                            <div className="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center text-lg overflow-hidden">
+                              {dapp.logo_url ? (
+                                <img 
+                                  src={dapp.logo_url} 
+                                  alt={dapp.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <span className="text-gray-400">📱</span>
+                              )}
                             </div>
                           </div>
                         </td>
                         <td className="px-4 py-4">
                           <div>
-                            <div className="font-medium text-white">{dapp.name}</div>
+                            <div className="font-medium text-white flex items-center gap-2">
+                              {dapp.name}
+                              {dapp.is_featured && (
+                                <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                              )}
+                              {dapp.is_new && (
+                                <span className="px-2 py-1 bg-green-600/20 text-green-300 text-xs rounded-full">
+                                  New
+                                </span>
+                              )}
+                            </div>
                             <div className="text-sm text-gray-400 truncate max-w-xs">
-                              {dapp.description}
+                              {dapp.problem_solved}
                             </div>
                           </div>
                         </td>
                         <td className="px-4 py-4">
                           <span className="px-2 py-1 bg-purple-600/20 text-purple-300 text-sm rounded-full">
-                            {dapp.category}
+                            {dapp.category?.title || 'Uncategorized'}
                           </span>
                         </td>
                         <td className="px-4 py-4">
-                          <span className={getStatusBadge(dapp.status)}>
-                            {dapp.status === 'published' ? 'Published' : 'Draft'}
-                          </span>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-sm text-gray-400">
+                              {dapp.sub_category}
+                            </span>
+                            <div className="flex flex-wrap gap-1">
+                              {dapp.blockchains.slice(0, 2).map((blockchain) => (
+                                <span
+                                  key={blockchain}
+                                  className="px-1.5 py-0.5 bg-gray-700 text-gray-300 text-xs rounded"
+                                >
+                                  {blockchain}
+                                </span>
+                              ))}
+                              {dapp.blockchains.length > 2 && (
+                                <span className="px-1.5 py-0.5 bg-gray-700 text-gray-300 text-xs rounded">
+                                  +{dapp.blockchains.length - 2}
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </td>
                         <td className="px-4 py-4">
-                          {dapp.is_featured && (
-                            <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                          )}
+                          <div className="flex items-center gap-1">
+                            <Star className="w-3 h-3 text-yellow-500" />
+                            <span className="text-white text-sm">
+                              {dapp.rating ? dapp.rating.toFixed(1) : 'N/A'}
+                            </span>
+                          </div>
                         </td>
                         <td className="px-4 py-4 text-gray-400 text-sm">
                           {formatDate(dapp.updated_at)}
                         </td>
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button className="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-600/20 rounded-lg transition-colors">
+                            <button 
+                              onClick={() => window.open(dapp.live_url, '_blank')}
+                              className="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-600/20 rounded-lg transition-colors"
+                              title="View Live"
+                            >
                               <Eye className="w-4 h-4" />
                             </button>
                             <button 
                               onClick={() => navigate(`/admin/dapps/edit/${dapp.id}`)}
                               className="p-2 text-gray-400 hover:text-green-400 hover:bg-green-600/20 rounded-lg transition-colors"
+                              title="Edit"
                             >
                               <Edit className="w-4 h-4" />
                             </button>
-                            <button className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-600/20 rounded-lg transition-colors">
+                            <button 
+                              onClick={() => handleDelete(dapp.id)}
+                              className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-600/20 rounded-lg transition-colors"
+                              title="Delete"
+                            >
                               <Trash2 className="w-4 h-4" />
                             </button>
                             <button className="p-2 text-gray-400 hover:text-gray-300 hover:bg-gray-600/20 rounded-lg transition-colors">
@@ -742,6 +745,37 @@ const AdminDAppsManagement: React.FC = () => {
                   </tbody>
                 </table>
               </div>
+
+              {/* Empty State */}
+              {filteredDApps.length === 0 && !loading && (
+                <div className="text-center py-16">
+                  <div className="text-6xl mb-4">📱</div>
+                  <h3 className="text-xl font-bold text-white mb-2">
+                    {dapps.length === 0 ? 'No dApps yet' : 'No dApps found'}
+                  </h3>
+                  <p className="text-gray-400 mb-6">
+                    {dapps.length === 0 
+                      ? 'Create your first dApp to get started.'
+                      : 'Try adjusting your filters to find dApps.'
+                    }
+                  </p>
+                  {dapps.length === 0 ? (
+                    <button
+                      onClick={() => navigate('/admin/dapps/new')}
+                      className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+                    >
+                      Create First dApp
+                    </button>
+                  ) : (
+                    <button
+                      onClick={clearFilters}
+                      className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+                    >
+                      Clear Filters
+                    </button>
+                  )}
+                </div>
+              )}
 
               {/* Pagination */}
               {totalPages > 1 && (
