@@ -20,14 +20,12 @@ function App() {
             {/* Admin Login - No Layout */}
             <Route path="/admin/login" element={<AdminLogin />} />
             
-            {/* Protected Admin Routes */}
+            {/* Protected Admin Routes - Uses AdminLayout internally */}
             <Route 
               path="/admin/dashboard" 
               element={
                 <ProtectedRoute requireAdmin>
-                  <Layout>
-                    <AdminDashboard />
-                  </Layout>
+                  <AdminDashboard />
                 </ProtectedRoute>
               } 
             />
