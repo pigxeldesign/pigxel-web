@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { AdminLayout } from '../components/AdminLayout';
+import AdminLayout from '../components/AdminLayout';
 import { ArrowLeft, Save, Search, Check, Upload, X } from 'lucide-react';
 
 interface DApp {
