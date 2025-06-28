@@ -501,9 +501,9 @@ const AdminFlowsManagement: React.FC = () => {
                     <div className="col-span-4">Flow</div>
                     <div className="col-span-2">dApp</div>
                     <div className="col-span-1">Status</div>
-                    <div className="col-span-2">Difficulty</div>
-                    <div className="col-span-1">Updated</div>
-                    <div className="col-span-1 text-right">Actions</div>
+                    <div className="col-span-1">Difficulty</div>
+                    <div className="col-span-2">Updated</div>
+                    <div className="col-span-2 text-right">Actions</div>
                   </div>
                 </div>
               </div>
@@ -568,7 +568,7 @@ const AdminFlowsManagement: React.FC = () => {
                           </div>
 
                           {/* Difficulty */}
-                          <div className="col-span-2">
+                          <div className="col-span-1">
                             <span className={`px-2 py-1 text-xs font-medium rounded-full ${getDifficultyColor(flow.difficulty)}`}>
                               {flow.difficulty}
                             </span>
@@ -576,14 +576,14 @@ const AdminFlowsManagement: React.FC = () => {
                           </div>
 
                           {/* Updated */}
-                          <div className="col-span-1">
+                          <div className="col-span-2">
                             <span className="text-gray-400 text-sm">
                               {new Date(flow.updated_at).toLocaleDateString()}
                             </span>
                           </div>
 
                           {/* Actions */}
-                          <div className="col-span-1">
+                          <div className="col-span-2">
                             <div className="flex items-center gap-1 justify-end">
                               <button
                                 className="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-600/20 rounded-lg transition-colors"
