@@ -1,26 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Plus, 
-  Edit, 
-  Trash2, 
-  ChevronDown, 
-  ChevronRight,
-  Search,
-  Filter,
-  MoreHorizontal,
-  Eye,
-  EyeOff,
-  Copy,
-  Move,
-  Palette,
-  Hash,
-  Loader2,
-  DragHandleDots2,
-  Check,
-  X,
-  AlertCircle
-} from 'lucide-react';
+import { Plus, Edit, Trash2, ChevronDown, ChevronRight, Search, Filter, MoreHorizontal, Eye, EyeOff, Copy, Move, Palette, Hash, Loader2, CircleDot as DragHandleDots2, Check, X, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../components/AdminLayout';
 import { supabase } from '../lib/supabase';
