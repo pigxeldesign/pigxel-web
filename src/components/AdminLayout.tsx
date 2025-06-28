@@ -14,7 +14,8 @@ import {
   User,
   LogOut,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -26,7 +27,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const { profile, signOut } = useAuth();
+  const [signingOut, setSigningOut] = useState(false);
+  const { profile, signOut, loading } = useAuth();
 
   // Handle responsive behavior
   useEffect(() => {
@@ -54,8 +56,18 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   ];
 
   const handleSignOut = async () => {
-    await signOut();
-    window.location.href = '/';
+    try {
+      setSigningOut(true);
+      setShowUserMenu(false);
+      console.log('Admin layout: Starting sign out...');
+      await signOut();
+    } catch (error) {
+      console.error('Admin layout: Sign out failed:', error);
+      // Force redirect even if sign out fails
+      window.location.href = '/';
+    } finally {
+      setSigningOut(false);
+    }
   };
 
   return (
@@ -89,57 +101,81 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               </button>
 
               {/* User Menu */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center space-x-3 px-3 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"
-                >
-                  <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4 text-white" />
-                  </div>
-                  <div className="hidden sm:block text-left">
-                    <div className="text-sm font-medium text-white">Admin</div>
-                    <div className="text-xs text-gray-400 truncate max-w-32">
-                      {profile?.email}
+              {loading ? (
+                <div className="flex items-center space-x-2 px-3 py-2 bg-gray-800 rounded-lg">
+                  <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                  <span className="text-gray-400 text-sm">Loading...</span>
+                </div>
+              ) : (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowUserMenu(!showUserMenu)}
+                    disabled={signingOut}
+                    className="flex items-center space-x-3 px-3 py-2 bg-gray-800 hover:bg-gray-700 disabled:bg-gray-800 text-white rounded-lg transition-colors"
+                  >
+                    <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                      <User className="w-4 h-4 text-white" />
                     </div>
-                  </div>
-                </button>
+                    <div className="hidden sm:block text-left">
+                      <div className="text-sm font-medium text-white">
+                        {signingOut ? 'Signing out...' : 'Admin'}
+                      </div>
+                      <div className="text-xs text-gray-400 truncate max-w-32">
+                        {profile?.email}
+                      </div>
+                    </div>
+                    {signingOut && <Loader2 className="w-4 h-4 animate-spin" />}
+                  </button>
 
-                <AnimatePresence>
-                  {showUserMenu && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50"
-                    >
-                      <div className="p-3 border-b border-gray-700">
-                        <p className="text-sm text-gray-400">Signed in as</p>
-                        <p className="text-white font-medium truncate">{profile?.email}</p>
-                        <span className="inline-block mt-1 px-2 py-1 bg-purple-600/20 text-purple-300 text-xs rounded-full">
-                          Administrator
-                        </span>
-                      </div>
-                      <div className="p-1">
-                        <button
-                          onClick={() => window.location.href = '/'}
-                          className="w-full text-left px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded transition-colors"
-                        >
-                          View Public Site
-                        </button>
-                        <button
-                          onClick={handleSignOut}
-                          className="w-full text-left px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded transition-colors flex items-center"
-                        >
-                          <LogOut className="w-4 h-4 mr-2" />
-                          Sign Out
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                  <AnimatePresence>
+                    {showUserMenu && !signingOut && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50"
+                      >
+                        <div className="p-3 border-b border-gray-700">
+                          <p className="text-sm text-gray-400">Signed in as</p>
+                          <p className="text-white font-medium truncate">{profile?.email}</p>
+                          <span className="inline-block mt-1 px-2 py-1 bg-purple-600/20 text-purple-300 text-xs rounded-full">
+                            Administrator
+                          </span>
+                        </div>
+                        <div className="p-1">
+                          <button
+                            onClick={() => {
+                              window.location.href = '/';
+                              setShowUserMenu(false);
+                            }}
+                            className="w-full text-left px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded transition-colors"
+                          >
+                            View Public Site
+                          </button>
+                          <button
+                            onClick={handleSignOut}
+                            disabled={signingOut}
+                            className="w-full text-left px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded transition-colors flex items-center disabled:opacity-50"
+                          >
+                            {signingOut ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Signing out...
+                              </>
+                            ) : (
+                              <>
+                                <LogOut className="w-4 h-4 mr-2" />
+                                Sign Out
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
             </div>
           </div>
         </div>

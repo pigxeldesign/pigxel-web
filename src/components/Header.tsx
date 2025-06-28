@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Menu, X, User, LogOut } from 'lucide-react';
+import { Search, Menu, X, User, LogOut, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -11,11 +11,21 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ onToggleSidebar, isSidebarOpen }) => {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const { user, profile, isAdmin, signOut } = useAuth();
+  const [signingOut, setSigningOut] = useState(false);
+  const { user, profile, isAdmin, signOut, loading } = useAuth();
 
   const handleSignOut = async () => {
-    await signOut();
-    setShowUserMenu(false);
+    try {
+      setSigningOut(true);
+      setShowUserMenu(false);
+      await signOut();
+    } catch (error) {
+      console.error('Sign out failed:', error);
+      // Force redirect even if sign out fails
+      window.location.href = '/';
+    } finally {
+      setSigningOut(false);
+    }
   };
 
   return (
@@ -61,20 +71,27 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, isSidebarOpen }) => {
 
           {/* Right Side Actions */}
           <div className="flex items-center space-x-4">
-            {user ? (
+            {loading ? (
+              <div className="flex items-center space-x-2 px-3 py-2 bg-gray-800 rounded-lg">
+                <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                <span className="text-gray-400 text-sm">Loading...</span>
+              </div>
+            ) : user ? (
               <div className="relative">
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center space-x-2 px-3 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                  disabled={signingOut}
+                  className="flex items-center space-x-2 px-3 py-2 bg-gray-800 hover:bg-gray-700 disabled:bg-gray-800 text-white rounded-lg transition-colors"
                 >
                   <User className="w-4 h-4" />
                   <span className="hidden sm:block">
                     {isAdmin ? 'Admin' : 'User'}
                   </span>
+                  {signingOut && <Loader2 className="w-4 h-4 animate-spin" />}
                 </button>
 
                 <AnimatePresence>
-                  {showUserMenu && (
+                  {showUserMenu && !signingOut && (
                     <motion.div
                       initial={{ opacity: 0, scale: 0.95, y: -10 }}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -84,7 +101,7 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, isSidebarOpen }) => {
                     >
                       <div className="p-3 border-b border-gray-700">
                         <p className="text-sm text-gray-400">Signed in as</p>
-                        <p className="text-white font-medium truncate">{profile?.email}</p>
+                        <p className="text-white font-medium truncate">{profile?.email || user.email}</p>
                         {isAdmin && (
                           <span className="inline-block mt-1 px-2 py-1 bg-purple-600/20 text-purple-300 text-xs rounded-full">
                             Admin
@@ -105,10 +122,20 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, isSidebarOpen }) => {
                         )}
                         <button
                           onClick={handleSignOut}
-                          className="w-full text-left px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded transition-colors flex items-center"
+                          disabled={signingOut}
+                          className="w-full text-left px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded transition-colors flex items-center disabled:opacity-50"
                         >
-                          <LogOut className="w-4 h-4 mr-2" />
-                          Sign Out
+                          {signingOut ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Signing out...
+                            </>
+                          ) : (
+                            <>
+                              <LogOut className="w-4 h-4 mr-2" />
+                              Sign Out
+                            </>
+                          )}
                         </button>
                       </div>
                     </motion.div>
