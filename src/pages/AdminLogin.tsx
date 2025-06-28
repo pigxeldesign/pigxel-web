@@ -16,9 +16,11 @@ const AdminLogin: React.FC = () => {
 
   // Redirect if already logged in as admin
   useEffect(() => {
+    console.log('AdminLogin useEffect: user:', user, 'isAdmin:', isAdmin, 'loading:', loading);
     if (user && isAdmin) {
       // Redirect to intended page or admin dashboard
       const from = location.state?.from?.pathname || '/admin/dashboard';
+      console.log('AdminLogin: Redirecting to:', from);
       window.location.href = from;
     }
   }, [user, isAdmin, location]);
@@ -28,14 +30,22 @@ const AdminLogin: React.FC = () => {
     setLoading(true);
     setError('');
 
+    console.log('AdminLogin: Attempting login with email:', email);
+
     try {
       const { error } = await signIn(email, password);
       
+      console.log('AdminLogin: signIn returned error:', error);
+      
       if (error) {
+        console.log('AdminLogin: Setting error message:', error.message);
         setError(error.message);
+      } else {
+        console.log('AdminLogin: Sign in successful, waiting for auth state change');
       }
       // Success handling is done by the auth context and useEffect above
     } catch (err) {
+      console.error('AdminLogin: Unexpected error during sign in:', err);
       setError('An unexpected error occurred');
     } finally {
       setLoading(false);

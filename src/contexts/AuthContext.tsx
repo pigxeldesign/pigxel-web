@@ -95,6 +95,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setProfile(null);
       }
       
+      console.log('Auth state changed. User:', session?.user, 'Profile:', profile, 'Is Admin:', isAdmin);
       setLoading(false);
       console.log('AuthProvider: Auth state change complete');
     });
@@ -126,6 +127,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (error) {
         console.error('AuthProvider: Error fetching profile:', error);
+        console.log('AuthProvider: Profile fetch error details:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
         if (error.code === 'PGRST116') {
           console.log('AuthProvider: Profile not found, will be created by trigger');
         }
@@ -148,6 +155,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         email,
         password,
       });
+      
+      console.log('Supabase signInWithPassword result error:', error);
       
       if (error) {
         console.error('AuthProvider: Sign in error:', error);
