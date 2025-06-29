@@ -345,18 +345,6 @@ const DAppSpotlight: React.FC = () => {
                     <span className="px-3 py-1 bg-purple-600/30 text-purple-200 rounded-full text-sm font-medium">
                       {dapp.sub_category}
                     </span>
-                    {dapp.rating && dapp.rating > 0 && (
-                      <div className="flex items-center text-sm text-gray-400">
-                        <Star className="w-4 h-4 text-yellow-500 mr-1" />
-                        {dapp.rating.toFixed(1)} Rating
-                      </div>
-                    )}
-                    {dapp.user_count && (
-                      <div className="flex items-center text-sm text-gray-400">
-                        <Users className="w-4 h-4 mr-1" />
-                        {dapp.user_count} Users
-                      </div>
-                    )}
                     {dapp.is_new && (
                       <span className="px-2 py-1 bg-green-600/30 text-green-200 rounded-full text-xs">
                         New
