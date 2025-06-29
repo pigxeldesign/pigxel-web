@@ -26,7 +26,7 @@ import {
   Trash2
 } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
-import { supabase, isValidSafeUrl, isProduction } from '../lib/supabase';
+import { supabase, isValidSafeUrl, isProduction, checkAuthStatus, directInsertDApp } from '../lib/supabase';
 
 interface DAppFormData {
   name: string;
@@ -127,11 +127,16 @@ const AdminDAppForm: React.FC = () => {
   }, [formData, isDirty]);
 
   const logDebug = (message: string, type: 'info' | 'error' | 'success' = 'info', details?: any) => {
-    const timestamp = new Date().toISOString();
+    const timestamp = new Date().toLocaleTimeString('en-US', {
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
     const logEntry = { timestamp, message, type, details };
     
     // Log to console
-    console.log(`[${type.toUpperCase()}][${timestamp}] ${message}`, details || '');
+    console.log(`[${timestamp}] ${message}`, details || '');
     
     // Add to UI log
     setDebugLogs(prev => [...prev, logEntry]);
@@ -403,6 +408,24 @@ const AdminDAppForm: React.FC = () => {
     }
   };
 
+  const tryFallbackDirectInsert = async (dataToSave: any): Promise<boolean> => {
+    try {
+      logDebug('Attempting fallback direct_insert_dapp RPC', 'info', dataToSave);
+      const { data, error } = await directInsertDApp(dataToSave);
+      
+      if (error) {
+        logDebug('Fallback direct insert failed', 'error', error);
+        return false;
+      }
+      
+      logDebug('Fallback direct insert successful', 'success', data);
+      return true;
+    } catch (error) {
+      logDebug('Fallback direct insert exception', 'error', error);
+      return false;
+    }
+  }
+
   const saveDApp = async (isAutoSave = false) => {
     saveAttemptRef.current += 1;
     const saveId = saveAttemptRef.current;
@@ -444,8 +467,10 @@ const AdminDAppForm: React.FC = () => {
       
       logDebug(`Save attempt ${saveId}: Prepared data`, 'info', dataToSave);
       
-      // First try saving via RPC, then fall back to direct table operation
+      // First try saving via RPC
       const rpcSuccess = await tryRpcSave(dataToSave);
+      
+      // If RPC fails, try direct table operation
       let success = rpcSuccess;
       
       if (!rpcSuccess) {
@@ -453,8 +478,15 @@ const AdminDAppForm: React.FC = () => {
         const directSuccess = await tryDirectSave(dataToSave);
         success = directSuccess;
         
+        // If both methods fail, try the fallback direct insert function
         if (!directSuccess) {
-          throw new Error("Both RPC and direct save methods failed");
+          logDebug(`Save attempt ${saveId}: Direct save failed, trying fallback method`, 'info');
+          const fallbackSuccess = await tryFallbackDirectInsert(dataToSave);
+          success = fallbackSuccess;
+          
+          if (!fallbackSuccess) {
+            throw new Error("All save methods failed");
+          }
         }
       }
 
@@ -652,7 +684,7 @@ const AdminDAppForm: React.FC = () => {
                           'text-blue-300'
                         }`}
                       >
-                        <span className="text-gray-500">[{new Date(log.timestamp).toLocaleTimeString()}]</span>{' '}
+                        <span className="text-gray-500">[{log.timestamp}]</span>{' '}
                         {log.message}
                         {log.details && (
                           <div className="ml-4 mt-1 text-gray-400 overflow-x-auto">

@@ -126,3 +126,40 @@ export function isValidSafeUrl(url: string): boolean {
 export function isProduction(): boolean {
   return import.meta.env.MODE === 'production';
 }
+
+/**
+ * Checks if the current user is authenticated with admin privileges
+ * Uses the check_auth_status RPC function for a reliable check
+ */
+export async function checkAuthStatus() {
+  try {
+    const { data, error } = await supabase.rpc('check_auth_status');
+    if (error) {
+      console.error('Auth status check error:', error);
+      return { isAuthenticated: false, isAdmin: false, error: error.message };
+    }
+    return {
+      isAuthenticated: data.is_authenticated,
+      userId: data.user_id,
+      isAdmin: data.is_admin,
+      error: null
+    };
+  } catch (error) {
+    console.error('Unexpected auth check error:', error);
+    return { isAuthenticated: false, isAdmin: false, error: String(error) };
+  }
+}
+
+/**
+ * Directly inserts a dApp as a fallback method
+ */
+export async function directInsertDApp(dappData: any) {
+  try {
+    const { data, error } = await supabase.rpc('direct_insert_dapp', {
+      p_dapp_data: dappData
+    });
+    return { data, error };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
