@@ -26,6 +26,16 @@ interface AuthProviderProps {
   children: React.ReactNode;
 }
 
+export const useIsAdmin = () => {
+  const { isAdmin } = useAuth();
+  return isAdmin;
+};
+
+// Helper function to check if production environment
+const isProduction = () => {
+  return import.meta.env.MODE === 'production';
+};
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -33,6 +43,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
 
+  // Calculate isAdmin from profile
   const isAdmin = profile?.user_type === 'admin';
 
   useEffect(() => {
@@ -123,7 +134,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setProfile(null);
         }
         
-        console.log('Auth state changed. User:', session?.user, 'Profile:', profile, 'Is Admin:', isAdmin);
+        console.log('Auth state changed. User:', session?.user?.email, 'Profile:', profile?.email, 'Is Admin:', isAdmin);
       } catch (error) {
         console.error('AuthProvider: Error during auth state change:', error);
         // Clear session data on error

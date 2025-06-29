@@ -61,6 +61,7 @@ const AdminDAppForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isEditing = Boolean(id);
+  const navigationAttempted = useRef(false);
   
   // Form state
   const [formData, setFormData] = useState<DAppFormData>({
@@ -163,6 +164,8 @@ const AdminDAppForm: React.FC = () => {
           category_id: data.category_id || '',
           sub_category: data.sub_category || '',
           blockchains: Array.isArray(data.blockchains) ? data.blockchains : [],
+          is_new: !!data.is_new,
+          is_featured: !!data.is_featured,
           live_url: data.live_url || '',
           github_url: data.github_url || '',
           twitter_url: data.twitter_url || '',
@@ -333,6 +336,8 @@ const AdminDAppForm: React.FC = () => {
         category_id: formData.category_id || null,
         sub_category: formData.sub_category ? formData.sub_category.trim() : '',
         blockchains: Array.isArray(formData.blockchains) ? formData.blockchains : [],
+        is_new: formData.is_new,
+        is_featured: formData.is_featured,
         live_url: formData.live_url.trim(),
         github_url: formData.github_url.trim() || null,
         twitter_url: formData.twitter_url.trim() || null,
@@ -342,31 +347,57 @@ const AdminDAppForm: React.FC = () => {
       
       if (isEditing) {
         console.log('Updating dApp with data:', dataToSave);
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('dapps')
           .update(dataToSave)
-          .eq('id', id);
+          .eq('id', id)
+          .select();
         
-        if (error) throw error;
+        console.log('Update response:', { data, error });
+        
+        if (error) {
+          console.error('Supabase update error:', error);
+          throw error;
+        }
+        
         console.log('dApp updated successfully');
       } else {
         console.log('Creating new dApp with data:', dataToSave);
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('dapps')
-          .insert([dataToSave]);
+          .insert([dataToSave])
+          .select();
         
-        if (error) throw error;
-        console.log('dApp created successfully');
+        console.log('Insert response:', { data, error });
+        
+        if (error) {
+          console.error('Supabase insert error:', error);
+          throw error;
+        }
+        
+        console.log('dApp created successfully:', data);
       }
       
       if (!isAutoSave) {
         setIsDirty(false);
         setSaveSuccess(true);
         
-        // Delay navigation to show success message - SINGLE navigation call
-        setTimeout(() => {
-          navigate('/admin/dapps');
-        }, 2000);
+        // Prevent multiple navigation attempts
+        if (!navigationAttempted.current) {
+          navigationAttempted.current = true;
+          
+          // Delay navigation to show success message - SINGLE navigation call
+          setTimeout(() => {
+            console.log('Attempting navigation to /admin/dapps');
+            try {
+              navigate('/admin/dapps');
+            } catch (navError) {
+              console.error('Navigation error:', navError);
+              // If navigation fails, reset the flag so we can try again
+              navigationAttempted.current = false;
+            }
+          }, 2000);
+        }
       }
     } catch (error: any) {
       if (!isProduction()) {
@@ -377,6 +408,7 @@ const AdminDAppForm: React.FC = () => {
       setError(error.message || 'Failed to save dApp. Please try again.');
       // Don't re-throw the error - this was causing the issue
     } finally {
+      console.log('Save operation completed, setting saving to false');
       setSaving(false);
     }
   };
