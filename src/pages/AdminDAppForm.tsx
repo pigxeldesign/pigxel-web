@@ -26,7 +26,7 @@ import {
   Trash2
 } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
-import { supabase, isValidSafeUrl, isProduction, checkAuthStatus, directInsertDApp } from '../lib/supabase';
+import { supabase, isValidSafeUrl, isProduction } from '../lib/supabase';
 
 interface DAppFormData {
   name: string;
@@ -57,18 +57,10 @@ interface ValidationErrors {
   [key: string]: string;
 }
 
-interface DebugLogEntry {
-  timestamp: string;
-  message: string;
-  type: 'info' | 'error' | 'success';
-  details?: any;
-}
-
 const AdminDAppForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isEditing = Boolean(id);
-  const saveAttemptRef = useRef<number>(0);
   
   // Form state
   const [formData, setFormData] = useState<DAppFormData>({
@@ -99,14 +91,32 @@ const AdminDAppForm: React.FC = () => {
   const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'error' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [debugLogs, setDebugLogs] = useState<DebugLogEntry[]>([]);
-  const [showDebugPanel, setShowDebugPanel] = useState(!isProduction());
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
+  const [currentSaveAttempt, setCurrentSaveAttempt] = useState(0);
   
   // Available options
   const blockchainOptions = [
     'Ethereum', 'Polygon', 'BSC', 'Arbitrum', 'Optimism', 'Avalanche', 
     'Solana', 'Cardano', 'Polkadot', 'Cosmos', 'Near', 'Fantom'
   ];
+
+  // Helper to log debug messages with timestamps
+  const logDebug = (message: string, data?: any) => {
+    const timestamp = new Date().toLocaleTimeString('en-US', { 
+      hour12: false, 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit' 
+    });
+    
+    const logMessage = `[${timestamp}] ${message}`;
+    console.log(logMessage, data || '');
+    
+    setDebugLogs(prev => {
+      const newLogs = [...prev, data ? `${logMessage}\n${JSON.stringify(data, null, 2)}` : logMessage];
+      return newLogs.slice(-50); // Keep only the last 50 logs
+    });
+  };
 
   // Load categories and dApp data
   useEffect(() => {
@@ -126,39 +136,16 @@ const AdminDAppForm: React.FC = () => {
     }
   }, [formData, isDirty]);
 
-  const logDebug = (message: string, type: 'info' | 'error' | 'success' = 'info', details?: any) => {
-    const timestamp = new Date().toLocaleTimeString('en-US', {
-      hour12: false,
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-    const logEntry = { timestamp, message, type, details };
-    
-    // Log to console
-    console.log(`[${timestamp}] ${message}`, details || '');
-    
-    // Add to UI log
-    setDebugLogs(prev => [...prev, logEntry]);
-    
-    // Always show debug panel on errors
-    if (type === 'error' && !showDebugPanel) {
-      setShowDebugPanel(true);
-    }
-    
-    return logEntry;
-  };
-
   const loadCategories = async () => {
     try {
-      logDebug('Loading categories...');
+      console.log('Loading categories...');
       const { data, error } = await supabase
         .from('categories')
         .select('id, slug, title, sub_categories')
         .order('title');
       
       if (error) throw error;
-      logDebug(`Categories loaded: ${data?.length || 0}`, 'success', data);
+      logDebug('Categories loaded:', data);
       setCategories(data || []);
     } catch (error: any) {
       if (!isProduction()) {
@@ -167,7 +154,6 @@ const AdminDAppForm: React.FC = () => {
         console.error('Error loading categories:', error.message || 'Failed to load categories');
       }
       setError('Failed to load categories. Please try again.');
-      logDebug('Error loading categories', 'error', error);
     }
   };
 
@@ -177,7 +163,7 @@ const AdminDAppForm: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      logDebug(`Loading dApp data for ID: ${id}`);
+      logDebug('Loading dApp data for ID:', id);
       const { data, error } = await supabase
         .from('dapps')
         .select('*')
@@ -187,7 +173,7 @@ const AdminDAppForm: React.FC = () => {
       if (error) throw error;
       
       if (data) {
-        logDebug('dApp data loaded successfully', 'success', data);
+        logDebug('dApp data loaded:', data);
         setFormData({
           name: data.name || '',
           description: data.description || '',
@@ -197,13 +183,13 @@ const AdminDAppForm: React.FC = () => {
           category_id: data.category_id || '',
           sub_category: data.sub_category || '',
           blockchains: Array.isArray(data.blockchains) ? data.blockchains : [],
-          is_new: !!data.is_new,
-          is_featured: !!data.is_featured,
           live_url: data.live_url || '',
           github_url: data.github_url || '',
           twitter_url: data.twitter_url || '',
           documentation_url: data.documentation_url || '',
-          discord_url: data.discord_url || ''
+          discord_url: data.discord_url || '',
+          is_new: Boolean(data.is_new),
+          is_featured: Boolean(data.is_featured)
         });
       }
     } catch (error: any) {
@@ -213,7 +199,6 @@ const AdminDAppForm: React.FC = () => {
         console.error('Error loading dApp:', error.message || 'Failed to load dApp data');
       }
       setError('Failed to load dApp data. Please try again.');
-      logDebug('Error loading dApp data', 'error', error);
     } finally {
       setLoading(false);
     }
@@ -223,15 +208,13 @@ const AdminDAppForm: React.FC = () => {
     if (!isEditing || !isDirty) return;
     
     setAutoSaveStatus('saving');
-    logDebug('Auto-save starting...');
     try {
       await saveDApp(true);
-      logDebug('Auto-save successful', 'success');
       setAutoSaveStatus('saved');
       setTimeout(() => setAutoSaveStatus(null), 2000);
       return true;
     } catch (error) {
-      logDebug('Auto-save failed', 'error', error);
+      console.error('Auto-save failed:', error);
       setAutoSaveStatus('error');
       setTimeout(() => setAutoSaveStatus(null), 3000);
       return false;
@@ -338,100 +321,168 @@ const AdminDAppForm: React.FC = () => {
     }
   };
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    logDebug('Form submitted', 'info', { formData });
+    logDebug('Form submitted', { formData });
+    
+    if (!validateForm()) {
+      return;
+    }
+    
     await saveDApp();
   };
 
-  const tryDirectSave = async (dataToSave: any): Promise<boolean> => {
+  // Method 1: Using the direct table insert
+  const saveWithDirectInsert = async () => {
+    const attempt = currentSaveAttempt;
+    logDebug(`Save attempt ${attempt}: Using direct table insert`);
+    
+    const dataToSave = {
+      name: formData.name.trim(),
+      description: formData.description.trim(),
+      problem_solved: formData.problem_solved.trim(),
+      logo_url: formData.logo_url.trim() || null,
+      thumbnail_url: formData.thumbnail_url.trim() || null,
+      category_id: formData.category_id || null,
+      sub_category: formData.sub_category ? formData.sub_category.trim() : '',
+      blockchains: Array.isArray(formData.blockchains) ? formData.blockchains : [],
+      is_new: formData.is_new,
+      is_featured: formData.is_featured,
+      live_url: formData.live_url.trim(),
+      github_url: formData.github_url.trim() || null,
+      twitter_url: formData.twitter_url.trim() || null,
+      documentation_url: formData.documentation_url.trim() || null,
+      discord_url: formData.discord_url.trim() || null
+    };
+    
     try {
-      logDebug('Attempting direct save to dapps table', 'info', dataToSave);
-      
-      let result;
       if (isEditing) {
-        // Update existing record
-        const { data, error } = await supabase
+        logDebug(`Save attempt ${attempt}: Updating dApp with direct table insert`, dataToSave);
+        const { error } = await supabase
           .from('dapps')
           .update(dataToSave)
-          .eq('id', id)
-          .select();
+          .eq('id', id);
         
         if (error) throw error;
-        result = { success: true, data };
-        logDebug('Direct update successful', 'success', data);
+        logDebug(`Save attempt ${attempt}: Direct table update successful`);
+        return { success: true, id };
       } else {
-        // Insert new record
+        logDebug(`Save attempt ${attempt}: Creating dApp with direct table insert`, dataToSave);
         const { data, error } = await supabase
           .from('dapps')
           .insert([dataToSave])
-          .select();
+          .select('id')
+          .single();
         
         if (error) throw error;
-        result = { success: true, data };
-        logDebug('Direct insert successful', 'success', data);
+        logDebug(`Save attempt ${attempt}: Direct table insert successful`, data);
+        return { success: true, id: data.id };
       }
-      
-      return true;
     } catch (error: any) {
-      logDebug('Direct save failed', 'error', error);
-      return false;
+      logDebug(`Save attempt ${attempt}: Direct table insert failed`, error);
+      throw error;
     }
   };
-
-  const tryRpcSave = async (dataToSave: any): Promise<boolean> => {
+  
+  // Method 2: Using the admin_save_dapp RPC function
+  const saveWithRPC = async () => {
+    const attempt = currentSaveAttempt;
+    logDebug(`Save attempt ${attempt}: Using admin_save_dapp RPC`);
+    
+    const dataToSave = {
+      name: formData.name.trim(),
+      description: formData.description.trim(),
+      problem_solved: formData.problem_solved.trim(),
+      logo_url: formData.logo_url.trim() || null,
+      thumbnail_url: formData.thumbnail_url.trim() || null,
+      category_id: formData.category_id || null,
+      sub_category: formData.sub_category ? formData.sub_category.trim() : '',
+      blockchains: Array.isArray(formData.blockchains) ? formData.blockchains : [],
+      is_new: formData.is_new,
+      is_featured: formData.is_featured,
+      live_url: formData.live_url.trim(),
+      github_url: formData.github_url.trim() || null,
+      twitter_url: formData.twitter_url.trim() || null,
+      documentation_url: formData.documentation_url.trim() || null,
+      discord_url: formData.discord_url.trim() || null
+    };
+    
+    if (isEditing) {
+      dataToSave.id = id;
+    }
+    
     try {
-      const operation = isEditing ? 'UPDATE' : 'INSERT';
-      logDebug(`Attempting RPC save with operation: ${operation}`, 'info', dataToSave);
-      
-      const { data, error } = await supabase
-        .rpc('admin_save_dapp', {
+      logDebug(`Save attempt ${attempt}: Calling admin_save_dapp RPC`, dataToSave);
+      const { data, error } = await supabase.rpc(
+        'admin_save_dapp', 
+        { 
           p_dapp_data: dataToSave,
-          p_operation: operation
-        });
+          p_operation: isEditing ? 'UPDATE' : 'INSERT'
+        }
+      );
       
-      if (error) {
-        logDebug('RPC call error', 'error', error);
-        throw error;
+      if (error) throw error;
+      
+      if (!data.success) {
+        logDebug(`Save attempt ${attempt}: RPC returned failure`, data);
+        throw new Error(data.error || 'Failed to save dApp');
       }
+      
+      logDebug(`Save attempt ${attempt}: RPC save successful`, data);
+      return { success: true, id: data.id };
+    } catch (error: any) {
+      logDebug(`Save attempt ${attempt}: RPC save failed`, error);
+      throw error;
+    }
+  };
+  
+  // Method 3: Using the simple_insert_dapp RPC function (fallback)
+  const saveWithSimpleRPC = async () => {
+    const attempt = currentSaveAttempt;
+    logDebug(`Save attempt ${attempt}: Using simple_insert_dapp RPC fallback`);
+    
+    const dataToSave = {
+      name: formData.name.trim(),
+      description: formData.description.trim(),
+      problem_solved: formData.problem_solved.trim(),
+      logo_url: formData.logo_url.trim() || null,
+      thumbnail_url: formData.thumbnail_url.trim() || null,
+      category_id: formData.category_id || null,
+      sub_category: formData.sub_category ? formData.sub_category.trim() : '',
+      blockchains: Array.isArray(formData.blockchains) ? formData.blockchains : [],
+      is_new: formData.is_new,
+      is_featured: formData.is_featured,
+      live_url: formData.live_url.trim(),
+      github_url: formData.github_url.trim() || null,
+      twitter_url: formData.twitter_url.trim() || null,
+      documentation_url: formData.documentation_url.trim() || null,
+      discord_url: formData.discord_url.trim() || null
+    };
+    
+    try {
+      logDebug(`Save attempt ${attempt}: Calling simple_insert_dapp RPC`, dataToSave);
+      const { data, error } = await supabase.rpc(
+        'simple_insert_dapp', 
+        { p_dapp_data: dataToSave }
+      );
+      
+      if (error) throw error;
       
       if (!data || !data.success) {
-        logDebug('RPC call returned failure', 'error', data);
-        throw new Error(data?.error || 'RPC operation failed');
+        logDebug(`Save attempt ${attempt}: Simple RPC returned failure`, data);
+        throw new Error((data && data.error) || 'Failed to save dApp');
       }
       
-      logDebug('RPC save successful', 'success', data);
-      return true;
+      logDebug(`Save attempt ${attempt}: Simple RPC save successful`, data);
+      return { success: true, id: data.id };
     } catch (error: any) {
-      logDebug('RPC save failed', 'error', error);
-      return false;
+      logDebug(`Save attempt ${attempt}: Simple RPC save failed`, error);
+      throw error;
     }
   };
 
-  const tryFallbackDirectInsert = async (dataToSave: any): Promise<boolean> => {
-    try {
-      logDebug('Attempting fallback direct_insert_dapp RPC', 'info', dataToSave);
-      const { data, error } = await directInsertDApp(dataToSave);
-      
-      if (error) {
-        logDebug('Fallback direct insert failed', 'error', error);
-        return false;
-      }
-      
-      logDebug('Fallback direct insert successful', 'success', data);
-      return true;
-    } catch (error) {
-      logDebug('Fallback direct insert exception', 'error', error);
-      return false;
-    }
-  }
-
   const saveDApp = async (isAutoSave = false) => {
-    saveAttemptRef.current += 1;
-    const saveId = saveAttemptRef.current;
-    
     if (!isAutoSave && !validateForm()) {
-      logDebug(`Save attempt ${saveId}: Form validation failed`, 'error', validationErrors);
       return;
     }
     
@@ -439,103 +490,71 @@ const AdminDAppForm: React.FC = () => {
     setError(null);
     setSaveSuccess(false);
     
-    try {
-      logDebug(`Save attempt ${saveId}: Starting save process (${isEditing ? 'update' : 'insert'})`, 'info');
+    // Increment save attempt counter
+    const attemptNum = currentSaveAttempt + 1;
+    setCurrentSaveAttempt(attemptNum);
+    
+    logDebug(`Save attempt ${attemptNum}: Starting save process (${isEditing ? 'update' : 'insert'})`);
+    
+    const methods = [
+      // Try the RPC function first
+      { name: 'RPC Method', fn: saveWithRPC },
       
-      // Prepare data for saving
-      const dataToSave = {
-        name: formData.name.trim(),
-        description: formData.description.trim(),
-        problem_solved: formData.problem_solved.trim(),
-        logo_url: formData.logo_url.trim() || null,
-        thumbnail_url: formData.thumbnail_url.trim() || null,
-        category_id: formData.category_id || null,
-        sub_category: formData.sub_category ? formData.sub_category.trim() : '',
-        blockchains: Array.isArray(formData.blockchains) ? formData.blockchains : [],
-        is_new: !!formData.is_new,
-        is_featured: !!formData.is_featured,
-        live_url: formData.live_url.trim(),
-        github_url: formData.github_url.trim() || null,
-        twitter_url: formData.twitter_url.trim() || null,
-        documentation_url: formData.documentation_url.trim() || null,
-        discord_url: formData.discord_url.trim() || null
-      };
+      // If that fails, try direct table insert
+      { name: 'Direct Insert Method', fn: saveWithDirectInsert },
       
-      if (isEditing && id) {
-        dataToSave.id = id;
-      }
-      
-      logDebug(`Save attempt ${saveId}: Prepared data`, 'info', dataToSave);
-      
-      // First try saving via RPC
-      const rpcSuccess = await tryRpcSave(dataToSave);
-      
-      // If RPC fails, try direct table operation
-      let success = rpcSuccess;
-      
-      if (!rpcSuccess) {
-        logDebug(`Save attempt ${saveId}: RPC method failed, trying direct table operation`, 'info');
-        const directSuccess = await tryDirectSave(dataToSave);
-        success = directSuccess;
-        
-        // If both methods fail, try the fallback direct insert function
-        if (!directSuccess) {
-          logDebug(`Save attempt ${saveId}: Direct save failed, trying fallback method`, 'info');
-          const fallbackSuccess = await tryFallbackDirectInsert(dataToSave);
-          success = fallbackSuccess;
-          
-          if (!fallbackSuccess) {
-            throw new Error("All save methods failed");
-          }
-        }
-      }
+      // If that fails too, try the simple insert RPC
+      { name: 'Simple RPC Method', fn: saveWithSimpleRPC }
+    ];
+    
+    let succeeded = false;
+    let lastError = null;
+    let savedId = null;
 
-      if (success) {
-        logDebug(`Save attempt ${saveId}: Save successful`, 'success');
-        
-        if (!isAutoSave) {
-          setIsDirty(false);
-          setSaveSuccess(true);
-          
-          // Delay navigation to show success message
-          setTimeout(() => {
-            logDebug(`Save attempt ${saveId}: Preparing to navigate to dApps list`, 'info');
-            const navigateToList = () => {
-              logDebug(`Save attempt ${saveId}: Navigating to /admin/dapps`, 'info');
-              navigate('/admin/dapps');
-            };
-            
-            // Try navigation with navigate(), fallback to window.location
-            try {
-              navigateToList();
-            } catch (navError) {
-              logDebug(`Save attempt ${saveId}: Navigate() failed, using window.location`, 'error', navError);
-              window.location.href = '/admin/dapps';
-            }
-          }, 2000);
-        }
-      } else {
-        throw new Error("Save operation failed");
-      }
-    } catch (error: any) {
-      const errorMessage = error.message || 'Failed to save dApp. Please try again.';
+    for (const method of methods) {
+      if (succeeded) break;
       
-      logDebug(`Save attempt ${saveId}: Save failed with error`, 'error', error);
+      try {
+        logDebug(`Save attempt ${attemptNum}: Trying ${method.name}`);
+        const result = await method.fn();
+        if (result && result.success) {
+          logDebug(`Save attempt ${attemptNum}: ${method.name} succeeded`, result);
+          succeeded = true;
+          savedId = result.id;
+          break;
+        } else {
+          logDebug(`Save attempt ${attemptNum}: ${method.name} failed with no error`, result);
+        }
+      } catch (error: any) {
+        lastError = error;
+        logDebug(`Save attempt ${attemptNum}: ${method.name} failed with error`, error);
+        // Continue to next method
+      }
+    }
+    
+    if (succeeded) {
+      logDebug(`Save attempt ${attemptNum}: Save succeeded using one of the methods`);
+      if (!isAutoSave) {
+        setIsDirty(false);
+        setSaveSuccess(true);
+        
+        // Delay navigation to show success message
+        setTimeout(() => {
+          navigate('/admin/dapps');
+        }, 2000);
+      }
+    } else {
+      const errorMessage = lastError?.message || lastError?.error?.message || 'Failed to save dApp after trying multiple methods';
+      logDebug(`Save attempt ${attemptNum}: All save methods failed`, { error: errorMessage });
       setError(errorMessage);
       
-      // Log additional details about the save attempt
-      console.error('Save error details:', {
-        error,
-        isEditing,
-        id,
-        formData: { ...formData, blockchains: formData.blockchains.length }
-      });
-      
-      throw error;
-    } finally {
-      setSaving(false);
-      logDebug(`Save attempt ${saveId}: Save operation completed`, 'info');
+      if (!isAutoSave) {
+        throw new Error(errorMessage);
+      }
     }
+    
+    setSaving(false);
+    return succeeded;
   };
 
   const selectedCategory = categories.find(cat => cat.id === formData.category_id);
@@ -603,13 +622,6 @@ const AdminDAppForm: React.FC = () => {
           {/* Action buttons */}
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setShowDebugPanel(!showDebugPanel)}
-              className="flex items-center px-3 py-2 bg-gray-800 border border-gray-700 hover:bg-gray-700 text-white rounded-lg transition-colors"
-              title="Toggle debug panel"
-            >
-              <Info className="w-4 h-4" />
-            </button>
-            <button
               onClick={() => setShowPreview(!showPreview)}
               className="flex items-center px-4 py-2 bg-gray-800 border border-gray-700 hover:bg-gray-700 text-white rounded-lg transition-colors"
             >
@@ -617,14 +629,7 @@ const AdminDAppForm: React.FC = () => {
               {showPreview ? 'Hide Preview' : 'Preview'}
             </button>
             <button
-              onClick={() => {
-                const form = document.getElementById('dapp-form');
-                if (form) {
-                  form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-                } else {
-                  saveDApp();
-                }
-              }}
+              onClick={handleSubmit}
               disabled={saving}
               className="flex items-center px-6 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 text-white rounded-lg transition-colors"
             >
@@ -642,65 +647,6 @@ const AdminDAppForm: React.FC = () => {
             </button>
           </div>
         </div>
-
-        {/* Debug Panel */}
-        <AnimatePresence>
-          {showDebugPanel && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mb-6 bg-gray-900 border border-gray-700 rounded-xl overflow-hidden"
-            >
-              <div className="bg-gray-800 p-3 flex items-center justify-between">
-                <h3 className="text-sm font-medium text-white">Debug Panel</h3>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setDebugLogs([])}
-                    className="text-xs px-2 py-1 bg-gray-700 text-gray-300 hover:bg-gray-600 rounded"
-                  >
-                    Clear
-                  </button>
-                  <button
-                    onClick={() => setShowDebugPanel(false)}
-                    className="text-gray-400 hover:text-gray-300"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-              
-              <div className="p-3 max-h-60 overflow-y-auto text-xs font-mono">
-                {debugLogs.length === 0 ? (
-                  <p className="text-gray-500">No logs yet. Actions will be recorded here.</p>
-                ) : (
-                  <div className="space-y-1">
-                    {debugLogs.map((log, index) => (
-                      <div 
-                        key={index} 
-                        className={`p-1 rounded ${
-                          log.type === 'error' ? 'bg-red-900/30 text-red-300' :
-                          log.type === 'success' ? 'bg-green-900/30 text-green-300' :
-                          'text-blue-300'
-                        }`}
-                      >
-                        <span className="text-gray-500">[{log.timestamp}]</span>{' '}
-                        {log.message}
-                        {log.details && (
-                          <div className="ml-4 mt-1 text-gray-400 overflow-x-auto">
-                            {typeof log.details === 'object' 
-                              ? JSON.stringify(log.details, null, 2)
-                              : log.details}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* Success Message */}
         {saveSuccess && (
@@ -740,11 +686,31 @@ const AdminDAppForm: React.FC = () => {
           </motion.div>
         )}
 
+        {/* Debug Panel (for development) */}
+        <div className="mb-6 bg-gray-900 border border-gray-800 rounded-lg overflow-hidden">
+          <div className="flex items-center justify-between bg-gray-800 px-4 py-2">
+            <h3 className="text-sm font-medium text-white">Debug Panel</h3>
+            <button 
+              onClick={() => setDebugLogs([])}
+              className="text-gray-400 hover:text-white text-xs"
+            >
+              Clear
+            </button>
+          </div>
+          <div className="p-4 max-h-40 overflow-y-auto">
+            <pre className="text-xs text-gray-400 font-mono">
+              {debugLogs.length === 0 
+                ? "No debug logs yet. Actions will be logged here."
+                : debugLogs.join('\n\n')}
+            </pre>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Form */}
           <div className="lg:col-span-2 space-y-8">
             {/* Basic Information */}
-            <form id="dapp-form" onSubmit={handleFormSubmit} className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
+            <form onSubmit={handleSubmit} className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
               <h2 className="text-xl font-bold text-white mb-6">Basic Information</h2>
               
               <div className="space-y-6">
@@ -849,32 +815,10 @@ const AdminDAppForm: React.FC = () => {
                     </p>
                   )}
                 </div>
-                
-                <div className="flex justify-end">
-                  <button 
-                    type="submit"
-                    className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center"
-                    disabled={saving}
-                  >
-                    {saving ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4 mr-2" />
-                        {isEditing ? 'Update dApp' : 'Create dApp'}
-                      </>
-                    )}
-                  </button>
-                </div>
               </div>
-            </form>
 
-            {/* Media Assets */}
-            <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
-              <h2 className="text-xl font-bold text-white mb-6">Media Assets</h2>
+              {/* Media Assets */}
+              <h2 className="text-xl font-bold text-white mb-6 mt-8">Media Assets</h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Logo Upload */}
@@ -895,15 +839,14 @@ const AdminDAppForm: React.FC = () => {
                     {validationErrors.logo_url && (
                       <p className="mt-1 text-sm text-red-400">{validationErrors.logo_url}</p>
                     )}
-                    {formData.logo_url && isValidSafeUrl(formData.logo_url) && (
+                    {formData.logo_url && (
                       <div className="relative">
                         <img
-                          src={formData.logo_url}
+                          src={isValidSafeUrl(formData.logo_url) ? formData.logo_url : ''}
                           alt="Logo preview"
                           className="w-20 h-20 object-cover rounded-lg border border-gray-600"
                           onError={(e) => {
                             e.currentTarget.style.display = 'none';
-                            logDebug('Logo image failed to load', 'error', { url: formData.logo_url });
                           }}
                         />
                       </div>
@@ -929,15 +872,14 @@ const AdminDAppForm: React.FC = () => {
                     {validationErrors.thumbnail_url && (
                       <p className="mt-1 text-sm text-red-400">{validationErrors.thumbnail_url}</p>
                     )}
-                    {formData.thumbnail_url && isValidSafeUrl(formData.thumbnail_url) && (
+                    {formData.thumbnail_url && (
                       <div className="relative">
                         <img
-                          src={formData.thumbnail_url}
+                          src={isValidSafeUrl(formData.thumbnail_url) ? formData.thumbnail_url : ''}
                           alt="Thumbnail preview"
                           className="w-full h-32 object-cover rounded-lg border border-gray-600"
                           onError={(e) => {
                             e.currentTarget.style.display = 'none';
-                            logDebug('Thumbnail image failed to load', 'error', { url: formData.thumbnail_url });
                           }}
                         />
                       </div>
@@ -945,11 +887,9 @@ const AdminDAppForm: React.FC = () => {
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Categorization */}
-            <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
-              <h2 className="text-xl font-bold text-white mb-6">Categorization</h2>
+              {/* Categorization */}
+              <h2 className="text-xl font-bold text-white mb-6 mt-8">Categorization</h2>
               
               <div className="space-y-6">
                 {/* Primary Category */}
@@ -1045,11 +985,9 @@ const AdminDAppForm: React.FC = () => {
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Social Links */}
-            <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
-              <h2 className="text-xl font-bold text-white mb-6">Social Links & Resources</h2>
+              {/* Social Links */}
+              <h2 className="text-xl font-bold text-white mb-6 mt-8">Social Links & Resources</h2>
               
               <div className="space-y-4">
                 {/* GitHub */}
@@ -1152,9 +1090,7 @@ const AdminDAppForm: React.FC = () => {
                   )}
                 </div>
               </div>
-            </div>
-
-            {/* Additional Information */}
+            </form>
           </div>
 
           {/* Sidebar */}
