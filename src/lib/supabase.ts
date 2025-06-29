@@ -54,13 +54,6 @@ export interface DApp {
   twitter_url?: string;
   documentation_url?: string;
   discord_url?: string;
-  founded?: string;
-  team?: string;
-  total_value_locked?: string;
-  daily_active_users?: string;
-  transactions?: string;
-  audits?: string[];
-  licenses?: string[];
   created_at: string;
   updated_at: string;
 }
