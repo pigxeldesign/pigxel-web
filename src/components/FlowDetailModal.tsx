@@ -155,12 +155,6 @@ const FlowDetailModal: React.FC<FlowDetailModalProps> = ({
               <button className="p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors">
                 <Share className="w-4 h-4" />
               </button>
-              <button
-                onClick={onClose}
-                className="p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
             </div>
           </div>
 
