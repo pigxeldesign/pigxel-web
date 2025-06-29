@@ -46,6 +46,23 @@ const FlowDetailModal: React.FC<FlowDetailModalProps> = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [autoPlayInterval, setAutoPlayInterval] = useState<NodeJS.Timeout | null>(null);
 
+  // Clean up interval when modal closes
+  React.useEffect(() => {
+    if (!isOpen) {
+      stopAutoPlay();
+      setCurrentScreenIndex(initialScreenIndex);
+    }
+  }, [isOpen, initialScreenIndex]);
+
+  // Clean up interval on unmount
+  React.useEffect(() => {
+    return () => {
+      if (autoPlayInterval) {
+        clearInterval(autoPlayInterval);
+      }
+    };
+  }, [autoPlayInterval]);
+
   if (!flow) return null;
 
   const currentScreen = flow.screens[currentScreenIndex];
@@ -89,22 +106,6 @@ const FlowDetailModal: React.FC<FlowDetailModalProps> = ({
     setCurrentScreenIndex(0);
   };
 
-  // Clean up interval when modal closes
-  React.useEffect(() => {
-    if (!isOpen) {
-      stopAutoPlay();
-      setCurrentScreenIndex(initialScreenIndex);
-    }
-  }, [isOpen, initialScreenIndex]);
-
-  // Clean up interval on unmount
-  React.useEffect(() => {
-    return () => {
-      if (autoPlayInterval) {
-        clearInterval(autoPlayInterval);
-      }
-    };
-  }, [autoPlayInterval]);
   const nextScreen = () => {
     if (isPlaying) return; // Don't allow manual navigation during auto-play
     setCurrentScreenIndex((prev) => 
@@ -147,6 +148,7 @@ const FlowDetailModal: React.FC<FlowDetailModalProps> = ({
               <button className="p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors">
                 onClick={resetFlow}
                 disabled={isPlaying}
+                className="p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
                 <RotateCcw className="w-4 h-4" />
               </button>
               <button className="p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors">
