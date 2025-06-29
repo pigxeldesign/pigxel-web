@@ -79,7 +79,7 @@ const AdminDAppForm: React.FC = () => {
   
   // UI state
   const [loading, setLoading] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const [showPreview, setShowPreview] = useState(false);
