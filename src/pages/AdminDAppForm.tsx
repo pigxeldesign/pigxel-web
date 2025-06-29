@@ -134,7 +134,7 @@ const AdminDAppForm: React.FC = () => {
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [formData, flowScreens, isDirty]);
+  }, [formData, isDirty]);
 
   const loadCategories = async () => {
     try {
