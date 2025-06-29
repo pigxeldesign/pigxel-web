@@ -715,7 +715,7 @@ const AdminDAppsManagement: React.FC = () => {
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button 
-                              onClick={() => window.open(dapp.live_url, '_blank')}
+                              onClick={() => navigate(`/dapp/${dapp.id}`)}
                               className="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-600/20 rounded-lg transition-colors"
                               title="View Live"
                             >
