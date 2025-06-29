@@ -45,27 +45,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
+          // Handle refresh token errors by clearing session
+          if (error.message?.includes('refresh_token_not_found') || 
+              error.message?.includes('Invalid Refresh Token')) {
+            console.log('AuthProvider: Invalid refresh token detected, clearing session...');
+            await supabase.auth.signOut();
+            setSession(null);
+            setUser(null);
+            setProfile(null);
+          } else {
           if (!isProduction()) {
             console.error('AuthProvider: Error getting session:', error);
           } else {
             console.error('AuthProvider: Error getting session:', error.message);
           }
+          }
         } else {
           console.log('AuthProvider: Initial session:', session?.user?.email || 'No session');
-        }
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          console.log('AuthProvider: User found, fetching profile...');
-          await fetchProfile(session.user.id);
-        } else {
-          console.log('AuthProvider: No user found');
-          setProfile(null);
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            console.log('AuthProvider: User found, fetching profile...');
+            await fetchProfile(session.user.id);
+          } else {
+            console.log('AuthProvider: No user found');
+            setProfile(null);
+          }
         }
       } catch (error) {
         console.error('AuthProvider: Error during initialization:', error);
+        // Clear any corrupted session data
+        await supabase.auth.signOut();
+        setSession(null);
+        setUser(null);
+        setProfile(null);
       } finally {
         console.log('AuthProvider: Initialization complete');
         setLoading(false);
@@ -88,6 +102,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
       
       try {
+        // Handle token refresh errors
+        if (event === 'TOKEN_REFRESHED' && !session) {
+          console.log('AuthProvider: Token refresh failed, clearing session...');
+          await supabase.auth.signOut();
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          return;
+        }
+        
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -102,7 +126,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log('Auth state changed. User:', session?.user, 'Profile:', profile, 'Is Admin:', isAdmin);
       } catch (error) {
         console.error('AuthProvider: Error during auth state change:', error);
-        // Ensure we still clear the profile on error
+        // Clear session data on error
+        await supabase.auth.signOut();
+        setSession(null);
+        setUser(null);
         setProfile(null);
       }
       console.log('AuthProvider: Auth state change complete');
