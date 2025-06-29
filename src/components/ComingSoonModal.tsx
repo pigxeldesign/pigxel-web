@@ -58,8 +58,7 @@ const ComingSoonModal: React.FC<ComingSoonModalProps> = ({ isOpen, onClose }) =>
           
           <div className="bg-blue-600/20 border border-blue-500/30 rounded-lg p-4 mb-4">
             <p className="text-sm text-blue-100">
-              Our AI-powered comparison tool is currently in development. 
-              We're working hard to bring you intelligent insights across Web3 platforms.
+              Our AI-powered tool is being perfected. We're working hard to bring you intelligent insights across Web3 utility platforms.
             </p>
           </div>
           
