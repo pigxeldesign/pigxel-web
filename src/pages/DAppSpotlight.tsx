@@ -568,7 +568,16 @@ const DAppSpotlight: React.FC = () => {
                     )}
 
                     {/* Flow Description */}
-                    <p className="text-gray-400 text-xs sm:text-sm mt-3 sm:mt-4">{flow.description}</p>
+                    <span className="flex items-center gap-2 justify-end cursor-pointer mt-3 sm:mt-4">
+                      <p className="text-gray-400 text-xs sm:text-sm flex-1">{flow.description}</p>
+                      <img
+                        src="/ChatGPT_Image_29_Jun_2025__15.05.43-removebg-preview.png"
+                        alt="AI Comparison Flow"
+                        width={20}
+                        height={20}
+                      />
+                      <span className="text-blue-500 hover:underline text-xs sm:text-sm">AI Comparison Flow</span>
+                    </span>
                   </motion.div>
                 ))}
               </div>
