@@ -37,8 +37,6 @@ interface DAppFormData {
   category_id: string;
   sub_category: string;
   blockchains: string[];
-  rating: number | null;
-  user_count: string;
   is_new: boolean;
   is_featured: boolean;
   live_url: string;
@@ -74,8 +72,6 @@ const AdminDAppForm: React.FC = () => {
     category_id: '',
     sub_category: '',
     blockchains: [],
-    rating: null,
-    user_count: '',
     is_new: false,
     is_featured: false,
     live_url: '',
@@ -166,8 +162,6 @@ const AdminDAppForm: React.FC = () => {
           category_id: data.category_id || '',
           sub_category: data.sub_category || '',
           blockchains: data.blockchains || [],
-          rating: data.rating,
-          user_count: data.user_count || '',
           is_new: data.is_new || false,
           is_featured: data.is_featured || false,
           live_url: data.live_url || '',
@@ -321,8 +315,6 @@ const AdminDAppForm: React.FC = () => {
         category_id: formData.category_id || null,
         sub_category: formData.sub_category.trim(),
         blockchains: formData.blockchains,
-        rating: formData.rating,
-        user_count: formData.user_count.trim() || null,
         is_new: formData.is_new,
         is_featured: formData.is_featured,
         live_url: formData.live_url.trim(),
