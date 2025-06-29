@@ -312,10 +312,12 @@ const AdminDAppForm: React.FC = () => {
   };
 
   const saveDApp = async (isAutoSave = false) => {
+    // First validate the form - don't set saving state until validation passes
     if (!isAutoSave && !validateForm()) {
       return;
     }
     
+    // Now that validation has passed, set the saving state
     setSaving(true);
     setError(null);
     setSaveSuccess(false);
