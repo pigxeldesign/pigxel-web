@@ -454,7 +454,7 @@ const DAppSpotlight: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="mb-6 sm:mb-8"
+              className="mb-4 sm:mb-6"
             >
               <div className="mb-4 sm:mb-6">
                 <h2 className="text-xl sm:text-2xl font-bold text-white">User Flows & Tutorials</h2>
@@ -590,6 +590,36 @@ const DAppSpotlight: React.FC = () => {
               </p>
             </motion.div>
           )}
+          
+          {/* AI Comparison Flow Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="mb-6 sm:mb-8"
+          >
+            <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-xl p-4 sm:p-6 border border-blue-500/20">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="flex-1">
+                  <h3 className="text-lg sm:text-xl font-bold text-white mb-2">AI-Powered Comparison</h3>
+                  <p className="text-gray-300 text-sm sm:text-base">
+                    Compare this dApp with similar alternatives using our AI-powered analysis tool.
+                  </p>
+                </div>
+                <Link 
+                  to={`/ai-comparison/${dapp.id}`}
+                  className="flex items-center px-4 sm:px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors text-sm sm:text-base group"
+                >
+                  <img 
+                    src="/ChatGPT_Image_29_Jun_2025__15.05.43-removebg-preview.png" 
+                    alt="" 
+                    className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform"
+                  />
+                  AI Comparison Flow
+                </Link>
+              </div>
+            </div>
+          </motion.div>
           
           {/* Creation Info */}
           <motion.div
