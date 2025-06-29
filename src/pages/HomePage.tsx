@@ -60,8 +60,6 @@ const HomePage: React.FC = () => {
       thumbnail: 'https://images.pexels.com/photos/730547/pexels-photo-730547.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop',
       subCategory: 'Wallets',
       blockchains: ['Ethereum', 'Polygon', 'BSC'],
-      rating: 4.8,
-      userCount: '30M+',
       isFeatured: true
     },
     {
@@ -72,8 +70,6 @@ const HomePage: React.FC = () => {
       thumbnail: 'https://images.pexels.com/photos/844124/pexels-photo-844124.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop',
       subCategory: 'Wallets',
       blockchains: ['Ethereum', 'Bitcoin', 'Polygon'],
-      rating: 4.6,
-      userCount: '15M+',
       isNew: true
     },
     {
@@ -84,8 +80,6 @@ const HomePage: React.FC = () => {
       thumbnail: 'https://images.pexels.com/photos/1181298/pexels-photo-1181298.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop',
       subCategory: 'Educational',
       blockchains: ['Ethereum', 'Arbitrum', 'Optimism'],
-      rating: 4.7,
-      userCount: '500K+',
       isFeatured: true
     },
     {
@@ -96,8 +90,6 @@ const HomePage: React.FC = () => {
       thumbnail: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop',
       subCategory: 'Educational',
       blockchains: ['Ethereum', 'Solana', 'Polygon'],
-      rating: 4.9,
-      userCount: '200K+',
       isNew: true
     },
     {
@@ -108,8 +100,6 @@ const HomePage: React.FC = () => {
       thumbnail: 'https://images.pexels.com/photos/1181263/pexels-photo-1181263.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop',
       subCategory: 'DeFi',
       blockchains: ['Ethereum', 'Polygon', 'Arbitrum'],
-      rating: 4.8,
-      userCount: '4M+',
       isFeatured: true
     },
     {
@@ -120,8 +110,6 @@ const HomePage: React.FC = () => {
       thumbnail: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop',
       subCategory: 'Lending',
       blockchains: ['Ethereum', 'Polygon', 'Avalanche'],
-      rating: 4.7,
-      userCount: '800K+',
       isFeatured: true
     },
     {
@@ -132,8 +120,6 @@ const HomePage: React.FC = () => {
       thumbnail: 'https://images.pexels.com/photos/1181316/pexels-photo-1181316.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop',
       subCategory: 'NFT Marketplaces',
       blockchains: ['Ethereum', 'Polygon', 'Klaytn'],
-      rating: 4.5,
-      userCount: '2M+',
       isFeatured: true
     },
     {
@@ -144,8 +130,6 @@ const HomePage: React.FC = () => {
       thumbnail: 'https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop',
       subCategory: 'Art Platforms',
       blockchains: ['Ethereum'],
-      rating: 4.6,
-      userCount: '150K+',
       isNew: true
     }
   ];
@@ -346,8 +330,7 @@ const HomePage: React.FC = () => {
                         </h3>
                       </div>
                       <div className="flex items-center text-xs text-gray-400">
-                        <Star className="w-3 h-3 text-yellow-500 mr-1" />
-                        {dapp.rating}
+                        <Star className="w-3 h-3 text-yellow-500" />
                       </div>
                     </div>
 
@@ -361,10 +344,6 @@ const HomePage: React.FC = () => {
                       <span className="px-2 py-1 bg-purple-600/20 text-purple-300 text-xs rounded-full">
                         {dapp.subCategory}
                       </span>
-                      <div className="flex items-center text-xs text-gray-500">
-                        <UsersIcon className="w-3 h-3 mr-1" />
-                        {dapp.userCount}
-                      </div>
                     </div>
 
                     {/* Blockchains */}
