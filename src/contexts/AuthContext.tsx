@@ -155,10 +155,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } else {
         console.error('AuthProvider: Unexpected error fetching profile. Please try again.');
       }
-        console.error('AuthProvider: Error during initialization:', error);
-      } else {
-        console.error('AuthProvider: Error during initialization. Please try again.');
-      }
       setProfile(null);
     }
   };
