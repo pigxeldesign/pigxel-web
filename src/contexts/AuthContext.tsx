@@ -31,7 +31,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [initializing, setInitializing] = useState(true);
+  const [initialized, setInitialized] = useState(false);
 
   const isAdmin = profile?.user_type === 'admin';
 
@@ -69,7 +69,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } finally {
         console.log('AuthProvider: Initialization complete');
         setLoading(false);
-        setInitializing(false);
+        setInitialized(true);
       }
     };
 
@@ -81,8 +81,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('AuthProvider: Auth state changed:', event, session?.user?.email || 'No user');
       
+      // Skip processing if we haven't initialized yet
+      if (!initialized) {
+        console.log('AuthProvider: Skipping auth state change - not initialized yet');
+        return;
+      }
+      
       try {
-        setLoading(true);
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -99,27 +104,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.error('AuthProvider: Error during auth state change:', error);
         // Ensure we still clear the profile on error
         setProfile(null);
-      } finally {
-        setLoading(false);
-        console.log('AuthProvider: Auth state change complete');
       }
+      console.log('AuthProvider: Auth state change complete');
     });
 
     return () => {
       console.log('AuthProvider: Cleaning up subscription');
       subscription.unsubscribe();
     };
-  }, []);
+  }, [initialized]);
 
-  // Update initializing state after first render
-  useEffect(() => {
-    if (initializing) {
-      const timer = setTimeout(() => {
-        setInitializing(false);
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [initializing]);
 
   const fetchProfile = async (userId: string) => {
     try {
