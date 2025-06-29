@@ -603,7 +603,20 @@ const AdminFlowsManagement: React.FC = () => {
                                 ) : (
                                   <Trash2 className="w-4 h-4" />
                                 )}
-                              </button>
+                            {flow.dapp_logo ? (
+                              <div className="w-6 h-6 rounded-md overflow-hidden">
+                                <img 
+                                  src={flow.dapp_logo} 
+                                  alt={flow.dapp_name}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                  }}
+                                />
+                              </div>
+                            ) : (
+                              <span className="text-lg">📱</span>
+                            )}
                             </div>
                           </div>
                         </div>
