@@ -22,10 +22,6 @@ export const useAuth = () => {
   return context;
 };
 
-interface AuthProviderProps {
-  children: React.ReactNode;
-}
-
 export const useIsAdmin = () => {
   const { isAdmin } = useAuth();
   return isAdmin;
@@ -35,6 +31,10 @@ export const useIsAdmin = () => {
 const isProduction = () => {
   return import.meta.env.MODE === 'production';
 };
+
+interface AuthProviderProps {
+  children: React.ReactNode;
+}
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);

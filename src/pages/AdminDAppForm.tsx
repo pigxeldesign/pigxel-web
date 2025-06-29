@@ -738,9 +738,9 @@ const AdminDAppForm: React.FC = () => {
                       <p className="mt-1 text-sm text-red-400">{validationErrors.logo_url}</p>
                     )}
                     {formData.logo_url && (
-                      <div className="relative">
+                      <div className="mt-2">
                         <img
-                         src={isValidSafeUrl(formData.logo_url) ? formData.logo_url : ''}
+                          src={isValidSafeUrl(formData.logo_url) ? formData.logo_url : ''}
                           alt="Logo preview"
                           className="w-20 h-20 object-cover rounded-lg border border-gray-600"
                           onError={(e) => {
