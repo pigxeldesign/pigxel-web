@@ -334,7 +334,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         {/* Main Content */}
         <main 
           className={`flex-1 transition-all duration-300 ${
-            isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-80'
+            isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-70'
           }`}
         >
           {children}

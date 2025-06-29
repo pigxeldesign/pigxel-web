@@ -61,15 +61,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
       <motion.aside
         initial={false}
         animate={{
-          width: isCollapsed ? 0 : 280,
-          x: isCollapsed ? -280 : 0,
+          width: isCollapsed ? 0 : 256,
+          x: isCollapsed ? -256 : 0,
         }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-gray-900 border-r border-gray-800 overflow-hidden z-50 lg:z-30 lg:relative ${
-          isCollapsed ? 'lg:w-0' : 'lg:w-70'
+        className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-gray-900 border-r border-gray-800 overflow-hidden z-50 lg:z-30 ${
+          isCollapsed ? 'lg:w-0' : 'lg:w-64'
         }`}
       >
-        <div className="w-70 h-full overflow-y-auto overscroll-contain">
+        <div className="w-64 h-full overflow-y-auto overscroll-contain">
           {/* Toggle Button */}
           <div className="flex justify-end p-4 lg:hidden">
             <button
@@ -187,11 +187,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
       <motion.button
         initial={false}
         animate={{
-          left: isCollapsed ? 0 : 280,
+          left: isCollapsed ? 0 : 256,
         }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
         onClick={onToggle}
-        className="hidden lg:flex absolute top-4 -right-4 z-40 items-center justify-center w-8 h-8 bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-gray-600 text-gray-400 hover:text-white rounded-full transition-all duration-200 group shadow-lg"
+        className="hidden lg:flex fixed top-20 z-40 items-center justify-center w-8 h-8 bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-gray-600 text-gray-400 hover:text-white rounded-r-lg transition-all duration-200 group"
         title={isCollapsed ? 'Open sidebar' : 'Close sidebar'}
       >
         <motion.div
