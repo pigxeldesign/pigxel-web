@@ -46,13 +46,6 @@ interface DAppFormData {
   twitter_url: string;
   documentation_url: string;
   discord_url: string;
-  founded: string;
-  team: string;
-  total_value_locked: string;
-  daily_active_users: string;
-  transactions: string;
-  audits: string[];
-  licenses: string[];
 }
 
 interface Category {
@@ -89,14 +82,7 @@ const AdminDAppForm: React.FC = () => {
     github_url: '',
     twitter_url: '',
     documentation_url: '',
-    discord_url: '',
-    founded: '',
-    team: '',
-    total_value_locked: '',
-    daily_active_users: '',
-    transactions: '',
-    audits: [],
-    licenses: []
+    discord_url: ''
   });
   
   // UI state
@@ -113,10 +99,6 @@ const AdminDAppForm: React.FC = () => {
   const blockchainOptions = [
     'Ethereum', 'Polygon', 'BSC', 'Arbitrum', 'Optimism', 'Avalanche', 
     'Solana', 'Cardano', 'Polkadot', 'Cosmos', 'Near', 'Fantom'
-  ];
-  
-  const licenseOptions = [
-    'MIT', 'Apache 2.0', 'GPL v3', 'BSD 3-Clause', 'ISC', 'Mozilla Public License 2.0'
   ];
 
   // Load categories and dApp data
@@ -192,14 +174,7 @@ const AdminDAppForm: React.FC = () => {
           github_url: data.github_url || '',
           twitter_url: data.twitter_url || '',
           documentation_url: data.documentation_url || '',
-          discord_url: data.discord_url || '',
-          founded: data.founded || '',
-          team: data.team || '',
-          total_value_locked: data.total_value_locked || '',
-          daily_active_users: data.daily_active_users || '',
-          transactions: data.transactions || '',
-          audits: data.audits || [],
-          licenses: data.licenses || []
+          discord_url: data.discord_url || ''
         });
       }
     } catch (error: any) {
@@ -354,14 +329,7 @@ const AdminDAppForm: React.FC = () => {
         github_url: formData.github_url.trim() || null,
         twitter_url: formData.twitter_url.trim() || null,
         documentation_url: formData.documentation_url.trim() || null,
-        discord_url: formData.discord_url.trim() || null,
-        founded: formData.founded.trim() || null,
-        team: formData.team.trim() || null,
-        total_value_locked: formData.total_value_locked.trim() || null,
-        daily_active_users: formData.daily_active_users.trim() || null,
-        transactions: formData.transactions.trim() || null,
-        audits: formData.audits.filter(audit => audit.trim() !== ''),
-        licenses: formData.licenses.filter(license => license.trim() !== '')
+        discord_url: formData.discord_url.trim() || null
       };
       
       if (isEditing) {
@@ -398,27 +366,6 @@ const AdminDAppForm: React.FC = () => {
     } finally {
       setSaving(false);
     }
-  };
-
-  const addAudit = () => {
-    setFormData(prev => ({
-      ...prev,
-      audits: [...prev.audits, '']
-    }));
-  };
-
-  const removeAudit = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      audits: prev.audits.filter((_, i) => i !== index)
-    }));
-  };
-
-  const updateAudit = (index: number, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      audits: prev.audits.map((audit, i) => i === index ? value : audit)
-    }));
   };
 
   const selectedCategory = categories.find(cat => cat.id === formData.category_id);

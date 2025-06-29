@@ -49,13 +49,6 @@ interface DApp {
   twitter_url?: string;
   documentation_url?: string;
   discord_url?: string;
-  founded?: string;
-  team?: string;
-  total_value_locked?: string;
-  daily_active_users?: string;
-  transactions?: string;
-  audits?: string[];
-  licenses?: string[];
   created_at: string;
   updated_at: string;
   flows: Flow[];
@@ -197,13 +190,6 @@ const DAppSpotlight: React.FC = () => {
         documentationUrl: dappData.documentation_url, // For backward compatibility
         discord_url: dappData.discord_url,
         discordUrl: dappData.discord_url, // For backward compatibility
-        founded: dappData.founded,
-        team: dappData.team,
-        total_value_locked: dappData.total_value_locked,
-        daily_active_users: dappData.daily_active_users,
-        transactions: dappData.transactions,
-        audits: dappData.audits || [],
-        licenses: dappData.licenses || [],
         created_at: dappData.created_at,
         updated_at: dappData.updated_at,
         flows: flowsWithScreens
