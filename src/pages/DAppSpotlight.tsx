@@ -107,10 +107,11 @@ const DAppSpotlight: React.FC = () => {
       
       // Fetch dApp with its category
       const { data: dappData, error: dappError } = await supabase
-        .from('dapps')
+        .from('dapp_with_categories')
         .select(`
           *,
-          category:categories(id, title, slug)
+          category_title,
+          category_slug
         `)
         .eq('id', id)
         .single();
@@ -169,8 +170,12 @@ const DAppSpotlight: React.FC = () => {
         logo: dappData.logo_url || '📱', // Fallback emoji if no logo
         thumbnail_url: dappData.thumbnail_url,
         thumbnail: dappData.thumbnail_url || 'https://images.pexels.com/photos/1181263/pexels-photo-1181263.jpeg?auto=compress&cs=tinysrgb&w=800&h=400&fit=crop', // Fallback image
-        category_id: dappData.category_id,
-        category: dappData.category?.title || 'Uncategorized',
+        category_id: dappData.category_id || null,
+        category: {
+          id: dappData.category_id || '',
+          title: dappData.category_title || 'Uncategorized',
+          slug: dappData.category_slug || 'uncategorized'
+        },
         sub_category: dappData.sub_category,
         subCategory: dappData.sub_category, // For backward compatibility
         blockchains: dappData.blockchains || [],
@@ -307,8 +312,8 @@ const DAppSpotlight: React.FC = () => {
           >
             <Link to="/" className="hover:text-white transition-colors">Home</Link>
             <ChevronRight className="w-4 h-4" />
-            <Link to={`/category/${dapp.category?.slug || 'uncategorized'}`} className="hover:text-white transition-colors">
-              {dapp.category?.title || 'Uncategorized'}
+            <Link to={`/category/${dapp.category.slug}`} className="hover:text-white transition-colors">
+              {dapp.category.title}
             </Link>
             <ChevronRight className="w-4 h-4" />
             <span className="text-white truncate">{dapp.name}</span>
