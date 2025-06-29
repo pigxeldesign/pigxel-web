@@ -26,7 +26,7 @@ import {
   Trash2
 } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
-import { supabase, isValidSafeUrl, isProduction } from '../lib/supabase';
+import { supabase, isValidSafeUrl, isProduction, directTableInsert, simpleInsertDApp, directInsertDApp } from '../lib/supabase';
 
 interface DAppFormData {
   name: string;
@@ -134,7 +134,7 @@ const AdminDAppForm: React.FC = () => {
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [formData, isDirty]);
+  }, [formData, flowScreens, isDirty]);
 
   const loadCategories = async () => {
     try {
@@ -207,7 +207,6 @@ const AdminDAppForm: React.FC = () => {
   const autoSave = async () => {
     if (!isEditing || !isDirty) return;
     
-    setAutoSaveStatus('saving');
     try {
       await saveDApp(true);
       setAutoSaveStatus('saved');
@@ -332,10 +331,10 @@ const AdminDAppForm: React.FC = () => {
     await saveDApp();
   };
 
-  // Method 1: Using the direct table insert
-  const saveWithDirectInsert = async () => {
+  // Method 1: Direct table insert (no RPC)
+  const saveWithDirectTableInsert = async () => {
     const attempt = currentSaveAttempt;
-    logDebug(`Save attempt ${attempt}: Using direct table insert`);
+    logDebug(`Save attempt ${attempt}: Using direct table insert (no RPC)`);
     
     const dataToSave = {
       name: formData.name.trim(),
@@ -356,38 +355,70 @@ const AdminDAppForm: React.FC = () => {
     };
     
     try {
-      if (isEditing) {
-        logDebug(`Save attempt ${attempt}: Updating dApp with direct table insert`, dataToSave);
-        const { error } = await supabase
-          .from('dapps')
-          .update(dataToSave)
-          .eq('id', id);
-        
-        if (error) throw error;
-        logDebug(`Save attempt ${attempt}: Direct table update successful`);
-        return { success: true, id };
-      } else {
-        logDebug(`Save attempt ${attempt}: Creating dApp with direct table insert`, dataToSave);
-        const { data, error } = await supabase
-          .from('dapps')
-          .insert([dataToSave])
-          .select('id')
-          .single();
-        
-        if (error) throw error;
-        logDebug(`Save attempt ${attempt}: Direct table insert successful`, data);
-        return { success: true, id: data.id };
+      logDebug(`Save attempt ${attempt}: Calling directTableInsert`, dataToSave);
+      const { data, error } = await directTableInsert(dataToSave);
+      
+      if (error) throw error;
+      
+      if (!data || !data.success) {
+        logDebug(`Save attempt ${attempt}: Direct table insert returned failure`, data);
+        throw new Error((data && data.error) || 'Failed to save dApp');
       }
-    } catch (error: any) {
+      
+      logDebug(`Save attempt ${attempt}: Direct table insert successful`, data);
+      return { success: true, id: data.id };
+    } catch (error) {
       logDebug(`Save attempt ${attempt}: Direct table insert failed`, error);
       throw error;
     }
   };
-  
-  // Method 2: Using the admin_save_dapp RPC function
-  const saveWithRPC = async () => {
+
+  // Method 2: Using the simple_insert_dapp RPC function
+  const saveWithSimpleRPC = async () => {
     const attempt = currentSaveAttempt;
-    logDebug(`Save attempt ${attempt}: Using admin_save_dapp RPC`);
+    logDebug(`Save attempt ${attempt}: Using simple_insert_dapp RPC`);
+    
+    const dataToSave = {
+      name: formData.name.trim(),
+      description: formData.description.trim(),
+      problem_solved: formData.problem_solved.trim(),
+      logo_url: formData.logo_url.trim() || null,
+      thumbnail_url: formData.thumbnail_url.trim() || null,
+      category_id: formData.category_id || null,
+      sub_category: formData.sub_category ? formData.sub_category.trim() : '',
+      blockchains: Array.isArray(formData.blockchains) ? formData.blockchains : [],
+      is_new: formData.is_new,
+      is_featured: formData.is_featured,
+      live_url: formData.live_url.trim(),
+      github_url: formData.github_url.trim() || null,
+      twitter_url: formData.twitter_url.trim() || null,
+      documentation_url: formData.documentation_url.trim() || null,
+      discord_url: formData.discord_url.trim() || null
+    };
+    
+    try {
+      logDebug(`Save attempt ${attempt}: Calling simple_insert_dapp RPC`, dataToSave);
+      const { data, error } = await simpleInsertDApp(dataToSave);
+      
+      if (error) throw error;
+      
+      if (!data || !data.success) {
+        logDebug(`Save attempt ${attempt}: Simple RPC returned failure`, data);
+        throw new Error((data && data.error) || 'Failed to save dApp');
+      }
+      
+      logDebug(`Save attempt ${attempt}: Simple RPC save successful`, data);
+      return { success: true, id: data.id };
+    } catch (error: any) {
+      logDebug(`Save attempt ${attempt}: Simple RPC save failed`, error);
+      throw error;
+    }
+  };
+  
+  // Method 3: Using directInsertDApp helper (fallback chain)
+  const saveWithDirectInsert = async () => {
+    const attempt = currentSaveAttempt;
+    logDebug(`Save attempt ${attempt}: Using directInsertDApp helper (fallback chain)`);
     
     const dataToSave = {
       name: formData.name.trim(),
@@ -412,71 +443,74 @@ const AdminDAppForm: React.FC = () => {
     }
     
     try {
-      logDebug(`Save attempt ${attempt}: Calling admin_save_dapp RPC`, dataToSave);
-      const { data, error } = await supabase.rpc(
-        'admin_save_dapp', 
-        { 
-          p_dapp_data: dataToSave,
-          p_operation: isEditing ? 'UPDATE' : 'INSERT'
-        }
-      );
-      
-      if (error) throw error;
-      
-      if (!data.success) {
-        logDebug(`Save attempt ${attempt}: RPC returned failure`, data);
-        throw new Error(data.error || 'Failed to save dApp');
-      }
-      
-      logDebug(`Save attempt ${attempt}: RPC save successful`, data);
-      return { success: true, id: data.id };
-    } catch (error: any) {
-      logDebug(`Save attempt ${attempt}: RPC save failed`, error);
-      throw error;
-    }
-  };
-  
-  // Method 3: Using the simple_insert_dapp RPC function (fallback)
-  const saveWithSimpleRPC = async () => {
-    const attempt = currentSaveAttempt;
-    logDebug(`Save attempt ${attempt}: Using simple_insert_dapp RPC fallback`);
-    
-    const dataToSave = {
-      name: formData.name.trim(),
-      description: formData.description.trim(),
-      problem_solved: formData.problem_solved.trim(),
-      logo_url: formData.logo_url.trim() || null,
-      thumbnail_url: formData.thumbnail_url.trim() || null,
-      category_id: formData.category_id || null,
-      sub_category: formData.sub_category ? formData.sub_category.trim() : '',
-      blockchains: Array.isArray(formData.blockchains) ? formData.blockchains : [],
-      is_new: formData.is_new,
-      is_featured: formData.is_featured,
-      live_url: formData.live_url.trim(),
-      github_url: formData.github_url.trim() || null,
-      twitter_url: formData.twitter_url.trim() || null,
-      documentation_url: formData.documentation_url.trim() || null,
-      discord_url: formData.discord_url.trim() || null
-    };
-    
-    try {
-      logDebug(`Save attempt ${attempt}: Calling simple_insert_dapp RPC`, dataToSave);
-      const { data, error } = await supabase.rpc(
-        'simple_insert_dapp', 
-        { p_dapp_data: dataToSave }
-      );
+      logDebug(`Save attempt ${attempt}: Calling directInsertDApp helper`, dataToSave);
+      const { data, error } = await directInsertDApp(dataToSave);
       
       if (error) throw error;
       
       if (!data || !data.success) {
-        logDebug(`Save attempt ${attempt}: Simple RPC returned failure`, data);
-        throw new Error((data && data.error) || 'Failed to save dApp');
+        logDebug(`Save attempt ${attempt}: directInsertDApp returned failure`, data);
+        throw new Error(data?.error || 'Failed to save dApp');
       }
       
-      logDebug(`Save attempt ${attempt}: Simple RPC save successful`, data);
+      logDebug(`Save attempt ${attempt}: directInsertDApp successful`, data);
       return { success: true, id: data.id };
     } catch (error: any) {
-      logDebug(`Save attempt ${attempt}: Simple RPC save failed`, error);
+      logDebug(`Save attempt ${attempt}: directInsertDApp failed`, error);
+      throw error;
+    }
+  };
+
+  // Method 4: Direct table update/insert using built-in supabase client
+  const saveWithDirectTableOperation = async () => {
+    const attempt = currentSaveAttempt;
+    logDebug(`Save attempt ${attempt}: Using direct table ${isEditing ? 'update' : 'insert'}`);
+    
+    try {
+      const cleanData = {
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        problem_solved: formData.problem_solved.trim(),
+        logo_url: formData.logo_url.trim() || null,
+        thumbnail_url: formData.thumbnail_url.trim() || null,
+        category_id: formData.category_id || null,
+        sub_category: formData.sub_category.trim(),
+        blockchains: formData.blockchains,
+        is_new: formData.is_new,
+        is_featured: formData.is_featured,
+        live_url: formData.live_url.trim(),
+        github_url: formData.github_url.trim() || null,
+        twitter_url: formData.twitter_url.trim() || null,
+        documentation_url: formData.documentation_url.trim() || null,
+        discord_url: formData.discord_url.trim() || null
+      };
+      
+      if (isEditing) {
+        logDebug(`Save attempt ${attempt}: Updating existing dApp with ID ${id}`, cleanData);
+        const { error } = await supabase
+          .from('dapps')
+          .update(cleanData)
+          .eq('id', id);
+        
+        if (error) throw error;
+        
+        logDebug(`Save attempt ${attempt}: Update successful`);
+        return { success: true, id };
+      } else {
+        logDebug(`Save attempt ${attempt}: Inserting new dApp`, cleanData);
+        const { data, error } = await supabase
+          .from('dapps')
+          .insert([cleanData])
+          .select('id')
+          .single();
+        
+        if (error) throw error;
+        
+        logDebug(`Save attempt ${attempt}: Insert successful`, data);
+        return { success: true, id: data.id };
+      }
+    } catch (error) {
+      logDebug(`Save attempt ${attempt}: Direct table operation failed`, error);
       throw error;
     }
   };
@@ -497,14 +531,17 @@ const AdminDAppForm: React.FC = () => {
     logDebug(`Save attempt ${attemptNum}: Starting save process (${isEditing ? 'update' : 'insert'})`);
     
     const methods = [
-      // Try the RPC function first
-      { name: 'RPC Method', fn: saveWithRPC },
+      // Try direct table operation first (most straightforward)
+      { name: 'Direct Table Operation', fn: saveWithDirectTableOperation },
       
-      // If that fails, try direct table insert
-      { name: 'Direct Insert Method', fn: saveWithDirectInsert },
+      // Try direct table insert without any RPC
+      { name: 'Direct Table Insert', fn: saveWithDirectTableInsert },
       
-      // If that fails too, try the simple insert RPC
-      { name: 'Simple RPC Method', fn: saveWithSimpleRPC }
+      // Try the simple_insert_dapp RPC
+      { name: 'Simple RPC Method', fn: saveWithSimpleRPC },
+      
+      // Try the directInsertDApp helper with fallback chain as last resort
+      { name: 'Fallback Chain', fn: saveWithDirectInsert }
     ];
     
     let succeeded = false;
@@ -647,26 +684,6 @@ const AdminDAppForm: React.FC = () => {
             </button>
           </div>
         </div>
-
-        {/* Success Message */}
-        {saveSuccess && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6 p-4 bg-green-600/20 border border-green-600/30 rounded-lg flex items-center"
-          >
-            <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
-            <p className="text-green-300 text-sm">
-              {isEditing ? 'dApp updated successfully!' : 'dApp created successfully!'}
-            </p>
-            <button
-              onClick={() => setSaveSuccess(false)}
-              className="ml-auto text-green-400 hover:text-green-300"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </motion.div>
-        )}
 
         {/* Error Message */}
         {error && (

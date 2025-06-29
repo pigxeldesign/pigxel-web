@@ -151,6 +151,82 @@ export async function checkAuthStatus() {
 }
 
 /**
+ * Direct table insert for dApps - bypasses RPC functions
+ */
+export async function directTableInsert(dappData: any) {
+  console.log('Attempting direct table insert', dappData);
+  
+  try {
+    // Create a clean data object with only the fields we need
+    const cleanData = {
+      name: dappData.name,
+      description: dappData.description,
+      problem_solved: dappData.problem_solved,
+      logo_url: dappData.logo_url || null,
+      thumbnail_url: dappData.thumbnail_url || null,
+      category_id: dappData.category_id || null,
+      sub_category: dappData.sub_category || '',
+      blockchains: Array.isArray(dappData.blockchains) ? dappData.blockchains : [],
+      is_new: Boolean(dappData.is_new),
+      is_featured: Boolean(dappData.is_featured),
+      live_url: dappData.live_url,
+      github_url: dappData.github_url || null,
+      twitter_url: dappData.twitter_url || null,
+      documentation_url: dappData.documentation_url || null,
+      discord_url: dappData.discord_url || null
+    };
+    
+    // Insert directly into the dapps table
+    const { data, error } = await supabase
+      .from('dapps')
+      .insert([cleanData])
+      .select('id')
+      .single();
+      
+    if (error) {
+      console.error('Direct table insert failed:', error);
+      return { data: null, error };
+    }
+    
+    return { 
+      data: { 
+        success: true, 
+        id: data.id, 
+        message: 'dApp created successfully via direct table insert' 
+      }, 
+      error: null 
+    };
+  } catch (error) {
+    console.error('Error during direct table insert:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Try simple RPC function for inserting dApps
+ */
+export async function simpleInsertDApp(dappData: any) {
+  console.log('Attempting simple_insert_dapp RPC', dappData);
+  
+  try {
+    const { data, error } = await supabase.rpc(
+      'simple_insert_dapp',
+      { p_dapp_data: dappData }
+    );
+    
+    if (error) {
+      console.error('simple_insert_dapp RPC failed:', error);
+      return { data: null, error };
+    }
+    
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error during simple_insert_dapp RPC:', error);
+    return { data: null, error };
+  }
+}
+
+/**
  * Directly inserts a dApp as a fallback method
  */
 export async function directInsertDApp(dappData: any) {
