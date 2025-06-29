@@ -61,6 +61,7 @@ const AdminDAppForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const navigationAttempted = useRef(false);
+  const saveAttempts = useRef(0);
   const isEditing = Boolean(id);
   
   // Form state
@@ -92,12 +93,27 @@ const AdminDAppForm: React.FC = () => {
   const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'error' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
   
   // Available options
   const blockchainOptions = [
     'Ethereum', 'Polygon', 'BSC', 'Arbitrum', 'Optimism', 'Avalanche', 
     'Solana', 'Cardano', 'Polkadot', 'Cosmos', 'Near', 'Fantom'
   ];
+
+  // Log function that also adds to debug logs
+  const logDebug = (message: string, obj?: any) => {
+    const timestamp = new Date().toISOString().substring(11, 23);
+    const logMsg = `${timestamp} - ${message}${obj ? ': ' + JSON.stringify(obj) : ''}`;
+    
+    console.log(message, obj);
+    
+    setDebugLogs(prev => {
+      const newLogs = [logMsg, ...prev];
+      // Keep only the 20 most recent logs
+      return newLogs.slice(0, 20);
+    });
+  };
 
   // Load categories and dApp data
   useEffect(() => {
@@ -107,7 +123,7 @@ const AdminDAppForm: React.FC = () => {
     }
   }, [id]);
 
-  // Auto-save functionality for editing
+  // Auto-save functionality for editing only
   useEffect(() => {
     if (isDirty && isEditing) {
       const timer = setTimeout(() => {
@@ -119,21 +135,21 @@ const AdminDAppForm: React.FC = () => {
 
   const loadCategories = async () => {
     try {
-      console.log('Loading categories...');
+      logDebug('Loading categories...');
       const { data, error } = await supabase
         .from('categories')
         .select('id, slug, title, sub_categories')
         .order('title');
       
       if (error) {
-        console.error('Error loading categories:', error);
+        logDebug('Error loading categories', error);
         throw error;
       }
       
-      console.log('Categories loaded:', data?.length || 0);
+      logDebug('Categories loaded successfully', { count: data?.length || 0 });
       setCategories(data || []);
-    } catch (error) {
-      console.error('Error loading categories:', error);
+    } catch (error: any) {
+      logDebug('Failed to load categories', error);
       setError('Failed to load categories. Please try again.');
     }
   };
@@ -144,7 +160,7 @@ const AdminDAppForm: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      console.log('Loading dApp data for ID:', id);
+      logDebug('Loading dApp data for ID', id);
       const { data, error } = await supabase
         .from('dapps')
         .select('*')
@@ -152,12 +168,12 @@ const AdminDAppForm: React.FC = () => {
         .single();
       
       if (error) {
-        console.error('Error loading dApp data:', error);
+        logDebug('Error loading dApp data', error);
         throw error;
       }
       
       if (data) {
-        console.log('dApp data loaded:', data);
+        logDebug('dApp data loaded successfully', data);
         setFormData({
           name: data.name || '',
           description: data.description || '',
@@ -176,10 +192,11 @@ const AdminDAppForm: React.FC = () => {
           discord_url: data.discord_url || ''
         });
       } else {
+        logDebug('No dApp data found for ID', id);
         setError('dApp not found');
       }
     } catch (error) {
-      console.error('Error loading dApp:', error);
+      logDebug('Failed to load dApp data', error);
       setError('Failed to load dApp data. Please try again.');
     } finally {
       setLoading(false);
@@ -192,12 +209,12 @@ const AdminDAppForm: React.FC = () => {
     setAutoSaveStatus('saving');
     try {
       await saveDApp(true);
-      console.log('Auto-save successful');
+      logDebug('Auto-save successful');
       setAutoSaveStatus('saved');
       setTimeout(() => setAutoSaveStatus(null), 2000);
       return true;
     } catch (error) {
-      console.error('Auto-save failed:', error);
+      logDebug('Auto-save failed', error);
       setAutoSaveStatus('error');
       setTimeout(() => setAutoSaveStatus(null), 3000);
       return false;
@@ -306,28 +323,29 @@ const AdminDAppForm: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted manually");
+    logDebug("Form submitted manually");
     saveDApp();
   };
 
   const saveDApp = async (isAutoSave = false) => {
     // Step 1: Validate form
-    console.log('Step 1: Validating form');
+    logDebug('Step 1: Validating form');
     
     if (!isAutoSave && !validateForm()) {
-      console.log('Validation failed');
+      logDebug('Validation failed', validationErrors);
       return;
     }
     
     // Step 2: Prepare UI for saving
-    console.log('Step 2: Preparing UI for saving');
+    logDebug('Step 2: Preparing UI for saving');
     setSaving(true);
     setError(null);
     setSaveSuccess(false);
+    saveAttempts.current++;
     
     try {
       // Step 3: Prepare data
-      console.log('Step 3: Preparing data for save operation');
+      logDebug('Step 3: Preparing data for save operation');
       
       const dataToSave = {
         name: formData.name.trim(),
@@ -346,42 +364,114 @@ const AdminDAppForm: React.FC = () => {
         documentation_url: formData.documentation_url.trim() || null,
         discord_url: formData.discord_url.trim() || null
       };
+
+      // Log the complete data being saved
+      logDebug('Data to save', dataToSave);
+      
+      let result;
       
       // Step 4: Save to Supabase
-      console.log('Step 4: Saving to Supabase database');
+      logDebug('Step 4: Saving to Supabase database');
       
       if (isEditing) {
-        console.log('Updating dApp with ID:', id);
+        logDebug('Updating dApp with ID:', id);
         
-        const { error } = await supabase
-          .from('dapps')
-          .update(dataToSave)
-          .eq('id', id);
-        
-        if (error) {
-          console.error('Supabase update error:', error);
-          throw new Error(`Update failed: ${error.message}`);
+        // First try using the admin RPC function if available
+        try {
+          const { data: rpcData, error: rpcError } = await supabase.rpc(
+            'admin_save_dapp',
+            {
+              p_dapp_data: { ...dataToSave, id },
+              p_operation: 'UPDATE'
+            }
+          );
+          
+          if (rpcError) {
+            logDebug('RPC update failed, falling back to regular update', rpcError);
+            // Fall back to regular update
+          } else {
+            logDebug('RPC update successful', rpcData);
+            result = rpcData;
+            
+            // Skip the regular update
+            throw new Error('SKIP_REGULAR_UPDATE');
+          }
+        } catch (rpcErr) {
+          if (rpcErr instanceof Error && rpcErr.message === 'SKIP_REGULAR_UPDATE') {
+            // This is our signal to skip the regular update
+            logDebug('Skipping regular update after successful RPC call');
+          } else {
+            // For any other error, continue with regular update
+            logDebug('Falling back to regular update after RPC error', rpcErr);
+            
+            // Regular update
+            const { data, error } = await supabase
+              .from('dapps')
+              .update({ ...dataToSave, updated_at: new Date().toISOString() })
+              .eq('id', id)
+              .select();
+              
+            logDebug('Regular update response', { data, error });
+            
+            if (error) {
+              throw new Error(`Update failed: ${error.message}`);
+            }
+            
+            result = { success: true, operation: 'UPDATE', data };
+            logDebug('dApp updated successfully');
+          }
         }
-        
-        console.log('dApp updated successfully');
       } else {
-        console.log('Creating new dApp');
+        logDebug('Creating new dApp');
         
-        const { data, error } = await supabase
-          .from('dapps')
-          .insert([dataToSave])
-          .select();
-        
-        if (error) {
-          console.error('Supabase insert error:', error);
-          throw new Error(`Insert failed: ${error.message}`);
+        // First try using the admin RPC function if available
+        try {
+          const { data: rpcData, error: rpcError } = await supabase.rpc(
+            'admin_save_dapp',
+            {
+              p_dapp_data: dataToSave,
+              p_operation: 'INSERT'
+            }
+          );
+          
+          if (rpcError) {
+            logDebug('RPC insert failed, falling back to regular insert', rpcError);
+            // Fall back to regular insert
+          } else {
+            logDebug('RPC insert successful', rpcData);
+            result = rpcData;
+            
+            // Skip the regular insert
+            throw new Error('SKIP_REGULAR_INSERT');
+          }
+        } catch (rpcErr) {
+          if (rpcErr instanceof Error && rpcErr.message === 'SKIP_REGULAR_INSERT') {
+            // This is our signal to skip the regular insert
+            logDebug('Skipping regular insert after successful RPC call');
+          } else {
+            // For any other error, continue with regular insert
+            logDebug('Falling back to regular insert after RPC error', rpcErr);
+            
+            // Regular insert
+            const { data, error } = await supabase
+              .from('dapps')
+              .insert([dataToSave])
+              .select();
+              
+            logDebug('Regular insert response', { data, error });
+            
+            if (error) {
+              throw new Error(`Insert failed: ${error.message}`);
+            }
+            
+            result = { success: true, operation: 'INSERT', data };
+            logDebug('dApp created successfully', data?.[0]?.id || 'No ID returned');
+          }
         }
-        
-        console.log('dApp created successfully:', data?.[0]?.id || 'No ID returned');
       }
       
       // Step 5: Handle success
-      console.log('Step 5: Save operation successful');
+      logDebug('Step 5: Save operation successful', result);
       
       if (!isAutoSave) {
         setIsDirty(false);
@@ -390,15 +480,15 @@ const AdminDAppForm: React.FC = () => {
         if (!navigationAttempted.current) {
           navigationAttempted.current = true;
           
-          console.log('Scheduling navigation to /admin/dapps in 2 seconds');
+          logDebug('Scheduling navigation to /admin/dapps in 2 seconds');
           setTimeout(() => {
-            console.log('Attempting to navigate to /admin/dapps now');
+            logDebug('Attempting to navigate to /admin/dapps now');
             
             try {
               navigate('/admin/dapps');
-              console.log('Navigation successful');
+              logDebug('Navigation successful');
             } catch (navError) {
-              console.error('Navigation error:', navError);
+              logDebug('Navigation error, trying window.location.href fallback', navError);
               // In case of a navigation error, try a different approach
               window.location.href = '/admin/dapps';
             }
@@ -406,17 +496,17 @@ const AdminDAppForm: React.FC = () => {
         }
       } else {
         // For auto-save, just mark as saved
-        console.log('Auto-save successful');
+        logDebug('Auto-save successful');
       }
     } catch (error: any) {
       // Step 6: Handle errors
-      console.error('Save operation failed:', error);
+      logDebug('Save operation failed', error);
       
       setError(typeof error === 'string' ? error : 
                error.message || 'Failed to save dApp. Please try again.');
     } finally {
       // Step 7: Clean up
-      console.log('Step 7: Cleanup - setting saving state to false');
+      logDebug('Step 7: Cleanup - setting saving state to false');
       
       // Set saving to false to update UI
       setSaving(false);
@@ -1002,8 +1092,21 @@ const AdminDAppForm: React.FC = () => {
                   <div>Saving: {saving ? 'true' : 'false'}</div>
                   <div>Is Dirty: {isDirty ? 'true' : 'false'}</div>
                   <div>Navigation Attempted: {navigationAttempted.current ? 'true' : 'false'}</div>
+                  <div>Save Attempts: {saveAttempts.current}</div>
                   <div>Validation Errors: {Object.keys(validationErrors).length}</div>
                 </div>
+
+                {/* Debug logs */}
+                {debugLogs.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-red-700/30">
+                    <h4 className="text-xs font-semibold text-red-300 mb-1">Recent Logs:</h4>
+                    <div className="max-h-40 overflow-y-auto">
+                      {debugLogs.map((log, i) => (
+                        <div key={i} className="text-xs text-red-400 whitespace-pre-wrap">{log}</div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
