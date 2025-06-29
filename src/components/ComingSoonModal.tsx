@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { X } from 'lucide-react';
+import { X, Mail } from 'lucide-react';
+import NewsletterModal from './NewsletterModal';
 
 interface ComingSoonModalProps {
   isOpen: boolean;
@@ -8,9 +9,20 @@ interface ComingSoonModalProps {
 }
 
 const ComingSoonModal: React.FC<ComingSoonModalProps> = ({ isOpen, onClose }) => {
+  const [showNewsletterModal, setShowNewsletterModal] = React.useState(false);
+
+  const handleNotifyClick = () => {
+    setShowNewsletterModal(true);
+  };
+
+  const handleNewsletterClose = () => {
+    setShowNewsletterModal(false);
+  };
+
   if (!isOpen) return null;
 
   return (
+    <>
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <motion.div 
@@ -63,14 +75,29 @@ const ComingSoonModal: React.FC<ComingSoonModalProps> = ({ isOpen, onClose }) =>
           </div>
           
           <button
-            onClick={onClose}
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+            onClick={handleNotifyClick}
+            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg font-medium transition-all duration-200 flex items-center justify-center"
           >
-            Got it
+            <Mail className="w-4 h-4 mr-2" />
+            Get Notified
+          </button>
+          
+          <button
+            onClick={onClose}
+            className="mt-3 text-gray-400 hover:text-white text-sm transition-colors"
+          >
+            Maybe later
           </button>
         </div>
       </motion.div>
     </div>
+    
+    {/* Newsletter Modal */}
+    <NewsletterModal 
+      isOpen={showNewsletterModal}
+      onClose={handleNewsletterClose}
+    />
+    </>
   );
 };
 

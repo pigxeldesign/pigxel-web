@@ -17,7 +17,8 @@ import {
   Database,
   Puzzle,
   Star,
-  Activity
+  Activity,
+  Mail
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -87,6 +88,14 @@ const AdminDashboard: React.FC = () => {
       icon: Puzzle,
       color: 'from-pink-500 to-rose-600',
       trend: 'down'
+    },
+    {
+      label: 'Newsletter Subscribers',
+      value: '1,247',
+      change: 15.3,
+      icon: Mail,
+      color: 'from-indigo-500 to-blue-600',
+      trend: 'up'
     }
   ];
 
