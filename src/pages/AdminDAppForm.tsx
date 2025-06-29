@@ -89,7 +89,6 @@ const AdminDAppForm: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   
   // Available options
-  const [saveSuccess, setSaveSuccess] = useState(false);
   const blockchainOptions = [
     'Ethereum', 'Polygon', 'BSC', 'Arbitrum', 'Optimism', 'Avalanche', 
     'Solana', 'Cardano', 'Polkadot', 'Cosmos', 'Near', 'Fantom'
