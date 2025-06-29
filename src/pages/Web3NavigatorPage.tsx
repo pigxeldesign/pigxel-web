@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Send, Info } from 'lucide-react';
+import ComingSoonModal from '../components/ComingSoonModal';
 
 interface QuestionCardProps {
   question: string;
@@ -26,6 +27,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, onClick }) => {
 const Web3NavigatorPage: React.FC = () => {
   const [query, setQuery] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isComingSoonModalOpen, setIsComingSoonModalOpen] = useState(false);
   
   const popularQuestions = [
     "Show me safe options for earning yield as a beginner.",
@@ -36,13 +38,16 @@ const Web3NavigatorPage: React.FC = () => {
   
   const handleQuestionClick = (question: string) => {
     setQuery(question);
-    // In a real implementation, this would trigger the search/AI response
+    // Show the coming soon modal
+    setIsComingSoonModalOpen(true);
   };
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real implementation, this would trigger the search/AI response
-    console.log("Submitting query:", query);
+    // Show the coming soon modal if there's a query
+    if (query.trim()) {
+      setIsComingSoonModalOpen(true);
+    }
   };
 
   return (
@@ -143,6 +148,12 @@ const Web3NavigatorPage: React.FC = () => {
           </div>
         </motion.div>
       </div>
+      
+      {/* Coming Soon Modal */}
+      <ComingSoonModal 
+        isOpen={isComingSoonModalOpen}
+        onClose={() => setIsComingSoonModalOpen(false)}
+      />
     </div>
   );
 };
