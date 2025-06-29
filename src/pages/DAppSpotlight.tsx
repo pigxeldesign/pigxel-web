@@ -1,350 +1,222 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  Star, 
-  Users, 
-  Globe, 
-  Github, 
-  Twitter, 
-  ExternalLink, 
+import {
+  Star,
+  Users,
+  Globe,
+  Github,
+  Twitter,
+  ExternalLink,
   ChevronRight,
   ChevronLeft,
   Play,
   BookOpen,
   MessageCircle,
-  Loader2
+  Loader2,
+  Calendar,
+  Shield,
+  Info,
+  AlertCircle,
+  Clock
 } from 'lucide-react';
 import FlowDetailModal from '../components/FlowDetailModal';
+import { supabase } from '../lib/supabase';
 
 interface DApp {
   id: string;
   name: string;
   description: string;
-  problemSolved: string;
-  logo: string;
-  thumbnail: string;
-  category: string;
-  subCategory: string;
+  problem_solved: string;
+  logo_url?: string;
+  thumbnail_url?: string;
+  category_id?: string;
+  category?: {
+    id: string;
+    title: string;
+    slug: string;
+  };
+  sub_category: string;
   blockchains: string[];
-  rating: number;
-  userCount: string;
-  liveUrl: string;
-  githubUrl?: string;
-  twitterUrl?: string;
-  documentationUrl?: string;
-  discordUrl?: string;
+  rating?: number;
+  user_count?: string;
+  is_new?: boolean;
+  is_featured?: boolean;
+  live_url: string;
+  github_url?: string;
+  twitter_url?: string;
+  documentation_url?: string;
+  discord_url?: string;
+  founded?: string;
+  team?: string;
+  total_value_locked?: string;
+  daily_active_users?: string;
+  transactions?: string;
+  audits?: string[];
+  licenses?: string[];
+  created_at: string;
+  updated_at: string;
   flows: Flow[];
 }
 
 interface Flow {
   id: string;
   title: string;
-  screens: FlowScreen[];
   description: string;
   duration: string;
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
-  screenCount: number;
+  screen_count: number;
+  is_premium: boolean;
+  screens: FlowScreen[];
+  created_at: string;
+  updated_at: string;
 }
 
 interface FlowScreen {
   id: string;
-  thumbnail: string;
+  flow_id: string;
+  order_index: number;
+  thumbnail_url: string;
   title: string;
   description?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 const DAppSpotlight: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [dapp, setDApp] = useState<DApp | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [currentSlides, setCurrentSlides] = useState<Record<string, number>>({});
   const [selectedFlow, setSelectedFlow] = useState<Flow | null>(null);
   const [selectedScreenIndex, setSelectedScreenIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Mock data with multiple screens per flow
-  const mockDApp: DApp = {
-    id: id || '1',
-    name: 'Uniswap',
-    description: 'The world\'s leading decentralized trading protocol, built on Ethereum. Swap, earn, and build on the leading decentralized crypto trading protocol.',
-    problemSolved: 'Enables permissionless token trading without intermediaries',
-    logo: '🦄',
-    thumbnail: 'https://images.pexels.com/photos/1181263/pexels-photo-1181263.jpeg?auto=compress&cs=tinysrgb&w=800&h=400&fit=crop',
-    category: 'DeFi',
-    subCategory: 'DEX',
-    blockchains: ['Ethereum', 'Polygon', 'Arbitrum', 'Optimism', 'Base'],
-    rating: 4.8,
-    userCount: '4.2M',
-    liveUrl: 'https://app.uniswap.org',
-    githubUrl: 'https://github.com/Uniswap',
-    twitterUrl: 'https://twitter.com/Uniswap',
-    documentationUrl: 'https://docs.uniswap.org',
-    discordUrl: 'https://discord.gg/uniswap',
-    flows: [
-      {
-        id: '1',
-        title: 'Token Swapping',
-        description: 'Complete guide to swapping tokens on Uniswap. Learn how to connect your wallet, select tokens, set amounts, and execute swaps safely.',
-        duration: '3 min',
-        difficulty: 'Beginner',
-        screenCount: 5,
-        screens: [
-          { 
-            id: '1-1', 
-            thumbnail: 'https://images.pexels.com/photos/730547/pexels-photo-730547.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Connect Wallet',
-            description: 'Start by connecting your Web3 wallet to access Uniswap'
-          },
-          { 
-            id: '1-2', 
-            thumbnail: 'https://images.pexels.com/photos/844124/pexels-photo-844124.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Select Tokens',
-            description: 'Choose the tokens you want to swap from and to'
-          },
-          { 
-            id: '1-3', 
-            thumbnail: 'https://images.pexels.com/photos/1181298/pexels-photo-1181298.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Enter Amount',
-            description: 'Specify the amount you want to trade'
-          },
-          { 
-            id: '1-4', 
-            thumbnail: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Review Swap',
-            description: 'Check the swap details, fees, and price impact'
-          },
-          { 
-            id: '1-5', 
-            thumbnail: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Confirm Transaction',
-            description: 'Approve and execute the swap transaction'
-          }
-        ]
-      },
-      {
-        id: '2',
-        title: 'Providing Liquidity',
-        description: 'Learn how to provide liquidity and earn fees. Understand price ranges, impermanent loss, and position management.',
-        duration: '5 min',
-        difficulty: 'Intermediate',
-        screenCount: 6,
-        screens: [
-          { 
-            id: '2-1', 
-            thumbnail: 'https://images.pexels.com/photos/1181316/pexels-photo-1181316.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Pool Selection',
-            description: 'Choose the liquidity pool you want to provide to'
-          },
-          { 
-            id: '2-2', 
-            thumbnail: 'https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Add Liquidity',
-            description: 'Navigate to the add liquidity interface'
-          },
-          { 
-            id: '2-3', 
-            thumbnail: 'https://images.pexels.com/photos/730547/pexels-photo-730547.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Set Price Range',
-            description: 'Define the price range for your liquidity position'
-          },
-          { 
-            id: '2-4', 
-            thumbnail: 'https://images.pexels.com/photos/844124/pexels-photo-844124.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Deposit Amounts',
-            description: 'Enter the amounts of each token to deposit'
-          },
-          { 
-            id: '2-5', 
-            thumbnail: 'https://images.pexels.com/photos/1181298/pexels-photo-1181298.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Approve Tokens',
-            description: 'Approve the smart contract to spend your tokens'
-          },
-          { 
-            id: '2-6', 
-            thumbnail: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Add Position',
-            description: 'Confirm and create your liquidity position'
-          }
-        ]
-      },
-      {
-        id: '3',
-        title: 'Understanding Fees',
-        description: 'Learn about gas fees and slippage. Master the art of optimizing transaction costs and timing.',
-        duration: '4 min',
-        difficulty: 'Beginner',
-        screenCount: 4,
-        screens: [
-          { 
-            id: '3-1', 
-            thumbnail: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Gas Settings',
-            description: 'Understand and adjust gas fees for your transactions'
-          },
-          { 
-            id: '3-2', 
-            thumbnail: 'https://images.pexels.com/photos/1181316/pexels-photo-1181316.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Slippage Tolerance',
-            description: 'Set appropriate slippage tolerance for your trades'
-          },
-          { 
-            id: '3-3', 
-            thumbnail: 'https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Transaction Preview',
-            description: 'Review all fees and costs before confirming'
-          },
-          { 
-            id: '3-4', 
-            thumbnail: 'https://images.pexels.com/photos/730547/pexels-photo-730547.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Fee Breakdown',
-            description: 'Understand the different types of fees involved'
-          }
-        ]
-      },
-      {
-        id: '4',
-        title: 'Advanced Trading',
-        description: 'Advanced techniques for experienced traders. Learn about MEV protection, limit orders, and portfolio optimization.',
-        duration: '8 min',
-        difficulty: 'Advanced',
-        screenCount: 7,
-        screens: [
-          { 
-            id: '4-1', 
-            thumbnail: 'https://images.pexels.com/photos/844124/pexels-photo-844124.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Market Analysis',
-            description: 'Analyze market conditions and trading opportunities'
-          },
-          { 
-            id: '4-2', 
-            thumbnail: 'https://images.pexels.com/photos/1181298/pexels-photo-1181298.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Price Charts',
-            description: 'Read and interpret price charts and indicators'
-          },
-          { 
-            id: '4-3', 
-            thumbnail: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Limit Orders',
-            description: 'Set up limit orders for better price execution'
-          },
-          { 
-            id: '4-4', 
-            thumbnail: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'MEV Protection',
-            description: 'Protect your trades from MEV attacks'
-          },
-          { 
-            id: '4-5', 
-            thumbnail: 'https://images.pexels.com/photos/1181316/pexels-photo-1181316.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Multi-hop Swaps',
-            description: 'Execute complex multi-step trading strategies'
-          },
-          { 
-            id: '4-6', 
-            thumbnail: 'https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Portfolio Tracking',
-            description: 'Monitor and analyze your trading performance'
-          },
-          { 
-            id: '4-7', 
-            thumbnail: 'https://images.pexels.com/photos/730547/pexels-photo-730547.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Risk Management',
-            description: 'Implement proper risk management strategies'
-          }
-        ]
-      },
-      {
-        id: '5',
-        title: 'Yield Farming Basics',
-        description: 'Introduction to yield farming strategies. Learn how to maximize returns while managing risks in DeFi protocols.',
-        duration: '6 min',
-        difficulty: 'Intermediate',
-        screenCount: 5,
-        screens: [
-          { 
-            id: '5-1', 
-            thumbnail: 'https://images.pexels.com/photos/730547/pexels-photo-730547.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Farm Selection',
-            description: 'Choose the best yield farming opportunities'
-          },
-          { 
-            id: '5-2', 
-            thumbnail: 'https://images.pexels.com/photos/844124/pexels-photo-844124.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Stake LP Tokens',
-            description: 'Stake your liquidity provider tokens to earn rewards'
-          },
-          { 
-            id: '5-3', 
-            thumbnail: 'https://images.pexels.com/photos/1181298/pexels-photo-1181298.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Monitor Rewards',
-            description: 'Track your farming rewards and APY changes'
-          },
-          { 
-            id: '5-4', 
-            thumbnail: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Claim Rewards',
-            description: 'Harvest your earned tokens and compound returns'
-          },
-          { 
-            id: '5-5', 
-            thumbnail: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Exit Strategy',
-            description: 'Plan your exit and unstake when needed'
-          }
-        ]
-      },
-      {
-        id: '6',
-        title: 'Gas Optimization Tips',
-        description: 'Save money on transaction fees with these proven strategies. Learn when to transact and how to optimize gas usage.',
-        duration: '4 min',
-        difficulty: 'Intermediate',
-        screenCount: 4,
-        screens: [
-          { 
-            id: '6-1', 
-            thumbnail: 'https://images.pexels.com/photos/1181316/pexels-photo-1181316.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Gas Tracker',
-            description: 'Monitor network congestion and gas prices'
-          },
-          { 
-            id: '6-2', 
-            thumbnail: 'https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Timing Strategies',
-            description: 'Learn the best times to make transactions'
-          },
-          { 
-            id: '6-3', 
-            thumbnail: 'https://images.pexels.com/photos/730547/pexels-photo-730547.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Batch Transactions',
-            description: 'Combine multiple operations to save gas'
-          },
-          { 
-            id: '6-4', 
-            thumbnail: 'https://images.pexels.com/photos/844124/pexels-photo-844124.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop', 
-            title: 'Layer 2 Solutions',
-            description: 'Use L2 networks for cheaper transactions'
-          }
-        ]
-      }
-    ]
-  };
-
   useEffect(() => {
-    // Simulate API call
+    // Fetch dApp data from Supabase
+    fetchDAppData();
+  }, [id]);
+
+  const fetchDAppData = async () => {
     setLoading(true);
-    setTimeout(() => {
-      setDApp(mockDApp);
+    setError(null);
+    
+    try {
+      if (!id) throw new Error('No dApp ID provided');
+      
+      // Fetch dApp with its category
+      const { data: dappData, error: dappError } = await supabase
+        .from('dapps')
+        .select(`
+          *,
+          category:categories(id, title, slug)
+        `)
+        .eq('id', id)
+        .single();
+      
+      if (dappError) throw dappError;
+      if (!dappData) throw new Error('dApp not found');
+      
+      // Fetch flows for this dApp
+      const { data: flowsData, error: flowsError } = await supabase
+        .from('flows')
+        .select('*')
+        .eq('dapp_id', id)
+        .order('created_at', { ascending: false });
+      
+      if (flowsError) throw flowsError;
+      
+      // For each flow, fetch its screens
+      const flowsWithScreens = await Promise.all(
+        (flowsData || []).map(async (flow) => {
+          const { data: screensData, error: screensError } = await supabase
+            .from('flow_screens')
+            .select('*')
+            .eq('flow_id', flow.id)
+            .order('order_index');
+          
+          if (screensError) throw screensError;
+          
+          // Transform screens data to match our interface
+          const screens = (screensData || []).map(screen => ({
+            id: screen.id,
+            flow_id: screen.flow_id,
+            order_index: screen.order_index,
+            thumbnail: screen.thumbnail_url,
+            thumbnail_url: screen.thumbnail_url,
+            title: screen.title,
+            description: screen.description,
+            created_at: screen.created_at,
+            updated_at: screen.updated_at
+          }));
+          
+          return {
+            ...flow,
+            screens
+          };
+        })
+      );
+      
+      // Transform dApp data to match our interface
+      const transformedDApp: DApp = {
+        id: dappData.id,
+        name: dappData.name,
+        description: dappData.description,
+        problem_solved: dappData.problem_solved,
+        problemSolved: dappData.problem_solved, // For backward compatibility
+        logo_url: dappData.logo_url,
+        logo: dappData.logo_url || '📱', // Fallback emoji if no logo
+        thumbnail_url: dappData.thumbnail_url,
+        thumbnail: dappData.thumbnail_url || 'https://images.pexels.com/photos/1181263/pexels-photo-1181263.jpeg?auto=compress&cs=tinysrgb&w=800&h=400&fit=crop', // Fallback image
+        category_id: dappData.category_id,
+        category: dappData.category?.title || 'Uncategorized',
+        sub_category: dappData.sub_category,
+        subCategory: dappData.sub_category, // For backward compatibility
+        blockchains: dappData.blockchains || [],
+        rating: dappData.rating || 0,
+        user_count: dappData.user_count,
+        userCount: dappData.user_count || '0', // For backward compatibility
+        is_new: dappData.is_new,
+        is_featured: dappData.is_featured,
+        live_url: dappData.live_url,
+        liveUrl: dappData.live_url, // For backward compatibility
+        github_url: dappData.github_url,
+        githubUrl: dappData.github_url, // For backward compatibility
+        twitter_url: dappData.twitter_url,
+        twitterUrl: dappData.twitter_url, // For backward compatibility
+        documentation_url: dappData.documentation_url,
+        documentationUrl: dappData.documentation_url, // For backward compatibility
+        discord_url: dappData.discord_url,
+        discordUrl: dappData.discord_url, // For backward compatibility
+        founded: dappData.founded,
+        team: dappData.team,
+        total_value_locked: dappData.total_value_locked,
+        daily_active_users: dappData.daily_active_users,
+        transactions: dappData.transactions,
+        audits: dappData.audits || [],
+        licenses: dappData.licenses || [],
+        created_at: dappData.created_at,
+        updated_at: dappData.updated_at,
+        flows: flowsWithScreens
+      };
+      
+      setDApp(transformedDApp);
+      
       // Initialize slide positions
       const initialSlides: Record<string, number> = {};
-      mockDApp.flows.forEach(flow => {
+      flowsWithScreens.forEach(flow => {
         initialSlides[flow.id] = 0;
       });
       setCurrentSlides(initialSlides);
+      
+    } catch (err: any) {
+      console.error('Error fetching dApp data:', err);
+      setError(err.message || 'Failed to load dApp data');
+    } finally {
       setLoading(false);
-    }, 1000);
-  }, [id]);
+    }
+  };
 
   const nextSlide = (flowId: string, maxSlides: number) => {
     setCurrentSlides(prev => ({
@@ -372,6 +244,14 @@ const DAppSpotlight: React.FC = () => {
     setSelectedScreenIndex(0);
   };
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
   if (loading) {
     return (
       <div className="pt-16 min-h-screen flex items-center justify-center">
@@ -383,11 +263,17 @@ const DAppSpotlight: React.FC = () => {
     );
   }
 
-  if (!dapp) {
+  if (error || !dapp) {
     return (
       <div className="pt-16 min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-white mb-4">dApp Not Found</h1>
+        <div className="text-center px-4">
+          <div className="text-6xl mb-4">🔍</div>
+          <h1 className="text-2xl font-bold text-white mb-4">
+            {error || 'dApp Not Found'}
+          </h1>
+          <p className="text-gray-400 mb-6">
+            We couldn't find the dApp you're looking for. It may have been removed or the URL might be incorrect.
+          </p>
           <Link to="/" className="text-purple-400 hover:text-purple-300">
             Return to Home
           </Link>
@@ -421,8 +307,8 @@ const DAppSpotlight: React.FC = () => {
           >
             <Link to="/" className="hover:text-white transition-colors">Home</Link>
             <ChevronRight className="w-4 h-4" />
-            <Link to={`/category/${dapp.category.toLowerCase()}`} className="hover:text-white transition-colors">
-              {dapp.category}
+            <Link to={`/category/${dapp.category?.slug || 'uncategorized'}`} className="hover:text-white transition-colors">
+              {dapp.category?.title || 'Uncategorized'}
             </Link>
             <ChevronRight className="w-4 h-4" />
             <span className="text-white truncate">{dapp.name}</span>
@@ -438,26 +324,44 @@ const DAppSpotlight: React.FC = () => {
             <div className="flex flex-col lg:flex-row items-start gap-4 sm:gap-6">
               {/* Logo and Basic Info */}
               <div className="flex items-start gap-6 flex-1">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center text-2xl sm:text-3xl flex-shrink-0">
-                  {dapp.logo}
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center text-2xl sm:text-3xl flex-shrink-0 overflow-hidden">
+                  {dapp.logo_url ? (
+                    <img src={dapp.logo_url} alt={dapp.name} className="w-full h-full object-cover" />
+                  ) : (
+                    '📱'
+                  )}
                 </div>
                 <div className="flex-1">
                   <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">{dapp.name}</h1>
                   <h2 className="text-lg sm:text-xl lg:text-2xl text-purple-300 font-semibold mb-3 sm:mb-4">
-                    {dapp.problemSolved}
+                    {dapp.problem_solved}
                   </h2>
                   <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-3 sm:mb-4">
                     <span className="px-3 py-1 bg-purple-600/30 text-purple-200 rounded-full text-sm font-medium">
-                      {dapp.subCategory}
+                      {dapp.sub_category}
                     </span>
-                    <div className="flex items-center text-sm text-gray-400">
-                      <Star className="w-4 h-4 text-yellow-500 mr-1" />
-                      {dapp.rating} Rating
-                    </div>
-                    <div className="flex items-center text-sm text-gray-400">
-                      <Users className="w-4 h-4 mr-1" />
-                      {dapp.userCount} Users
-                    </div>
+                    {dapp.rating && dapp.rating > 0 && (
+                      <div className="flex items-center text-sm text-gray-400">
+                        <Star className="w-4 h-4 text-yellow-500 mr-1" />
+                        {dapp.rating.toFixed(1)} Rating
+                      </div>
+                    )}
+                    {dapp.user_count && (
+                      <div className="flex items-center text-sm text-gray-400">
+                        <Users className="w-4 h-4 mr-1" />
+                        {dapp.user_count} Users
+                      </div>
+                    )}
+                    {dapp.is_new && (
+                      <span className="px-2 py-1 bg-green-600/30 text-green-200 rounded-full text-xs">
+                        New
+                      </span>
+                    )}
+                    {dapp.is_featured && (
+                      <span className="px-2 py-1 bg-yellow-600/30 text-yellow-200 rounded-full text-xs">
+                        Featured
+                      </span>
+                    )}
                   </div>
                   <p className="text-gray-300 leading-relaxed mb-3 sm:mb-4 text-sm sm:text-base">
                     {dapp.description}
@@ -480,7 +384,7 @@ const DAppSpotlight: React.FC = () => {
               {/* Action Buttons and Links */}
               <div className="w-full lg:w-auto flex flex-col gap-3 lg:min-w-[200px]">
                 <a
-                  href={dapp.liveUrl}
+                  href={dapp.live_url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center px-4 sm:px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors text-sm sm:text-base"
@@ -494,9 +398,9 @@ const DAppSpotlight: React.FC = () => {
                 
                 {/* Links & Community Icons */}
                 <div className="flex items-center justify-center gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-gray-700">
-                  {dapp.githubUrl && (
+                  {dapp.github_url && (
                     <a
-                      href={dapp.githubUrl}
+                      href={dapp.github_url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-1.5 sm:p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
@@ -505,9 +409,9 @@ const DAppSpotlight: React.FC = () => {
                       <Github className="w-4 h-4 sm:w-5 sm:h-5" />
                     </a>
                   )}
-                  {dapp.twitterUrl && (
+                  {dapp.twitter_url && (
                     <a
-                      href={dapp.twitterUrl}
+                      href={dapp.twitter_url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-1.5 sm:p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
@@ -516,9 +420,9 @@ const DAppSpotlight: React.FC = () => {
                       <Twitter className="w-4 h-4 sm:w-5 sm:h-5" />
                     </a>
                   )}
-                  {dapp.documentationUrl && (
+                  {dapp.documentation_url && (
                     <a
-                      href={dapp.documentationUrl}
+                      href={dapp.documentation_url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-1.5 sm:p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
@@ -527,9 +431,9 @@ const DAppSpotlight: React.FC = () => {
                       <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
                     </a>
                   )}
-                  {dapp.discordUrl && (
+                  {dapp.discord_url && (
                     <a
-                      href={dapp.discordUrl}
+                      href={dapp.discord_url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-1.5 sm:p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
@@ -539,7 +443,7 @@ const DAppSpotlight: React.FC = () => {
                     </a>
                   )}
                   <a
-                    href={dapp.liveUrl}
+                    href={dapp.live_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-1.5 sm:p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
@@ -552,115 +456,278 @@ const DAppSpotlight: React.FC = () => {
             </div>
           </motion.div>
 
+          {/* Additional Information */}
+          {(dapp.founded || dapp.team || dapp.total_value_locked || dapp.daily_active_users || 
+            dapp.transactions || dapp.audits?.length || dapp.licenses?.length) && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="mb-6 sm:mb-8"
+            >
+              <div className="mb-4 sm:mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-white">Additional Information</h2>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                {/* Founded */}
+                {dapp.founded && (
+                  <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 sm:p-6 hover:bg-gray-800/70 hover:border-gray-600 transition-all duration-300">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 bg-blue-600/20 rounded-lg flex items-center justify-center">
+                        <Calendar className="w-4 h-4 text-blue-400" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-white">Founded</h3>
+                    </div>
+                    <p className="text-gray-300">{dapp.founded}</p>
+                  </div>
+                )}
+                
+                {/* Team */}
+                {dapp.team && (
+                  <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 sm:p-6 hover:bg-gray-800/70 hover:border-gray-600 transition-all duration-300">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 bg-purple-600/20 rounded-lg flex items-center justify-center">
+                        <Users className="w-4 h-4 text-purple-400" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-white">Team</h3>
+                    </div>
+                    <p className="text-gray-300">{dapp.team}</p>
+                  </div>
+                )}
+                
+                {/* Total Value Locked */}
+                {dapp.total_value_locked && (
+                  <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 sm:p-6 hover:bg-gray-800/70 hover:border-gray-600 transition-all duration-300">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 bg-green-600/20 rounded-lg flex items-center justify-center">
+                        <Star className="w-4 h-4 text-green-400" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-white">TVL</h3>
+                    </div>
+                    <p className="text-gray-300">{dapp.total_value_locked}</p>
+                  </div>
+                )}
+                
+                {/* Daily Active Users */}
+                {dapp.daily_active_users && (
+                  <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 sm:p-6 hover:bg-gray-800/70 hover:border-gray-600 transition-all duration-300">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 bg-yellow-600/20 rounded-lg flex items-center justify-center">
+                        <Users className="w-4 h-4 text-yellow-400" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-white">Daily Users</h3>
+                    </div>
+                    <p className="text-gray-300">{dapp.daily_active_users}</p>
+                  </div>
+                )}
+                
+                {/* Transactions */}
+                {dapp.transactions && (
+                  <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 sm:p-6 hover:bg-gray-800/70 hover:border-gray-600 transition-all duration-300">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 bg-pink-600/20 rounded-lg flex items-center justify-center">
+                        <Clock className="w-4 h-4 text-pink-400" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-white">Transactions</h3>
+                    </div>
+                    <p className="text-gray-300">{dapp.transactions}</p>
+                  </div>
+                )}
+                
+                {/* Audits */}
+                {dapp.audits && dapp.audits.length > 0 && (
+                  <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 sm:p-6 hover:bg-gray-800/70 hover:border-gray-600 transition-all duration-300">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 bg-teal-600/20 rounded-lg flex items-center justify-center">
+                        <Shield className="w-4 h-4 text-teal-400" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-white">Security Audits</h3>
+                    </div>
+                    <ul className="space-y-1">
+                      {dapp.audits.map((audit, index) => (
+                        <li key={index} className="text-gray-300 flex items-start">
+                          <span className="text-teal-400 mr-2">•</span>
+                          {audit}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
+                {/* Licenses */}
+                {dapp.licenses && dapp.licenses.length > 0 && (
+                  <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 sm:p-6 hover:bg-gray-800/70 hover:border-gray-600 transition-all duration-300">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 bg-orange-600/20 rounded-lg flex items-center justify-center">
+                        <Info className="w-4 h-4 text-orange-400" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-white">Licenses</h3>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {dapp.licenses.map((license, index) => (
+                        <span key={index} className="px-3 py-1 bg-gray-700/50 text-gray-300 text-sm rounded-lg border border-gray-600">
+                          {license}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+
           {/* Flows Gallery */}
+          {dapp.flows && dapp.flows.length > 0 ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="mb-6 sm:mb-8"
+            >
+              <div className="mb-4 sm:mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-white">User Flows & Tutorials</h2>
+              </div>
+              
+              <div className="space-y-6 sm:space-y-8">
+                {dapp.flows.map((flow, index) => (
+                  <motion.div
+                    key={flow.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.1 + index * 0.1 }}
+                    className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 sm:p-6 hover:bg-gray-800/70 hover:border-gray-600 transition-all duration-300"
+                  >
+                    {/* Flow Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                        <h3 className="text-lg sm:text-xl font-bold text-white">{flow.title}</h3>
+                        {flow.is_premium && (
+                          <span className="px-2 py-1 bg-yellow-600/20 text-yellow-300 text-xs rounded-full">
+                            Premium
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm">
+                        <span className="text-gray-400">{flow.screen_count} screens</span>
+                        <span className="px-2 py-1 bg-black/50 text-white rounded">
+                          {flow.duration}
+                        </span>
+                        <span className={`px-2 py-1 rounded ${getDifficultyColor(flow.difficulty)}`}>
+                          {flow.difficulty}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Carousel Container */}
+                    {flow.screens && flow.screens.length > 0 ? (
+                      <div className="relative">
+                        {/* Navigation Buttons */}
+                        {currentSlides[flow.id] > 0 && (
+                          <button
+                            onClick={() => prevSlide(flow.id)}
+                            className="absolute left-1 sm:left-2 top-1/2 transform -translate-y-1/2 z-10 w-6 h-6 sm:w-8 sm:h-8 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center transition-colors"
+                          >
+                            <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4" />
+                          </button>
+                        )}
+                        
+                        {currentSlides[flow.id] < flow.screens.length - 3 && (
+                          <button
+                            onClick={() => nextSlide(flow.id, flow.screens.length)}
+                            className="absolute right-1 sm:right-2 top-1/2 transform -translate-y-1/2 z-10 w-6 h-6 sm:w-8 sm:h-8 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center transition-colors"
+                          >
+                            <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
+                          </button>
+                        )}
+
+                        {/* Screens Carousel */}
+                        <div className="overflow-hidden rounded-lg">
+                          <motion.div
+                            className="flex gap-2 sm:gap-4"
+                            animate={{
+                              x: `${-currentSlides[flow.id] * (100 / Math.min(3, flow.screens.length))}%`
+                            }}
+                            transition={{ duration: 0.3, ease: 'easeInOut' }}
+                            style={{ width: `${(flow.screens.length / Math.min(3, flow.screens.length)) * 100}%` }}
+                          >
+                            {flow.screens.map((screen, screenIndex) => (
+                              <motion.div
+                                key={screen.id}
+                                className="flex-shrink-0 cursor-pointer group"
+                                style={{ width: `${100 / flow.screens.length}%` }}
+                                whileHover={{ scale: 1.02 }}
+                                onClick={() => handleScreenClick(flow, screenIndex)}
+                              >
+                                <div className="relative aspect-[4/3] rounded-md sm:rounded-lg overflow-hidden border border-gray-600 group-hover:border-purple-500 transition-colors">
+                                  <img
+                                    src={screen.thumbnail_url}
+                                    alt={screen.title}
+                                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                    onError={(e) => {
+                                      // Fallback image if the thumbnail fails to load
+                                      e.currentTarget.src = 'https://images.pexels.com/photos/1181263/pexels-photo-1181263.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop';
+                                    }}
+                                  />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                                  
+                                  {/* Play Button Overlay */}
+                                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-600/90 rounded-full flex items-center justify-center backdrop-blur-sm">
+                                      <Play className="w-3 h-3 sm:w-4 sm:h-4 text-white ml-0.5" />
+                                    </div>
+                                  </div>
+
+                                  {/* Screen Title */}
+                                  <div className="absolute bottom-1 sm:bottom-2 left-1 sm:left-2 right-1 sm:right-2">
+                                    <p className="text-white text-xs sm:text-sm font-medium truncate">
+                                      {screen.title}
+                                    </p>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            ))}
+                          </motion.div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-gray-700/30 rounded-lg p-4 text-center">
+                        <p className="text-gray-400 text-sm">No screens available for this flow</p>
+                      </div>
+                    )}
+
+                    {/* Flow Description */}
+                    <p className="text-gray-400 text-xs sm:text-sm mt-3 sm:mt-4">{flow.description}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="mb-6 sm:mb-8 bg-gray-800/50 border border-gray-700 rounded-xl p-6 text-center"
+            >
+              <div className="text-6xl mb-4">🎬</div>
+              <h3 className="text-xl font-bold text-white mb-2">No Flows Available</h3>
+              <p className="text-gray-400 mb-2">
+                This dApp doesn't have any user flows or tutorials yet.
+              </p>
+              <p className="text-gray-500 text-sm">
+                Check back later for step-by-step guides on how to use {dapp.name}.
+              </p>
+            </motion.div>
+          )}
+          
+          {/* Creation Info */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="mb-6 sm:mb-8"
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-center text-xs text-gray-500 mt-8 mb-4"
           >
-            <div className="mb-4 sm:mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold text-white">User Flows & Tutorials</h2>
-            </div>
-            
-            <div className="space-y-6 sm:space-y-8">
-              {dapp.flows.map((flow, index) => (
-                <motion.div
-                  key={flow.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.1 + index * 0.1 }}
-                  className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 sm:p-6 hover:bg-gray-800/70 hover:border-gray-600 transition-all duration-300"
-                >
-                  {/* Flow Header */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                      <h3 className="text-lg sm:text-xl font-bold text-white">{flow.title}</h3>
-                      <span className="text-xs sm:text-sm text-gray-400">from {flow.title}</span>
-                    </div>
-                    <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm">
-                      <span className="text-gray-400">{flow.screenCount} screens</span>
-                      <span className="px-2 py-1 bg-black/50 text-white rounded">
-                        {flow.duration}
-                      </span>
-                      <span className={`px-2 py-1 rounded ${getDifficultyColor(flow.difficulty)}`}>
-                        {flow.difficulty}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Carousel Container */}
-                  <div className="relative">
-                    {/* Navigation Buttons */}
-                    {currentSlides[flow.id] > 0 && (
-                      <button
-                        onClick={() => prevSlide(flow.id)}
-                        className="absolute left-1 sm:left-2 top-1/2 transform -translate-y-1/2 z-10 w-6 h-6 sm:w-8 sm:h-8 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center transition-colors"
-                      >
-                        <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4" />
-                      </button>
-                    )}
-                    
-                    {currentSlides[flow.id] < flow.screens.length - 3 && (
-                      <button
-                        onClick={() => nextSlide(flow.id, flow.screens.length)}
-                        className="absolute right-1 sm:right-2 top-1/2 transform -translate-y-1/2 z-10 w-6 h-6 sm:w-8 sm:h-8 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center transition-colors"
-                      >
-                        <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
-                      </button>
-                    )}
-
-                    {/* Screens Carousel */}
-                    <div className="overflow-hidden rounded-lg">
-                      <motion.div
-                        className="flex gap-2 sm:gap-4"
-                        animate={{
-                          x: `${-currentSlides[flow.id] * (100 / 3)}%`
-                        }}
-                        transition={{ duration: 0.3, ease: 'easeInOut' }}
-                        style={{ width: `${(flow.screens.length / 3) * 100}%` }}
-                      >
-                        {flow.screens.map((screen, screenIndex) => (
-                          <motion.div
-                            key={screen.id}
-                            className="flex-shrink-0 cursor-pointer group"
-                            style={{ width: `${100 / flow.screens.length}%` }}
-                            whileHover={{ scale: 1.02 }}
-                            onClick={() => handleScreenClick(flow, screenIndex)}
-                          >
-                            <div className="relative aspect-[4/3] rounded-md sm:rounded-lg overflow-hidden border border-gray-600 group-hover:border-purple-500 transition-colors">
-                              <img
-                                src={screen.thumbnail}
-                                alt={screen.title}
-                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                              
-                              {/* Play Button Overlay */}
-                              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-600/90 rounded-full flex items-center justify-center backdrop-blur-sm">
-                                  <Play className="w-3 h-3 sm:w-4 sm:h-4 text-white ml-0.5" />
-                                </div>
-                              </div>
-
-                              {/* Screen Title */}
-                              <div className="absolute bottom-1 sm:bottom-2 left-1 sm:left-2 right-1 sm:right-2">
-                                <p className="text-white text-xs sm:text-sm font-medium truncate">
-                                  {screen.title}
-                                </p>
-                              </div>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </motion.div>
-                    </div>
-                  </div>
-
-                  {/* Flow Description */}
-                  <p className="text-gray-400 text-xs sm:text-sm mt-3 sm:mt-4">{flow.description}</p>
-                </motion.div>
-              ))}
-            </div>
+            <p>Added on {formatDate(dapp.created_at)} • Last updated {formatDate(dapp.updated_at)}</p>
           </motion.div>
         </div>
       </div>
