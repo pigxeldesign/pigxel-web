@@ -1,13 +1,13 @@
 /*
-  # Clean up dapps table schema
+  # Fix dapp_with_categories view
 
-  1. Schema Changes
-    - Safely remove unused columns from dapps table if they exist
-    - Keep only essential columns for the application
-
-  2. View Updates
-    - Recreate dapp_with_categories view with updated schema
-    - Include category information for easier querying
+  1. Changes
+     - Safely drop unused columns from dapps table if they exist
+     - Recreate the dapp_with_categories view with proper column checks
+     - Fix the error with the rating column by checking if it exists before including it
+  
+  2. Security
+     - No security changes
 */
 
 -- Safely drop columns from the dapps table if they exist
@@ -73,7 +73,8 @@ END $$;
 -- Recreate the dapp_with_categories view to reflect the current schema
 DROP VIEW IF EXISTS dapp_with_categories;
 
-CREATE VIEW dapp_with_categories AS
+-- Create the view with dynamic columns based on what exists in the schema
+CREATE OR REPLACE VIEW dapp_with_categories AS
 SELECT
   d.id,
   d.name,
@@ -84,7 +85,10 @@ SELECT
   d.category_id,
   d.sub_category,
   d.blockchains,
-  d.rating,
+  CASE WHEN EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'dapps' AND column_name = 'rating'
+  ) THEN d.rating ELSE NULL::numeric END as rating,
   d.user_count,
   d.is_new,
   d.is_featured,
