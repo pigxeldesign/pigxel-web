@@ -95,8 +95,11 @@ const AllCategoriesPage: React.FC = () => {
 
       // Load dApps with category information
       const { data: dappsData, error: dappsError } = await supabase
-        .from('dapp_with_categories')
-        .select('*')
+        .from('dapps')
+        .select(`
+          *,
+          categories!inner(id, title, slug)
+        `)
         .order('updated_at', { ascending: false });
       
       if (dappsError) throw dappsError;
@@ -110,10 +113,10 @@ const AllCategoriesPage: React.FC = () => {
         logo_url: dapp.logo_url,
         thumbnail_url: dapp.thumbnail_url,
         category_id: dapp.category_id,
-        category: dapp.category_title ? {
-          id: dapp.category_id || '',
-          title: dapp.category_title,
-          slug: dapp.category_slug || ''
+        category: dapp.categories ? {
+          id: dapp.categories.id,
+          title: dapp.categories.title,
+          slug: dapp.categories.slug
         } : undefined,
         sub_category: dapp.sub_category,
         blockchains: dapp.blockchains || [],
