@@ -46,6 +46,45 @@ const FlowDetailModal: React.FC<FlowDetailModalProps> = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [autoPlayInterval, setAutoPlayInterval] = useState<NodeJS.Timeout | null>(null);
 
+  // Define functions before they are used
+  const stopAutoPlay = () => {
+    if (autoPlayInterval) {
+      clearInterval(autoPlayInterval);
+      setAutoPlayInterval(null);
+    }
+    setIsPlaying(false);
+  };
+
+  const startAutoPlay = () => {
+    if (autoPlayInterval) {
+      clearInterval(autoPlayInterval);
+    }
+    
+    setIsPlaying(true);
+    setCurrentScreenIndex(0); // Start from first screen
+    
+    const interval = setInterval(() => {
+      setCurrentScreenIndex(prevIndex => {
+        const nextIndex = prevIndex + 1;
+        if (nextIndex >= flow!.screens.length) {
+          // Reached the end, stop auto-play
+          setIsPlaying(false);
+          clearInterval(interval);
+          setAutoPlayInterval(null);
+          return 0; // Reset to first screen
+        }
+        return nextIndex;
+      });
+    }, 2000); // 2 seconds per screen
+    
+    setAutoPlayInterval(interval);
+  };
+
+  const resetFlow = () => {
+    stopAutoPlay();
+    setCurrentScreenIndex(0);
+  };
+
   // Clean up interval when modal closes
   React.useEffect(() => {
     if (!isOpen) {
@@ -66,45 +105,6 @@ const FlowDetailModal: React.FC<FlowDetailModalProps> = ({
   if (!flow) return null;
 
   const currentScreen = flow.screens[currentScreenIndex];
-
-  // Auto-play functionality
-  const startAutoPlay = () => {
-    if (autoPlayInterval) {
-      clearInterval(autoPlayInterval);
-    }
-    
-    setIsPlaying(true);
-    setCurrentScreenIndex(0); // Start from first screen
-    
-    const interval = setInterval(() => {
-      setCurrentScreenIndex(prevIndex => {
-        const nextIndex = prevIndex + 1;
-        if (nextIndex >= flow.screens.length) {
-          // Reached the end, stop auto-play
-          setIsPlaying(false);
-          clearInterval(interval);
-          setAutoPlayInterval(null);
-          return 0; // Reset to first screen
-        }
-        return nextIndex;
-      });
-    }, 2000); // 2 seconds per screen
-    
-    setAutoPlayInterval(interval);
-  };
-
-  const stopAutoPlay = () => {
-    if (autoPlayInterval) {
-      clearInterval(autoPlayInterval);
-      setAutoPlayInterval(null);
-    }
-    setIsPlaying(false);
-  };
-
-  const resetFlow = () => {
-    stopAutoPlay();
-    setCurrentScreenIndex(0);
-  };
 
   const nextScreen = () => {
     if (isPlaying) return; // Don't allow manual navigation during auto-play
@@ -145,10 +145,11 @@ const FlowDetailModal: React.FC<FlowDetailModalProps> = ({
                 {isPlaying ? <Pause className="w-4 h-4 mr-1" /> : <Play className="w-4 h-4 mr-1" />}
                 {isPlaying ? 'Pause' : 'Play'}
               </button>
-              <button className="p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors">
+              <button
                 onClick={resetFlow}
                 disabled={isPlaying}
                 className="p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
+              >
                 <RotateCcw className="w-4 h-4" />
               </button>
               <button className="p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors">
