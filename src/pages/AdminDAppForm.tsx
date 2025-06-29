@@ -35,6 +35,8 @@ interface DAppFormData {
   logo_url: string;
   thumbnail_url: string;
   category_id: string;
+  sub_category: string;
+  blockchains: string[];
   is_new: boolean;
   is_featured: boolean;
   live_url: string;
@@ -68,6 +70,8 @@ const AdminDAppForm: React.FC = () => {
     logo_url: '',
     thumbnail_url: '',
     category_id: '',
+    sub_category: '',
+    blockchains: [],
     is_new: false,
     is_featured: false,
     live_url: '',
@@ -157,6 +161,8 @@ const AdminDAppForm: React.FC = () => {
           logo_url: data.logo_url || '',
           thumbnail_url: data.thumbnail_url || '',
           category_id: data.category_id || '',
+          sub_category: data.sub_category || '',
+          blockchains: data.blockchains || [],
           is_new: data.is_new || false,
           is_featured: data.is_featured || false,
           live_url: data.live_url || '',
@@ -316,6 +322,8 @@ const AdminDAppForm: React.FC = () => {
         logo_url: formData.logo_url.trim() || null,
         thumbnail_url: formData.thumbnail_url.trim() || null,
         category_id: formData.category_id || null,
+        sub_category: formData.sub_category.trim(),
+        blockchains: formData.blockchains,
         is_new: formData.is_new,
         is_featured: formData.is_featured,
         live_url: formData.live_url.trim(),
