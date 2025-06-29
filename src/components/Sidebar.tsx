@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Star, Zap, Filter, TrendingUp, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '../lib/supabase';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -10,6 +11,64 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
   const location = useLocation();
+  const [featuredCount, setFeaturedCount] = useState<number>(0);
+  const [newCount, setNewCount] = useState<number>(0);
+  const [categoriesCount, setCategoriesCount] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      setLoading(true);
+      try {
+        // Get featured dApps count
+        const { count: featuredCount, error: featuredError } = await supabase
+          .from('dapps')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_featured', true);
+        
+        if (featuredError) throw featuredError;
+        setFeaturedCount(featuredCount || 0);
+        
+        // Get new dApps count
+        const { count: newCount, error: newError } = await supabase
+          .from('dapps')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_new', true);
+        
+        if (newError) throw newError;
+        setNewCount(newCount || 0);
+        
+        // Get categories with their dApp counts
+        const { data: categories, error: categoriesError } = await supabase
+          .from('categories')
+          .select('id, slug');
+        
+        if (categoriesError) throw categoriesError;
+        
+        // For each category, get the count of dApps
+        const categoryCountsMap: Record<string, number> = {};
+        
+        for (const category of categories || []) {
+          const { count, error } = await supabase
+            .from('dapps')
+            .select('*', { count: 'exact', head: true })
+            .eq('category_id', category.id);
+          
+          if (!error) {
+            categoryCountsMap[category.slug] = count || 0;
+          }
+        }
+        
+        setCategoriesCount(categoryCountsMap);
+      } catch (error) {
+        console.error('Error fetching counts:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchCounts();
+  }, []);
 
   const navItems = [
     { icon: Home, label: 'Home', path: '/', active: location.pathname === '/' && location.pathname !== '/navigator' },
@@ -27,18 +86,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
       path: '/navigator', 
       active: location.pathname === '/navigator' 
     },
-    { icon: Star, label: 'Featured', path: '/featured', count: 12 },
-    { icon: Zap, label: 'New', path: '/new', count: 8 },
+    { icon: Star, label: 'Featured', path: '/featured', count: featuredCount },
+    { icon: Zap, label: 'New', path: '/new', count: newCount },
     { icon: Filter, label: 'All Categories', path: '/categories' },
   ];
 
   const categories = [
-    { name: 'Getting Started', slug: 'getting-started', count: 15 },
-    { name: 'Digital Assets', slug: 'digital-assets', count: 32 },
-    { name: 'Communities', slug: 'communities', count: 18 },
-    { name: 'Creative & Publishing', slug: 'creative-publishing', count: 24 },
-    { name: 'Data & Infrastructure', slug: 'data-infrastructure', count: 12 },
-    { name: 'Real-World Apps', slug: 'real-world-apps', count: 28 },
+    { name: 'Getting Started', slug: 'getting-started', count: categoriesCount['getting-started'] || 0 },
+    { name: 'Digital Assets', slug: 'digital-assets', count: categoriesCount['digital-assets'] || 0 },
+    { name: 'Communities', slug: 'communities', count: categoriesCount['communities'] || 0 },
+    { name: 'Creative & Publishing', slug: 'creative-publishing', count: categoriesCount['creative-publishing'] || 0 },
+    { name: 'Data & Infrastructure', slug: 'data-infrastructure', count: categoriesCount['data-infrastructure'] || 0 },
+    { name: 'Real-World Apps', slug: 'real-world-apps', count: categoriesCount['real-world-apps'] || 0 },
   ];
 
   return (
@@ -150,13 +209,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                     >
                       <Link
                         to={`/category/${category.slug}`}
-                        className={`flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-all duration-200 group ${
+                        className={`text-xs px-2 py-1 rounded-full transition-colors ${loading ? 'bg-gray-800' : 
                           isActive
                             ? 'bg-purple-600/20 text-purple-300 border border-purple-600/30'
                             : 'text-gray-300 hover:text-white hover:bg-gray-800'
                         }`}
                         onClick={() => {
-                          // Close sidebar on mobile when navigating
+                        {loading ? '...' : item.count}
                           if (window.innerWidth < 1024) {
                             onToggle();
                           }
@@ -166,11 +225,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                         <motion.span
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
-                          className={`text-xs transition-colors ${
+                          className={`text-xs transition-colors ${loading ? 'text-gray-600' : 
                             isActive ? 'text-purple-400' : 'text-gray-500 group-hover:text-gray-400'
                           }`}
                         >
-                          {category.count}
+                          {loading ? '...' : category.count}
                         </motion.span>
                       </Link>
                     </motion.div>
