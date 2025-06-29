@@ -283,26 +283,6 @@ const AllCategoriesPage: React.FC = () => {
             <p className="text-gray-300 text-lg sm:text-xl mb-6">
               Discover all decentralized applications across every category
             </p>
-            
-            {/* Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold text-white">{dapps.length}</div>
-                <div className="text-gray-400 text-sm">Total dApps</div>
-              </div>
-              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold text-white">{categories.length}</div>
-                <div className="text-gray-400 text-sm">Categories</div>
-              </div>
-              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold text-white">{dapps.filter(d => d.is_featured).length}</div>
-                <div className="text-gray-400 text-sm">Featured</div>
-              </div>
-              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold text-white">{dapps.filter(d => d.is_new).length}</div>
-                <div className="text-gray-400 text-sm">New</div>
-              </div>
-            </div>
           </motion.div>
 
           {/* Search and Filters */}
