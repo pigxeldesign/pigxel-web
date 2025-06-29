@@ -17,6 +17,7 @@ import AdminFlowsManagement from './pages/AdminFlowsManagement';
 import AdminFlowForm from './pages/AdminFlowForm';
 import AdminMediaLibrary from './pages/AdminMediaLibrary';
 import AdminIntegrationsManagement from './pages/AdminIntegrationsManagement';
+import Web3NavigatorPage from './pages/Web3NavigatorPage';
 
 function App() {
   return (
@@ -133,6 +134,7 @@ function App() {
                 <Routes>
                   <Route path="/" element={<HomePage />} />
                   <Route path="/search" element={<SearchResults />} />
+                  <Route path="/navigator" element={<Web3NavigatorPage />} />
                   <Route path="/category/:slug" element={<CategoryListing />} />
                   <Route path="/dapp/:id" element={<DAppSpotlight />} />
                   <Route path="/flow/:id" element={<FlowViewer />} />

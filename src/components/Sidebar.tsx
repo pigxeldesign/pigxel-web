@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Star, Zap, Filter, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Home, Star, Zap, Filter, TrendingUp, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface SidebarProps {
@@ -12,7 +12,21 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
   const location = useLocation();
 
   const navItems = [
-    { icon: Home, label: 'Home', path: '/', active: location.pathname === '/' },
+    { icon: Home, label: 'Home', path: '/', active: location.pathname === '/' && location.pathname !== '/navigator' },
+    { 
+      icon: () => (
+        <div className="w-5 h-5 flex items-center justify-center">
+          <img 
+            src="/ChatGPT_Image_29_Jun_2025__15.05.43-removebg-preview.png" 
+            alt="" 
+            className="w-5 h-5 object-contain"
+          />
+        </div>
+      ), 
+      label: 'Web3 Navigator', 
+      path: '/navigator', 
+      active: location.pathname === '/navigator' 
+    },
     { icon: Star, label: 'Featured', path: '/featured', count: 12 },
     { icon: TrendingUp, label: 'Trending', path: '/trending', count: 24 },
     { icon: Zap, label: 'New', path: '/new', count: 8 },
