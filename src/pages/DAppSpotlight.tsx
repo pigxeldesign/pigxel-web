@@ -397,9 +397,6 @@ const DAppSpotlight: React.FC = () => {
                   <ExternalLink className="w-4 h-4 mr-2" />
                   Launch dApp
                 </a>
-                <button className="px-4 sm:px-6 py-3 bg-gray-800 border border-gray-700 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors text-sm sm:text-base">
-                  Add to Favorites
-                </button>
                 
                 {/* Links & Community Icons */}
                 <div className="flex items-center justify-center gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-gray-700">
