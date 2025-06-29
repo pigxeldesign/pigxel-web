@@ -28,7 +28,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
       active: location.pathname === '/navigator' 
     },
     { icon: Star, label: 'Featured', path: '/featured', count: 12 },
-    { icon: TrendingUp, label: 'Trending', path: '/trending', count: 24 },
     { icon: Zap, label: 'New', path: '/new', count: 8 },
     { icon: Filter, label: 'All Categories', path: '/categories' },
   ];
