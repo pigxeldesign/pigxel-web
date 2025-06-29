@@ -91,7 +91,6 @@ const AdminDAppForm: React.FC = () => {
   const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'error' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
   
   // Available options
   const blockchainOptions = [
