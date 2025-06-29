@@ -411,13 +411,13 @@ const DAppSpotlight: React.FC = () => {
 
   return (
     <div className="pt-16 min-h-screen">
-      <div className="px-4 sm:px-6 lg:px-8 py-8">
+      <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         <div className="max-w-7xl mx-auto">
           {/* Breadcrumb */}
           <motion.nav
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center space-x-2 text-sm text-gray-400 mb-6"
+            className="flex items-center space-x-2 text-xs sm:text-sm text-gray-400 mb-4 sm:mb-6 overflow-x-auto"
           >
             <Link to="/" className="hover:text-white transition-colors">Home</Link>
             <ChevronRight className="w-4 h-4" />
@@ -425,7 +425,7 @@ const DAppSpotlight: React.FC = () => {
               {dapp.category}
             </Link>
             <ChevronRight className="w-4 h-4" />
-            <span className="text-white">{dapp.name}</span>
+            <span className="text-white truncate">{dapp.name}</span>
           </motion.nav>
 
           {/* Header Section */}
@@ -433,20 +433,20 @@ const DAppSpotlight: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-2xl p-8 mb-8 border border-purple-500/20"
+            className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-2xl p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8 border border-purple-500/20"
           >
-            <div className="flex flex-col lg:flex-row items-start gap-6">
+            <div className="flex flex-col lg:flex-row items-start gap-4 sm:gap-6">
               {/* Logo and Basic Info */}
               <div className="flex items-start gap-6 flex-1">
-                <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center text-3xl">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center text-2xl sm:text-3xl flex-shrink-0">
                   {dapp.logo}
                 </div>
                 <div className="flex-1">
-                  <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2">{dapp.name}</h1>
-                  <h2 className="text-xl lg:text-2xl text-purple-300 font-semibold mb-4">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">{dapp.name}</h1>
+                  <h2 className="text-lg sm:text-xl lg:text-2xl text-purple-300 font-semibold mb-3 sm:mb-4">
                     {dapp.problemSolved}
                   </h2>
-                  <div className="flex items-center gap-4 mb-4">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-3 sm:mb-4">
                     <span className="px-3 py-1 bg-purple-600/30 text-purple-200 rounded-full text-sm font-medium">
                       {dapp.subCategory}
                     </span>
@@ -459,16 +459,16 @@ const DAppSpotlight: React.FC = () => {
                       {dapp.userCount} Users
                     </div>
                   </div>
-                  <p className="text-gray-300 leading-relaxed mb-4">
+                  <p className="text-gray-300 leading-relaxed mb-3 sm:mb-4 text-sm sm:text-base">
                     {dapp.description}
                   </p>
                   
                   {/* Supported Blockchains */}
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1 sm:gap-2">
                     {dapp.blockchains.map((blockchain) => (
                       <span
                         key={blockchain}
-                        className="px-3 py-1 bg-gray-700/50 text-gray-300 text-sm rounded-lg border border-gray-600"
+                        className="px-2 sm:px-3 py-1 bg-gray-700/50 text-gray-300 text-xs sm:text-sm rounded-lg border border-gray-600"
                       >
                         {blockchain}
                       </span>
@@ -478,31 +478,31 @@ const DAppSpotlight: React.FC = () => {
               </div>
 
               {/* Action Buttons and Links */}
-              <div className="flex flex-col gap-3 min-w-[200px]">
+              <div className="w-full lg:w-auto flex flex-col gap-3 lg:min-w-[200px]">
                 <a
                   href={dapp.liveUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+                  className="flex items-center justify-center px-4 sm:px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors text-sm sm:text-base"
                 >
                   <ExternalLink className="w-4 h-4 mr-2" />
                   Launch dApp
                 </a>
-                <button className="px-6 py-3 bg-gray-800 border border-gray-700 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors">
+                <button className="px-4 sm:px-6 py-3 bg-gray-800 border border-gray-700 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors text-sm sm:text-base">
                   Add to Favorites
                 </button>
                 
                 {/* Links & Community Icons */}
-                <div className="flex items-center justify-center gap-3 pt-4 border-t border-gray-700">
+                <div className="flex items-center justify-center gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-gray-700">
                   {dapp.githubUrl && (
                     <a
                       href={dapp.githubUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
+                      className="p-1.5 sm:p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
                       title="GitHub"
                     >
-                      <Github className="w-5 h-5" />
+                      <Github className="w-4 h-4 sm:w-5 sm:h-5" />
                     </a>
                   )}
                   {dapp.twitterUrl && (
@@ -510,10 +510,10 @@ const DAppSpotlight: React.FC = () => {
                       href={dapp.twitterUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
+                      className="p-1.5 sm:p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
                       title="Twitter"
                     >
-                      <Twitter className="w-5 h-5" />
+                      <Twitter className="w-4 h-4 sm:w-5 sm:h-5" />
                     </a>
                   )}
                   {dapp.documentationUrl && (
@@ -521,10 +521,10 @@ const DAppSpotlight: React.FC = () => {
                       href={dapp.documentationUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
+                      className="p-1.5 sm:p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
                       title="Documentation"
                     >
-                      <BookOpen className="w-5 h-5" />
+                      <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
                     </a>
                   )}
                   {dapp.discordUrl && (
@@ -532,20 +532,20 @@ const DAppSpotlight: React.FC = () => {
                       href={dapp.discordUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
+                      className="p-1.5 sm:p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
                       title="Discord"
                     >
-                      <MessageCircle className="w-5 h-5" />
+                      <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                     </a>
                   )}
                   <a
                     href={dapp.liveUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
+                    className="p-1.5 sm:p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
                     title="Website"
                   >
-                    <Globe className="w-5 h-5" />
+                    <Globe className="w-4 h-4 sm:w-5 sm:h-5" />
                   </a>
                 </div>
               </div>
@@ -557,33 +557,33 @@ const DAppSpotlight: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="mb-8"
+            className="mb-6 sm:mb-8"
           >
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-white">User Flows & Tutorials</h2>
+            <div className="mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-white">User Flows & Tutorials</h2>
             </div>
             
-            <div className="space-y-8">
+            <div className="space-y-6 sm:space-y-8">
               {dapp.flows.map((flow, index) => (
                 <motion.div
                   key={flow.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.1 + index * 0.1 }}
-                  className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 hover:bg-gray-800/70 hover:border-gray-600 transition-all duration-300"
+                  className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 sm:p-6 hover:bg-gray-800/70 hover:border-gray-600 transition-all duration-300"
                 >
                   {/* Flow Header */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-4">
-                      <h3 className="text-xl font-bold text-white">{flow.title}</h3>
-                      <span className="text-sm text-gray-400">from {flow.title}</span>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                      <h3 className="text-lg sm:text-xl font-bold text-white">{flow.title}</h3>
+                      <span className="text-xs sm:text-sm text-gray-400">from {flow.title}</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm text-gray-400">{flow.screenCount} screens</span>
-                      <span className="px-2 py-1 bg-black/50 text-white text-xs rounded">
+                    <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm">
+                      <span className="text-gray-400">{flow.screenCount} screens</span>
+                      <span className="px-2 py-1 bg-black/50 text-white rounded">
                         {flow.duration}
                       </span>
-                      <span className={`px-2 py-1 text-xs rounded ${getDifficultyColor(flow.difficulty)}`}>
+                      <span className={`px-2 py-1 rounded ${getDifficultyColor(flow.difficulty)}`}>
                         {flow.difficulty}
                       </span>
                     </div>
@@ -595,25 +595,25 @@ const DAppSpotlight: React.FC = () => {
                     {currentSlides[flow.id] > 0 && (
                       <button
                         onClick={() => prevSlide(flow.id)}
-                        className="absolute left-2 top-1/2 transform -translate-y-1/2 z-10 w-8 h-8 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center transition-colors"
+                        className="absolute left-1 sm:left-2 top-1/2 transform -translate-y-1/2 z-10 w-6 h-6 sm:w-8 sm:h-8 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center transition-colors"
                       >
-                        <ChevronLeft className="w-4 h-4" />
+                        <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4" />
                       </button>
                     )}
                     
                     {currentSlides[flow.id] < flow.screens.length - 3 && (
                       <button
                         onClick={() => nextSlide(flow.id, flow.screens.length)}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 z-10 w-8 h-8 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center transition-colors"
+                        className="absolute right-1 sm:right-2 top-1/2 transform -translate-y-1/2 z-10 w-6 h-6 sm:w-8 sm:h-8 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center transition-colors"
                       >
-                        <ChevronRight className="w-4 h-4" />
+                        <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
                       </button>
                     )}
 
                     {/* Screens Carousel */}
                     <div className="overflow-hidden rounded-lg">
                       <motion.div
-                        className="flex gap-4"
+                        className="flex gap-2 sm:gap-4"
                         animate={{
                           x: `${-currentSlides[flow.id] * (100 / 3)}%`
                         }}
@@ -628,7 +628,7 @@ const DAppSpotlight: React.FC = () => {
                             whileHover={{ scale: 1.02 }}
                             onClick={() => handleScreenClick(flow, screenIndex)}
                           >
-                            <div className="relative aspect-[4/3] rounded-lg overflow-hidden border border-gray-600 group-hover:border-purple-500 transition-colors">
+                            <div className="relative aspect-[4/3] rounded-md sm:rounded-lg overflow-hidden border border-gray-600 group-hover:border-purple-500 transition-colors">
                               <img
                                 src={screen.thumbnail}
                                 alt={screen.title}
@@ -638,14 +638,14 @@ const DAppSpotlight: React.FC = () => {
                               
                               {/* Play Button Overlay */}
                               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                <div className="w-10 h-10 bg-purple-600/90 rounded-full flex items-center justify-center backdrop-blur-sm">
-                                  <Play className="w-4 h-4 text-white ml-0.5" />
+                                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-600/90 rounded-full flex items-center justify-center backdrop-blur-sm">
+                                  <Play className="w-3 h-3 sm:w-4 sm:h-4 text-white ml-0.5" />
                                 </div>
                               </div>
 
                               {/* Screen Title */}
-                              <div className="absolute bottom-2 left-2 right-2">
-                                <p className="text-white text-sm font-medium truncate">
+                              <div className="absolute bottom-1 sm:bottom-2 left-1 sm:left-2 right-1 sm:right-2">
+                                <p className="text-white text-xs sm:text-sm font-medium truncate">
                                   {screen.title}
                                 </p>
                               </div>
@@ -657,7 +657,7 @@ const DAppSpotlight: React.FC = () => {
                   </div>
 
                   {/* Flow Description */}
-                  <p className="text-gray-400 text-sm mt-4">{flow.description}</p>
+                  <p className="text-gray-400 text-xs sm:text-sm mt-3 sm:mt-4">{flow.description}</p>
                 </motion.div>
               ))}
             </div>

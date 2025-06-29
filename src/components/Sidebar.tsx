@@ -55,7 +55,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
           isCollapsed ? 'lg:w-0' : 'lg:w-64'
         }`}
       >
-        <div className="w-64 h-full overflow-y-auto">
+        <div className="w-64 h-full overflow-y-auto overscroll-contain">
           {/* Toggle Button */}
           <div className="flex justify-end p-4 lg:hidden">
             <button
@@ -66,7 +66,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
             </button>
           </div>
 
-          <div className="p-6 pt-2 lg:pt-6">
+          <div className="p-4 sm:p-6 pt-2 lg:pt-6">
             {/* Navigation */}
             <nav className="space-y-2">
               {navItems.map((item, index) => {
@@ -116,12 +116,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
             </nav>
 
             {/* Categories */}
-            <div className="mt-8">
+            <div className="mt-6 sm:mt-8">
               <motion.h3
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.3, delay: 0.3 }}
-                className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4"
+                className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 sm:mb-4"
               >
                 Categories
               </motion.h3>

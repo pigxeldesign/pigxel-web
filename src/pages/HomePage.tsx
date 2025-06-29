@@ -164,7 +164,7 @@ const HomePage: React.FC = () => {
   return (
     <div className="pt-16 min-h-screen">
       {/* Hero Section */}
-      <section className="relative px-4 sm:px-6 lg:px-8 py-20 lg:py-32 overflow-hidden">
+      <section className="relative px-4 sm:px-6 lg:px-8 py-12 sm:py-20 lg:py-32 overflow-hidden">
         {/* Background floating images */}
         <div className="absolute inset-0 pointer-events-none">
           {floatingImages.map((image, index) => (
@@ -186,7 +186,7 @@ const HomePage: React.FC = () => {
                   ease: "easeInOut"
                 }
               }}
-              className={`absolute ${image.position} hidden lg:block`}
+              className={`absolute ${image.position} hidden xl:block`}
             >
               <div className="relative">
                 <img
@@ -207,7 +207,7 @@ const HomePage: React.FC = () => {
             transition={{ duration: 0.8 }}
             className="text-center"
           >
-            <h1 className="text-5xl lg:text-7xl xl:text-8xl font-bold text-white mb-8 leading-tight">
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl xl:text-8xl font-bold text-white mb-6 sm:mb-8 leading-tight">
               <div className="flex flex-col items-center">
                 <span className="bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent">
                   Web3
@@ -220,7 +220,7 @@ const HomePage: React.FC = () => {
                 </span>
               </div>
             </h1>
-            <p className="text-xl lg:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed font-light">
+            <p className="text-lg sm:text-xl lg:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed font-light px-4">
               Explore curated decentralized apps, analyze real-world user flows,
               <br />
               screen libraries and join the revolution of digital ownership
@@ -232,13 +232,13 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Stats */}
-      <section className="px-4 sm:px-6 lg:px-8 pb-20">
+      <section className="px-4 sm:px-6 lg:px-8 pb-12 sm:pb-20">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="grid grid-cols-2 lg:grid-cols-4 gap-8 mb-20"
+            className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8 mb-12 sm:mb-20"
           >
             {[
               { label: "dApps Listed", value: "1,200+" },
@@ -247,10 +247,10 @@ const HomePage: React.FC = () => {
               { label: "Reviews", value: "8,500+" }
             ].map((stat, index) => (
               <div key={stat.label} className="text-center">
-                <div className="text-3xl lg:text-4xl font-bold text-white mb-2">
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-1 sm:mb-2">
                   {stat.value}
                 </div>
-                <div className="text-gray-400 text-sm uppercase tracking-wider">
+                <div className="text-gray-400 text-xs sm:text-sm uppercase tracking-wider">
                   {stat.label}
                 </div>
               </div>
@@ -260,26 +260,27 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Featured Section */}
-      <section className="px-4 sm:px-6 lg:px-8 pb-20">
+      <section className="px-4 sm:px-6 lg:px-8 pb-12 sm:pb-20">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className="mb-12"
+            className="mb-8 sm:mb-12"
           >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-3xl lg:text-4xl font-bold text-white">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">
                 Featured dApps
               </h2>
               <Link 
                 to="/featured" 
-                className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
+                className="text-purple-400 hover:text-purple-300 font-medium transition-colors text-sm sm:text-base"
               >
-                View All →
+                <span className="hidden sm:inline">View All →</span>
+                <span className="sm:hidden">All →</span>
               </Link>
             </div>
-            <p className="text-gray-400 text-lg">
+            <p className="text-gray-400 text-base sm:text-lg">
               Discover the most popular and innovative decentralized applications
             </p>
           </motion.div>
@@ -288,7 +289,7 @@ const HomePage: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.6 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"
           >
             {featuredDApps.map((dapp, index) => (
               <motion.div
@@ -301,7 +302,7 @@ const HomePage: React.FC = () => {
               >
                 <Link to={`/dapp/${dapp.id}`} className="block">
                   {/* Thumbnail Image */}
-                  <div className="relative w-full h-48 overflow-hidden">
+                  <div className="relative w-full h-40 sm:h-48 overflow-hidden">
                     <img
                       src={dapp.thumbnail}
                       alt={dapp.name}
@@ -310,7 +311,7 @@ const HomePage: React.FC = () => {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                     
                     {/* Status badges */}
-                    <div className="absolute top-3 right-3 flex flex-col gap-1">
+                    <div className="absolute top-2 right-2 sm:top-3 sm:right-3 flex flex-col gap-1">
                       {dapp.isFeatured && (
                         <span className="px-2 py-1 bg-yellow-600/90 text-yellow-100 text-xs rounded-full backdrop-blur-sm">
                           Featured
@@ -325,14 +326,14 @@ const HomePage: React.FC = () => {
                   </div>
 
                   {/* Content */}
-                  <div className="p-4">
+                  <div className="p-3 sm:p-4">
                     {/* Logo and Title */}
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gray-700 rounded-lg flex items-center justify-center text-lg">
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-700 rounded-lg flex items-center justify-center text-sm sm:text-lg">
                           {dapp.logo}
                         </div>
-                        <h3 className="text-lg font-bold text-white group-hover:text-purple-300 transition-colors truncate">
+                        <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-purple-300 transition-colors truncate">
                           {dapp.name}
                         </h3>
                       </div>
@@ -359,11 +360,11 @@ const HomePage: React.FC = () => {
                     </div>
 
                     {/* Blockchains */}
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1 overflow-hidden">
                       {dapp.blockchains.slice(0, 3).map((blockchain) => (
                         <span
                           key={blockchain}
-                          className="px-2 py-1 bg-gray-700 text-gray-300 text-xs rounded"
+                          className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-gray-700 text-gray-300 text-xs rounded"
                         >
                           {blockchain}
                         </span>
@@ -383,23 +384,23 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Categories Grid */}
-      <section className="px-4 sm:px-6 lg:px-8 pb-20">
+      <section className="px-4 sm:px-6 lg:px-8 pb-12 sm:pb-20">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.8 }}
-            className="mb-12"
+            className="mb-8 sm:mb-12"
           >
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
               Explore by Category
             </h2>
-            <p className="text-gray-400 text-lg">
+            <p className="text-gray-400 text-base sm:text-lg">
               Find the perfect dApp for your needs in our organized categories
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {categories.map((category, index) => (
               <CategoryCard
                 key={category.title}
@@ -416,19 +417,19 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="px-4 sm:px-6 lg:px-8 pb-20">
+      <section className="px-4 sm:px-6 lg:px-8 pb-12 sm:pb-20">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 1.0 }}
-            className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-2xl p-8 lg:p-12 border border-purple-500/20"
+            className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-2xl p-6 sm:p-8 lg:p-12 border border-purple-500/20"
           >
             <div className="text-center">
-              <h3 className="text-2xl lg:text-3xl font-bold text-white mb-4">
+              <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-4">
                 Ready to Build on Web3?
               </h3>
-              <p className="text-gray-300 mb-8 max-w-2xl mx-auto">
+              <p className="text-gray-300 mb-6 sm:mb-8 max-w-2xl mx-auto text-sm sm:text-base">
                 Join thousands of developers and users exploring the decentralized web. 
                 Start your journey today with our curated selection of tools and resources.
               </p>
@@ -437,13 +438,13 @@ const HomePage: React.FC = () => {
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <Link
                   to="/category/getting-started"
-                  className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors shadow-lg hover:shadow-xl transform hover:scale-105 duration-200"
+                  className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors shadow-lg hover:shadow-xl transform hover:scale-105 duration-200"
                 >
                   Get Started
                 </Link>
                 <Link
                   to="/categories"
-                  className="px-8 py-3 bg-transparent border-2 border-purple-600 text-purple-300 hover:bg-purple-600 hover:text-white rounded-lg font-medium transition-all duration-200"
+                  className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-transparent border-2 border-purple-600 text-purple-300 hover:bg-purple-600 hover:text-white rounded-lg font-medium transition-all duration-200"
                 >
                   Learn More
                 </Link>
