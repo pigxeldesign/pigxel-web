@@ -543,7 +543,21 @@ const AdminFlowsManagement: React.FC = () => {
                           {/* dApp */}
                           <div className="col-span-2">
                             <div className="flex items-center gap-2">
-                              <span className="text-lg">{flow.dapp_logo}</span>
+                              <div className="w-8 h-8 bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
+                                {flow.dapp_logo && flow.dapp_logo.startsWith('http') ? (
+                                  <img 
+                                    src={flow.dapp_logo} 
+                                    alt={flow.dapp_name}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = 'none';
+                                      e.currentTarget.parentElement!.innerHTML = '📱';
+                                    }}
+                                  />
+                                ) : (
+                                  <span className="text-gray-400">📱</span>
+                                )}
+                              </div>
                               <span className="text-white font-medium">{flow.dapp_name}</span>
                             </div>
                           </div>
