@@ -35,10 +35,10 @@ function App() {
             transition={{ duration: 1 }}
           >
             <a href="https://bolt.new" target="_blank" rel="noopener noreferrer">
-              <img
-                src="/white_circle_360x360.png"
-                alt="Powered by Bolt.new"
-                className="w-full h-full object-contain"
+              <img 
+                src="/white_circle_360x360 copy.png" 
+                alt="Powered by Bolt.new" 
+                className="w-full h-full object-contain" 
               />
             </a>
           </motion.div>
