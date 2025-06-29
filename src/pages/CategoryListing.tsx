@@ -32,8 +32,6 @@ interface DApp {
   category: string;
   subCategory: string;
   blockchains: string[];
-  rating: number;
-  userCount: string;
   isNew?: boolean;
   isFeatured?: boolean;
 }
@@ -124,8 +122,6 @@ const CategoryListing: React.FC = () => {
       category: slug || '',
       subCategory: 'Wallets',
       blockchains: ['Ethereum', 'Polygon', 'BSC'],
-      rating: 4.8,
-      userCount: '30M+',
       isFeatured: true
     },
     {
@@ -138,8 +134,6 @@ const CategoryListing: React.FC = () => {
       category: slug || '',
       subCategory: 'Wallets',
       blockchains: ['Ethereum', 'Bitcoin', 'Polygon'],
-      rating: 4.6,
-      userCount: '15M+',
       isNew: true
     },
     {
@@ -152,8 +146,6 @@ const CategoryListing: React.FC = () => {
       category: slug || '',
       subCategory: 'Educational',
       blockchains: ['Ethereum', 'Arbitrum', 'Optimism'],
-      rating: 4.7,
-      userCount: '500K+',
       isFeatured: true
     },
     {
@@ -166,8 +158,6 @@ const CategoryListing: React.FC = () => {
       category: slug || '',
       subCategory: 'Educational',
       blockchains: ['Ethereum', 'Solana', 'Polygon'],
-      rating: 4.9,
-      userCount: '200K+',
       isNew: true
     },
     {
@@ -180,8 +170,6 @@ const CategoryListing: React.FC = () => {
       category: slug || '',
       subCategory: 'DeFi',
       blockchains: ['Ethereum', 'Polygon', 'Arbitrum'],
-      rating: 4.8,
-      userCount: '4M+',
       isFeatured: true
     },
     {
@@ -194,8 +182,6 @@ const CategoryListing: React.FC = () => {
       category: slug || '',
       subCategory: 'Lending',
       blockchains: ['Ethereum', 'Polygon', 'Avalanche'],
-      rating: 4.7,
-      userCount: '800K+',
       isFeatured: true
     },
     {
@@ -208,8 +194,6 @@ const CategoryListing: React.FC = () => {
       category: slug || '',
       subCategory: 'NFT Marketplaces',
       blockchains: ['Ethereum', 'Polygon', 'Klaytn'],
-      rating: 4.5,
-      userCount: '2M+',
       isFeatured: true
     },
     {
@@ -222,8 +206,6 @@ const CategoryListing: React.FC = () => {
       category: slug || '',
       subCategory: 'Art Platforms',
       blockchains: ['Ethereum'],
-      rating: 4.6,
-      userCount: '150K+',
       isNew: true
     }
   ];
@@ -270,9 +252,6 @@ const CategoryListing: React.FC = () => {
     switch (sortBy) {
       case 'alphabetical':
         filtered.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case 'popular':
-        filtered.sort((a, b) => b.rating - a.rating);
         break;
       case 'newest':
       default:
@@ -617,10 +596,6 @@ const CategoryListing: React.FC = () => {
                             {dapp.name}
                           </h3>
                         </div>
-                        <div className="flex items-center text-xs text-gray-400">
-                          <Star className="w-3 h-3 text-yellow-500 mr-1" />
-                          {dapp.rating}
-                        </div>
                       </div>
 
                       {/* Problem Solved */}
@@ -633,10 +608,6 @@ const CategoryListing: React.FC = () => {
                         <span className="px-2 py-1 bg-purple-600/20 text-purple-300 text-xs rounded-full">
                           {dapp.subCategory}
                         </span>
-                        <div className="flex items-center text-xs text-gray-500">
-                          <Users className="w-3 h-3 mr-1" />
-                          {dapp.userCount}
-                        </div>
                       </div>
 
                       {/* Blockchains */}

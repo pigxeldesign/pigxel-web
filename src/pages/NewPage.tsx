@@ -31,8 +31,6 @@ interface DApp {
   };
   sub_category: string;
   blockchains: string[];
-  rating?: number;
-  user_count?: string;
   is_new?: boolean;
   is_featured?: boolean;
   live_url: string;
@@ -120,8 +118,6 @@ const NewPage: React.FC = () => {
         } : undefined,
         sub_category: dapp.sub_category,
         blockchains: dapp.blockchains || [],
-        rating: dapp.rating,
-        user_count: dapp.user_count,
         is_new: dapp.is_new,
         is_featured: dapp.is_featured,
         live_url: dapp.live_url,
@@ -176,9 +172,6 @@ const NewPage: React.FC = () => {
     switch (sortBy) {
       case 'alphabetical':
         filtered.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case 'rating':
-        filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
         break;
       case 'newest':
       default:
@@ -542,12 +535,6 @@ const NewPage: React.FC = () => {
                                   {dapp.name}
                                 </h3>
                               </div>
-                              {dapp.rating && (
-                                <div className="flex items-center text-xs text-gray-400">
-                                  <Star className="w-3 h-3 text-yellow-500 mr-1" />
-                                  {dapp.rating}
-                                </div>
-                              )}
                             </div>
 
                             {/* Problem Solved */}
@@ -560,12 +547,6 @@ const NewPage: React.FC = () => {
                               <span className="px-2 py-1 bg-purple-600/20 text-purple-300 text-xs rounded-full">
                                 {dapp.category?.title || 'Uncategorized'}
                               </span>
-                              {dapp.user_count && (
-                                <div className="flex items-center text-xs text-gray-500">
-                                  <Users className="w-3 h-3 mr-1" />
-                                  {dapp.user_count}
-                                </div>
-                              )}
                             </div>
 
                             {/* Blockchains */}
@@ -616,12 +597,6 @@ const NewPage: React.FC = () => {
                                   New
                                 </span>
                               </div>
-                              {dapp.rating && (
-                                <div className="flex items-center text-sm text-gray-400">
-                                  <Star className="w-4 h-4 text-yellow-500 mr-1" />
-                                  {dapp.rating}
-                                </div>
-                              )}
                             </div>
                             
                             <p className="text-purple-400 text-sm mb-2 line-clamp-1">
@@ -632,12 +607,6 @@ const NewPage: React.FC = () => {
                               <span className="px-2 py-1 bg-purple-600/20 text-purple-300 text-xs rounded-full">
                                 {dapp.category?.title || 'Uncategorized'}
                               </span>
-                              {dapp.user_count && (
-                                <div className="flex items-center">
-                                  <Users className="w-3 h-3 mr-1" />
-                                  {dapp.user_count}
-                                </div>
-                              )}
                               <div className="flex gap-1">
                                 {dapp.blockchains.slice(0, 2).map((blockchain) => (
                                   <span
