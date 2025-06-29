@@ -35,6 +35,8 @@ interface DAppFormData {
   logo_url: string;
   thumbnail_url: string;
   category_id: string;
+  sub_category: string;
+  blockchains: string[];
   is_new: boolean;
   is_featured: boolean;
   live_url: string;
@@ -68,6 +70,8 @@ const AdminDAppForm: React.FC = () => {
     logo_url: '',
     thumbnail_url: '',
     category_id: '',
+    sub_category: '',
+    blockchains: [],
     is_new: false,
     is_featured: false,
     live_url: '',
