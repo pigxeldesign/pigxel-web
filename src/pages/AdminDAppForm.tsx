@@ -37,6 +37,8 @@ interface DAppFormData {
   category_id: string;
   sub_category: string;
   blockchains: string[];
+  rating: number | null;
+  user_count: string;
   is_new: boolean;
   is_featured: boolean;
   live_url: string;
@@ -72,6 +74,8 @@ const AdminDAppForm: React.FC = () => {
     category_id: '',
     sub_category: '',
     blockchains: [],
+    rating: null,
+    user_count: '',
     is_new: false,
     is_featured: false,
     live_url: '',
@@ -162,6 +166,8 @@ const AdminDAppForm: React.FC = () => {
           category_id: data.category_id || '',
           sub_category: data.sub_category || '',
           blockchains: data.blockchains || [],
+          rating: data.rating,
+          user_count: data.user_count || '',
           is_new: data.is_new || false,
           is_featured: data.is_featured || false,
           live_url: data.live_url || '',
@@ -315,6 +321,8 @@ const AdminDAppForm: React.FC = () => {
         category_id: formData.category_id || null,
         sub_category: formData.sub_category.trim(),
         blockchains: formData.blockchains,
+        rating: formData.rating,
+        user_count: formData.user_count.trim() || null,
         is_new: formData.is_new,
         is_featured: formData.is_featured,
         live_url: formData.live_url.trim(),
@@ -857,6 +865,44 @@ const AdminDAppForm: React.FC = () => {
                       {validationErrors.discord_url}
                     </p>
                   )}
+                </div>
+              </div>
+            </div>
+
+            {/* Additional Information */}
+            <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
+              <h2 className="text-xl font-bold text-white mb-6">Additional Information</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Rating */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Rating (0-5)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="5"
+                    step="0.1"
+                    value={formData.rating === null ? '' : formData.rating}
+                    onChange={(e) => handleInputChange('rating', e.target.value === '' ? null : parseFloat(e.target.value))}
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    placeholder="Enter rating (0-5)"
+                  />
+                </div>
+
+                {/* User Count */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    User Count
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.user_count}
+                    onChange={(e) => handleInputChange('user_count', e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    placeholder="e.g., 10K+, 1M+, etc."
+                  />
                 </div>
               </div>
             </div>
