@@ -61,7 +61,6 @@ const AdminDAppForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const navigationAttempted = useRef(false);
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isEditing = Boolean(id);
   
   // Form state
@@ -93,7 +92,6 @@ const AdminDAppForm: React.FC = () => {
   const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'error' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [saveStep, setSaveStep] = useState<string | null>(null);
   
   // Available options
   const blockchainOptions = [
@@ -107,13 +105,6 @@ const AdminDAppForm: React.FC = () => {
     if (isEditing) {
       loadDAppData();
     }
-    
-    // Cleanup any timeouts on unmount
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-    };
   }, [id]);
 
   // Auto-save functionality for editing
@@ -141,7 +132,7 @@ const AdminDAppForm: React.FC = () => {
       
       console.log('Categories loaded:', data?.length || 0);
       setCategories(data || []);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error loading categories:', error);
       setError('Failed to load categories. Please try again.');
     }
@@ -187,7 +178,7 @@ const AdminDAppForm: React.FC = () => {
       } else {
         setError('dApp not found');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error loading dApp:', error);
       setError('Failed to load dApp data. Please try again.');
     } finally {
@@ -321,40 +312,22 @@ const AdminDAppForm: React.FC = () => {
 
   const saveDApp = async (isAutoSave = false) => {
     // Step 1: Validate form
-    setSaveStep('validating');
     console.log('Step 1: Validating form');
     
     if (!isAutoSave && !validateForm()) {
       console.log('Validation failed');
-      setSaveStep(null);
       return;
     }
     
     // Step 2: Prepare UI for saving
-    setSaveStep('preparing');
     console.log('Step 2: Preparing UI for saving');
     setSaving(true);
     setError(null);
     setSaveSuccess(false);
     
-    // Create a safety timeout to ensure we don't get stuck in saving state
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-    
-    saveTimeoutRef.current = setTimeout(() => {
-      if (saving) {
-        console.log('Safety timeout triggered - resetting saving state');
-        setSaving(false);
-        setError('Operation timed out. Please try again.');
-        setSaveStep(null);
-      }
-    }, 15000); // 15 second safety timeout
-    
     try {
       // Step 3: Prepare data
-      setSaveStep('preparing-data');
-      console.log('Step 3: Preparing data');
+      console.log('Step 3: Preparing data for save operation');
       
       const dataToSave = {
         name: formData.name.trim(),
@@ -375,79 +348,45 @@ const AdminDAppForm: React.FC = () => {
       };
       
       // Step 4: Save to Supabase
-      setSaveStep('saving-to-database');
-      console.log('Step 4: Saving to Supabase');
+      console.log('Step 4: Saving to Supabase database');
       
-      // First try direct RPC function call which bypasses RLS
-      try {
-        setSaveStep('attempt-rpc-function');
+      if (isEditing) {
+        console.log('Updating dApp with ID:', id);
         
-        // Try using the RPC function if available
-        const rpcResponse = await supabase.rpc('admin_save_dapp', {
-          p_dapp_data: dataToSave,
-          p_operation: isEditing ? 'UPDATE' : 'INSERT'
-        });
+        const { error } = await supabase
+          .from('dapps')
+          .update(dataToSave)
+          .eq('id', id);
         
-        console.log('RPC function response:', rpcResponse);
-        
-        if (rpcResponse.error) {
-          console.warn('RPC function failed, falling back to standard method:', rpcResponse.error);
-          throw new Error('RPC function failed: ' + rpcResponse.error.message);
+        if (error) {
+          console.error('Supabase update error:', error);
+          throw new Error(`Update failed: ${error.message}`);
         }
         
-        console.log('Save successful via RPC function');
-      } catch (rpcError) {
-        console.log('Falling back to standard insert/update method');
+        console.log('dApp updated successfully');
+      } else {
+        console.log('Creating new dApp');
         
-        // Try standard Supabase methods as fallback
-        if (isEditing) {
-          console.log('Updating dApp with ID:', id);
-          setSaveStep('update-via-supabase');
-          
-          const { error: updateError } = await supabase
-            .from('dapps')
-            .update(dataToSave)
-            .eq('id', id);
-          
-          if (updateError) {
-            console.error('Supabase update error:', updateError);
-            throw new Error(`Update failed: ${updateError.message}`);
-          }
-          
-          console.log('Update successful');
-        } else {
-          console.log('Creating new dApp');
-          setSaveStep('insert-via-supabase');
-          
-          const { data: insertData, error: insertError } = await supabase
-            .from('dapps')
-            .insert([dataToSave])
-            .select();
-          
-          if (insertError) {
-            console.error('Supabase insert error:', insertError);
-            throw new Error(`Insert failed: ${insertError.message}`);
-          }
-          
-          console.log('Insert successful:', insertData?.[0]?.id || 'No ID returned');
+        const { data, error } = await supabase
+          .from('dapps')
+          .insert([dataToSave])
+          .select();
+        
+        if (error) {
+          console.error('Supabase insert error:', error);
+          throw new Error(`Insert failed: ${error.message}`);
         }
+        
+        console.log('dApp created successfully:', data?.[0]?.id || 'No ID returned');
       }
       
       // Step 5: Handle success
-      setSaveStep('success');
-      console.log('Step 5: Save successful');
+      console.log('Step 5: Save operation successful');
       
       if (!isAutoSave) {
         setIsDirty(false);
         setSaveSuccess(true);
         
-        // If safety timeout is still active, clear it
-        if (saveTimeoutRef.current) {
-          clearTimeout(saveTimeoutRef.current);
-          saveTimeoutRef.current = null;
-        }
-        
-        // Navigate after a short delay
         if (!navigationAttempted.current) {
           navigationAttempted.current = true;
           
@@ -471,27 +410,16 @@ const AdminDAppForm: React.FC = () => {
       }
     } catch (error: any) {
       // Step 6: Handle errors
-      setSaveStep('error');
       console.error('Save operation failed:', error);
       
       setError(typeof error === 'string' ? error : 
                error.message || 'Failed to save dApp. Please try again.');
-      
-      // If safety timeout is still active, clear it
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-        saveTimeoutRef.current = null;
-      }
     } finally {
-      // Step 7: Clean up regardless of outcome
-      setSaveStep('cleanup');
+      // Step 7: Clean up
       console.log('Step 7: Cleanup - setting saving state to false');
       
-      // Set saving to false in a way that ensures it always happens
-      requestAnimationFrame(() => {
-        setSaving(false);
-        console.log('Saving state set to false');
-      });
+      // Set saving to false to update UI
+      setSaving(false);
     }
   };
 
@@ -554,13 +482,6 @@ const AdminDAppForm: React.FC = () => {
                   <span className="text-red-400">Save failed</span>
                 </>
               )}
-            </div>
-          )}
-          
-          {/* Save Step Indicator (for debugging) */}
-          {saveStep && (
-            <div className="text-xs text-gray-500">
-              {saveStep}
             </div>
           )}
           
@@ -1078,7 +999,6 @@ const AdminDAppForm: React.FC = () => {
               <div className="bg-red-900/20 border border-red-700/30 rounded-xl p-4">
                 <h3 className="text-sm font-semibold text-red-300 mb-2">Debug Information</h3>
                 <div className="space-y-1 text-xs text-red-400">
-                  <div>Save Step: {saveStep || 'none'}</div>
                   <div>Saving: {saving ? 'true' : 'false'}</div>
                   <div>Is Dirty: {isDirty ? 'true' : 'false'}</div>
                   <div>Navigation Attempted: {navigationAttempted.current ? 'true' : 'false'}</div>
