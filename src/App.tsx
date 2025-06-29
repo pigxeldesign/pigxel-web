@@ -21,12 +21,28 @@ import Web3NavigatorPage from './pages/Web3NavigatorPage';
 import AllCategoriesPage from './pages/AllCategoriesPage';
 import FeaturedPage from './pages/FeaturedPage';
 import NewPage from './pages/NewPage';
+import { motion } from 'framer-motion';
 
 function App() {
   return (
     <AuthProvider>
       <Router>
         <div className="min-h-screen bg-gray-900">
+          {/* Bolt.new Badge */}
+          <motion.div 
+            className="fixed bottom-4 right-4 z-40 w-16 h-16 opacity-70 hover:opacity-100 transition-opacity duration-300"
+            whileHover={{ rotate: 360 }}
+            transition={{ duration: 1 }}
+          >
+            <a href="https://bolt.new" target="_blank" rel="noopener noreferrer">
+              <img 
+                src="/white_circle_360x360.png" 
+                alt="Powered by Bolt.new" 
+                className="w-full h-full"
+              />
+            </a>
+          </motion.div>
+
           <Routes>
             {/* Admin Login - No Layout */}
             <Route path="/admin/login" element={<AdminLogin />} />
