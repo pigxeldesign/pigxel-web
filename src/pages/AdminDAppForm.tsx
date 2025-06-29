@@ -35,8 +35,6 @@ interface DAppFormData {
   logo_url: string;
   thumbnail_url: string;
   category_id: string;
-  sub_category: string;
-  blockchains: string[];
   is_new: boolean;
   is_featured: boolean;
   live_url: string;
@@ -70,8 +68,6 @@ const AdminDAppForm: React.FC = () => {
     logo_url: '',
     thumbnail_url: '',
     category_id: '',
-    sub_category: '',
-    blockchains: [],
     is_new: false,
     is_featured: false,
     live_url: '',
@@ -84,13 +80,13 @@ const AdminDAppForm: React.FC = () => {
   // UI state
   const [loading, setLoading] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const [showPreview, setShowPreview] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'error' | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   
   // Available options
   const blockchainOptions = [
@@ -162,9 +158,7 @@ const AdminDAppForm: React.FC = () => {
           thumbnail_url: data.thumbnail_url || '',
           category_id: data.category_id || '',
           sub_category: data.sub_category || '',
-          blockchains: data.blockchains || [],
-          is_new: data.is_new || false,
-          is_featured: data.is_featured || false,
+          blockchains: Array.isArray(data.blockchains) ? data.blockchains : [],
           live_url: data.live_url || '',
           github_url: data.github_url || '',
           twitter_url: data.twitter_url || '',
@@ -192,13 +186,15 @@ const AdminDAppForm: React.FC = () => {
       await saveDApp(true);
       console.log('Auto-save successful');
       setAutoSaveStatus('saved');
-      setTimeout(() => setAutoSaveStatus(null), 2000);
+      setTimeout(() => setAutoSaveStatus(null), 2000); 
+      return true;
       return true;
       return true;
     } catch (error) {
       console.error('Auto-save failed:', error);
       setAutoSaveStatus('error');
-      setTimeout(() => setAutoSaveStatus(null), 3000);
+      setTimeout(() => setAutoSaveStatus(null), 3000); 
+      return false;
       return false;
       return false;
     }
@@ -313,6 +309,7 @@ const AdminDAppForm: React.FC = () => {
     setError(null);
     setSaveSuccess(false);
     setSaveSuccess(false);
+    setSaveSuccess(false);
     try {
       // Prepare data for saving
       const dataToSave = {
@@ -322,10 +319,8 @@ const AdminDAppForm: React.FC = () => {
         logo_url: formData.logo_url.trim() || null,
         thumbnail_url: formData.thumbnail_url.trim() || null,
         category_id: formData.category_id || null,
-        sub_category: formData.sub_category.trim(),
-        blockchains: formData.blockchains,
-        is_new: formData.is_new,
-        is_featured: formData.is_featured,
+        sub_category: formData.sub_category ? formData.sub_category.trim() : '',
+        blockchains: Array.isArray(formData.blockchains) ? formData.blockchains : [],
         live_url: formData.live_url.trim(),
         github_url: formData.github_url.trim() || null,
         twitter_url: formData.twitter_url.trim() || null,
@@ -336,7 +331,7 @@ const AdminDAppForm: React.FC = () => {
       if (isEditing) {
         console.log('Updating dApp with data:', dataToSave);
         console.log('Updating dApp with data:', dataToSave);
-        console.log('Updating dApp:', dataToSave);
+        console.log('Updating dApp with data:', dataToSave);
         const { error } = await supabase
           .from('dapps')
           .update(dataToSave)
@@ -347,7 +342,7 @@ const AdminDAppForm: React.FC = () => {
       } else {
         console.log('Creating new dApp with data:', dataToSave);
         console.log('Creating new dApp with data:', dataToSave);
-        console.log('Creating dApp:', dataToSave);
+        console.log('Creating new dApp with data:', dataToSave);
         const { error } = await supabase
           .from('dapps')
           .insert([dataToSave]);
@@ -359,6 +354,12 @@ const AdminDAppForm: React.FC = () => {
       if (!isAutoSave) {
         setIsDirty(false);
         setSaveSuccess(true);
+        
+        // Delay navigation to show success message
+        setTimeout(() => {
+          console.log('Navigating to /admin/dapps');
+          navigate('/admin/dapps');
+        }, 2000);
         
         // Temporarily log success instead of navigating to isolate the navigation error
         console.log('dApp saved successfully, delaying navigation for debugging');
@@ -383,6 +384,7 @@ const AdminDAppForm: React.FC = () => {
       } else {
         console.error('Error saving dApp:', error.message || 'Failed to save dApp');
       }
+      console.log('Save error details:', error);
       console.log('Save error details:', error);
       console.log('Save error details:', error);
       setError(error.message || 'Failed to save dApp. Please try again.');
@@ -482,6 +484,26 @@ const AdminDAppForm: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* Success Message */}
+        {saveSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-green-600/20 border border-green-600/30 rounded-lg flex items-center"
+          >
+            <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
+            <p className="text-green-300 text-sm">
+              {isEditing ? 'dApp updated successfully!' : 'dApp created successfully!'}
+            </p>
+            <button
+              onClick={() => setSaveSuccess(false)}
+              className="ml-auto text-green-400 hover:text-green-300"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
 
         {/* Success Message */}
         {saveSuccess && (
