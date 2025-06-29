@@ -20,6 +20,7 @@ import {
   Database, 
   Globe 
 } from 'lucide-react';
+import { isValidSafeUrl } from '../lib/supabase';
 
 interface DApp {
   id: string;
@@ -579,9 +580,13 @@ const CategoryListing: React.FC = () => {
                     {/* Thumbnail Image */}
                     <div className="relative w-full h-40 sm:h-48 overflow-hidden">
                       <img
-                        src={dapp.thumbnail}
+                        src={isValidSafeUrl(dapp.thumbnail) ? dapp.thumbnail : ''}
                         alt={dapp.name}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        onError={(e) => {
+                          // Fallback image if the thumbnail fails to load
+                          e.currentTarget.src = 'https://images.pexels.com/photos/1181263/pexels-photo-1181263.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop';
+                        }}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                       

@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { GraduationCap, Wallet, Users, Palette, Database, Globe, Star, Users as UsersIcon } from 'lucide-react';
+import { isValidSafeUrl } from '../lib/supabase';
 import CategoryCard from '../components/CategoryCard';
 
 const HomePage: React.FC = () => {
@@ -188,11 +189,14 @@ const HomePage: React.FC = () => {
               }}
               className={`absolute ${image.position} hidden xl:block`}
             >
-              <div className="relative">
+              <div className="relative"> 
                 <img
-                  src={image.src}
+                  src={isValidSafeUrl(image.src) ? image.src : ''}
                   alt=""
                   className="rounded-xl shadow-2xl border border-gray-700/50"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-purple-900/20 to-transparent rounded-xl" />
               </div>
@@ -304,9 +308,13 @@ const HomePage: React.FC = () => {
                   {/* Thumbnail Image */}
                   <div className="relative w-full h-40 sm:h-48 overflow-hidden">
                     <img
-                      src={dapp.thumbnail}
+                      src={isValidSafeUrl(dapp.thumbnail) ? dapp.thumbnail : ''}
                       alt={dapp.name}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      onError={(e) => {
+                        // Fallback image if the thumbnail fails to load
+                        e.currentTarget.src = 'https://images.pexels.com/photos/1181263/pexels-photo-1181263.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop';
+                      }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                     
