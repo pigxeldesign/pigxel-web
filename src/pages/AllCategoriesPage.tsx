@@ -794,7 +794,7 @@ const AllCategoriesPage: React.FC = () => {
                     Next
                   </button>
                   </>
-                </div>
+                </motion.div>
               )}
             </>
           )}
