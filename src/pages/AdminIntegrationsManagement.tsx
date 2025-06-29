@@ -33,7 +33,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../components/AdminLayout';
-import { supabase } from '../lib/supabase';
+import { supabase, isValidSafeUrl, isProduction } from '../lib/supabase';
 
 interface Integration {
   id: string;
@@ -285,7 +285,7 @@ const AdminIntegrationsManagement: React.FC = () => {
   const isValidUrl = (url: string): boolean => {
     try {
       new URL(url);
-      return true;
+      return isValidSafeUrl(url);
     } catch {
       return false;
     }

@@ -88,3 +88,26 @@ export interface FlowScreen {
   created_at: string;
   updated_at: string;
 }
+
+/**
+ * Validates if a URL is safe (not using javascript: or other potentially dangerous protocols)
+ * @param url The URL to validate
+ * @returns boolean indicating if the URL is safe
+ */
+export function isValidSafeUrl(url: string): boolean {
+  try {
+    const parsedUrl = new URL(url);
+    // Only allow http and https protocols
+    return ['http:', 'https:'].includes(parsedUrl.protocol);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Determines if the application is running in production mode
+ * @returns boolean indicating if in production
+ */
+export function isProduction(): boolean {
+  return import.meta.env.MODE === 'production';
+}

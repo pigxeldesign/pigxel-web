@@ -45,7 +45,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('AuthProvider: Error getting session:', error);
+          if (!isProduction()) {
+            console.error('AuthProvider: Error getting session:', error);
+          } else {
+            console.error('AuthProvider: Error getting session:', error.message);
+          }
         } else {
           console.log('AuthProvider: Initial session:', session?.user?.email || 'No session');
         }
@@ -126,13 +130,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         .single();
 
       if (error) {
-        console.error('AuthProvider: Error fetching profile:', error);
-        console.log('AuthProvider: Profile fetch error details:', {
-          code: error.code,
-          message: error.message,
-          details: error.details,
-          hint: error.hint
-        });
+        if (!isProduction()) {
+          console.error('AuthProvider: Error fetching profile:', error);
+          console.log('AuthProvider: Profile fetch error details:', {
+            code: error.code,
+            message: error.message,
+            details: error.details,
+            hint: error.hint
+          });
+        } else {
+          console.error('AuthProvider: Error fetching profile:', error.message);
+        }
         if (error.code === 'PGRST116') {
           console.log('AuthProvider: Profile not found, will be created by trigger');
         }
@@ -142,7 +150,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setProfile(data);
       }
     } catch (error) {
-      console.error('AuthProvider: Unexpected error fetching profile:', error);
+      if (!isProduction()) {
+        console.error('AuthProvider: Unexpected error fetching profile:', error);
+      } else {
+        console.error('AuthProvider: Unexpected error fetching profile. Please try again.');
+      }
+        console.error('AuthProvider: Error during initialization:', error);
+      } else {
+        console.error('AuthProvider: Error during initialization. Please try again.');
+      }
       setProfile(null);
     }
   };
@@ -159,14 +175,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('Supabase signInWithPassword result error:', error);
       
       if (error) {
-        console.error('AuthProvider: Sign in error:', error);
+        if (!isProduction()) {
+          console.error('AuthProvider: Sign in error:', error);
+        } else {
+          console.error('AuthProvider: Sign in error:', error.message);
+        }
       } else {
         console.log('AuthProvider: Sign in successful');
       }
       
       return { error };
     } catch (error) {
-      console.error('AuthProvider: Unexpected sign in error:', error);
+      if (!isProduction()) {
+        console.error('AuthProvider: Unexpected sign in error:', error);
+      } else {
+        console.error('AuthProvider: Unexpected sign in error. Please try again.');
+      }
       return { error };
     }
   };
@@ -189,7 +213,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        console.error('AuthProvider: Supabase signOut error:', error);
+        if (!isProduction()) {
+          console.error('AuthProvider: Supabase signOut error:', error);
+        } else {
+          console.error('AuthProvider: Supabase signOut error:', error.message);
+        }
         // Don't throw here, still redirect
       } else {
         console.log('AuthProvider: Supabase signOut successful');
@@ -200,7 +228,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       window.location.href = '/';
       
     } catch (error) {
-      console.error('AuthProvider: Unexpected signOut error:', error);
+      if (!isProduction()) {
+        console.error('AuthProvider: Unexpected signOut error:', error);
+      } else {
+        console.error('AuthProvider: Unexpected signOut error. Please try again.');
+      }
       
       // Even if there's an error, clear state and redirect
       setUser(null);

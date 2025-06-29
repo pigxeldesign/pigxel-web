@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../components/AdminLayout';
-import { supabase } from '../lib/supabase';
+import { supabase, isProduction } from '../lib/supabase';
 
 interface Flow {
   id: string;
@@ -132,7 +132,11 @@ const AdminFlowsManagement: React.FC = () => {
       
       setDApps(Array.from(dappMap.values()));
     } catch (error) {
-      console.error('Error loading flows:', error);
+      if (!isProduction()) {
+        console.error('Error loading flows:', error);
+      } else {
+        console.error('Error loading flows:', error instanceof Error ? error.message : 'Failed to load flows');
+      }
       setError('Failed to load flows. Please try again.'); 
     } finally {
       setLoading(false); 
@@ -232,7 +236,11 @@ const AdminFlowsManagement: React.FC = () => {
           return newSet;
         });
       } catch (error: any) {
-        console.error('Error deleting flow:', error);
+        if (!isProduction()) {
+          console.error('Error deleting flow:', error);
+        } else {
+          console.error('Error deleting flow:', error.message || 'Failed to delete flow');
+        }
         setError(error.message || 'Failed to delete flow. Please try again.');
       } finally {
         setDeleting(null);

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Edit, Trash2, ChevronDown, ChevronRight, Search, Filter, MoreHorizontal, Eye, EyeOff, Copy, Move, Palette, Hash, Loader2, CircleDot as DragHandleDots2, Check, X, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../components/AdminLayout';
-import { supabase } from '../lib/supabase';
+import { supabase, isProduction } from '../lib/supabase';
 
 interface Category {
   id: string;
@@ -104,7 +104,11 @@ const AdminCategoriesManagement: React.FC = () => {
       console.log('Categories loaded:', data);
       setCategories(data || []);
     } catch (error) {
-      console.error('Error loading categories:', error);
+      if (!isProduction()) {
+        console.error('Error loading categories:', error);
+      } else {
+        console.error('Error loading categories:', error instanceof Error ? error.message : 'Failed to load categories');
+      }
       setError('Failed to load categories. Please try again.');
     } finally {
       setLoading(false);
@@ -209,7 +213,11 @@ const AdminCategoriesManagement: React.FC = () => {
       // Reload categories
       await loadCategories();
     } catch (error: any) {
-      console.error('Error saving category:', error);
+      if (!isProduction()) {
+        console.error('Error saving category:', error);
+      } else {
+        console.error('Error saving category:', error.message || 'Failed to save category');
+      }
       setError(error.message || 'Failed to save category. Please try again.');
     } finally {
       setSaving(false);
@@ -253,7 +261,11 @@ const AdminCategoriesManagement: React.FC = () => {
           return newSet;
         });
       } catch (error: any) {
-        console.error('Error deleting category:', error);
+        if (!isProduction()) {
+          console.error('Error deleting category:', error);
+        } else {
+          console.error('Error deleting category:', error.message || 'Failed to delete category');
+        }
         setError(error.message || 'Failed to delete category. Please try again.');
       }
     }

@@ -26,7 +26,7 @@ import {
   Trash2
 } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
-import { supabase } from '../lib/supabase';
+import { supabase, isValidSafeUrl, isProduction } from '../lib/supabase';
 
 interface DAppFormData {
   name: string;
@@ -149,7 +149,11 @@ const AdminDAppForm: React.FC = () => {
       console.log('Categories loaded:', data);
       setCategories(data || []);
     } catch (error: any) {
-      console.error('Error loading categories:', error);
+      if (!isProduction()) {
+        console.error('Error loading categories:', error);
+      } else {
+        console.error('Error loading categories:', error.message || 'Failed to load categories');
+      }
       setError('Failed to load categories. Please try again.');
     }
   };
@@ -199,7 +203,11 @@ const AdminDAppForm: React.FC = () => {
         });
       }
     } catch (error: any) {
-      console.error('Error loading dApp:', error);
+      if (!isProduction()) {
+        console.error('Error loading dApp:', error);
+      } else {
+        console.error('Error loading dApp:', error.message || 'Failed to load dApp data');
+      }
       setError('Failed to load dApp data. Please try again.');
     } finally {
       setLoading(false);
@@ -251,32 +259,46 @@ const AdminDAppForm: React.FC = () => {
     if (!formData.live_url.trim()) {
       errors.live_url = 'Live URL is required';
     } else if (!isValidUrl(formData.live_url)) {
-      errors.live_url = 'Please enter a valid URL';
+      errors.live_url = 'Please enter a valid URL (must start with http:// or https://)';
+    } else if (!isValidSafeUrl(formData.live_url)) {
+      errors.live_url = 'URL must use http or https protocol';
     }
     
     // Optional URL validations
     if (formData.github_url && !isValidUrl(formData.github_url)) {
-      errors.github_url = 'Please enter a valid GitHub URL';
+      errors.github_url = 'Please enter a valid GitHub URL (must start with http:// or https://)';
+    } else if (formData.github_url && !isValidSafeUrl(formData.github_url)) {
+      errors.github_url = 'URL must use http or https protocol';
     }
     
     if (formData.twitter_url && !isValidUrl(formData.twitter_url)) {
-      errors.twitter_url = 'Please enter a valid Twitter URL';
+      errors.twitter_url = 'Please enter a valid Twitter URL (must start with http:// or https://)';
+    } else if (formData.twitter_url && !isValidSafeUrl(formData.twitter_url)) {
+      errors.twitter_url = 'URL must use http or https protocol';
     }
     
     if (formData.documentation_url && !isValidUrl(formData.documentation_url)) {
-      errors.documentation_url = 'Please enter a valid documentation URL';
+      errors.documentation_url = 'Please enter a valid documentation URL (must start with http:// or https://)';
+    } else if (formData.documentation_url && !isValidSafeUrl(formData.documentation_url)) {
+      errors.documentation_url = 'URL must use http or https protocol';
     }
     
     if (formData.discord_url && !isValidUrl(formData.discord_url)) {
-      errors.discord_url = 'Please enter a valid Discord URL';
+      errors.discord_url = 'Please enter a valid Discord URL (must start with http:// or https://)';
+    } else if (formData.discord_url && !isValidSafeUrl(formData.discord_url)) {
+      errors.discord_url = 'URL must use http or https protocol';
     }
     
     if (formData.logo_url && !isValidUrl(formData.logo_url)) {
-      errors.logo_url = 'Please enter a valid logo URL';
+      errors.logo_url = 'Please enter a valid logo URL (must start with http:// or https://)';
+    } else if (formData.logo_url && !isValidSafeUrl(formData.logo_url)) {
+      errors.logo_url = 'URL must use http or https protocol';
     }
     
     if (formData.thumbnail_url && !isValidUrl(formData.thumbnail_url)) {
-      errors.thumbnail_url = 'Please enter a valid thumbnail URL';
+      errors.thumbnail_url = 'Please enter a valid thumbnail URL (must start with http:// or https://)';
+    } else if (formData.thumbnail_url && !isValidSafeUrl(formData.thumbnail_url)) {
+      errors.thumbnail_url = 'URL must use http or https protocol';
     }
     
     setValidationErrors(errors);
@@ -366,7 +388,11 @@ const AdminDAppForm: React.FC = () => {
         navigate('/admin/dapps');
       }
     } catch (error: any) {
-      console.error('Error saving dApp:', error);
+      if (!isProduction()) {
+        console.error('Error saving dApp:', error);
+      } else {
+        console.error('Error saving dApp:', error.message || 'Failed to save dApp');
+      }
       setError(error.message || 'Failed to save dApp. Please try again.');
       throw error;
     } finally {
@@ -642,7 +668,7 @@ const AdminDAppForm: React.FC = () => {
                     {formData.logo_url && (
                       <div className="relative">
                         <img
-                          src={formData.logo_url}
+                         src={isValidSafeUrl(formData.logo_url) ? formData.logo_url : ''}
                           alt="Logo preview"
                           className="w-20 h-20 object-cover rounded-lg border border-gray-600"
                           onError={(e) => {
@@ -675,7 +701,7 @@ const AdminDAppForm: React.FC = () => {
                     {formData.thumbnail_url && (
                       <div className="relative">
                         <img
-                          src={formData.thumbnail_url}
+                         src={isValidSafeUrl(formData.thumbnail_url) ? formData.thumbnail_url : ''}
                           alt="Thumbnail preview"
                           className="w-full h-32 object-cover rounded-lg border border-gray-600"
                           onError={(e) => {

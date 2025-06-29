@@ -29,7 +29,7 @@ import {
   Move
 } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
-import { supabase } from '../lib/supabase';
+import { supabase, isValidSafeUrl, isProduction } from '../lib/supabase';
 
 interface DApp {
   id: string;
@@ -131,7 +131,11 @@ export default function AdminFlowForm() {
 
       setDapps(formattedDapps);
     } catch (error) {
-      console.error('Error fetching dApps:', error);
+      if (!isProduction()) {
+        console.error('Error fetching dApps:', error);
+      } else {
+        console.error('Error fetching dApps:', error instanceof Error ? error.message : 'Failed to fetch dApps');
+      }
       setError('Failed to load dApps');
     }
   };
@@ -181,7 +185,11 @@ export default function AdminFlowForm() {
 
       setFlowScreens(formattedScreens);
     } catch (error) {
-      console.error('Error fetching flow:', error);
+      if (!isProduction()) {
+        console.error('Error fetching flow:', error);
+      } else {
+        console.error('Error fetching flow:', error instanceof Error ? error.message : 'Failed to fetch flow');
+      }
       setError('Failed to load flow');
     } finally {
       setLoading(false);
@@ -227,7 +235,7 @@ export default function AdminFlowForm() {
   const isValidUrl = (url: string): boolean => {
     try {
       new URL(url);
-      return true;
+      return isValidSafeUrl(url);
     } catch {
       return false;
     }
@@ -333,7 +341,11 @@ export default function AdminFlowForm() {
         navigate('/admin/flows');
       }
     } catch (error: any) {
-      console.error('Error saving flow:', error);
+      if (!isProduction()) {
+        console.error('Error saving flow:', error);
+      } else {
+        console.error('Error saving flow:', error instanceof Error ? error.message : 'Failed to save flow');
+      }
       setError(error.message || 'Failed to save flow. Please try again.');
       throw error;
     } finally {
@@ -771,7 +783,7 @@ export default function AdminFlowForm() {
                           {screen.thumbnail_url && isValidUrl(screen.thumbnail_url) && (
                             <div className="mt-2">
                               <img
-                                src={screen.thumbnail_url}
+                                src={isValidSafeUrl(screen.thumbnail_url) ? screen.thumbnail_url : ''}
                                 alt="Preview"
                                 className="w-full h-24 object-cover rounded border border-gray-600"
                                 onError={(e) => {
