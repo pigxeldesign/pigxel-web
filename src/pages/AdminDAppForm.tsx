@@ -91,6 +91,7 @@ const AdminDAppForm: React.FC = () => {
   const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'error' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   
   // Available options
   const blockchainOptions = [
@@ -189,15 +190,18 @@ const AdminDAppForm: React.FC = () => {
     try {
       await saveDApp(true);
       console.log('Auto-save successful');
-      setAutoSaveStatus('saved');
+      setTimeout(() => setAutoSaveStatus(null), 2000); 
+      return true;
       setTimeout(() => setAutoSaveStatus(null), 2000); 
       return true;
       return true;
       return true;
     } catch (error) {
       console.error('Auto-save failed:', error);
+      console.error('Auto-save failed:', error);
       setAutoSaveStatus('error');
       setTimeout(() => setAutoSaveStatus(null), 3000); 
+      return false;
       return false;
       return false;
       return false;
@@ -314,6 +318,7 @@ const AdminDAppForm: React.FC = () => {
     setSaveSuccess(false);
     setSaveSuccess(false);
     setSaveSuccess(false);
+    setSaveSuccess(false);
     try {
       // Prepare data for saving
       const dataToSave = {
@@ -358,6 +363,11 @@ const AdminDAppForm: React.FC = () => {
       if (!isAutoSave) {
         setIsDirty(false);
         setSaveSuccess(true);
+        
+        // Delay navigation to show success message
+        setTimeout(() => {
+          navigate('/admin/dapps');
+        }, 2000);
         
         // Delay navigation to show success message
         setTimeout(() => {
@@ -488,6 +498,26 @@ const AdminDAppForm: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* Success Message */}
+        {saveSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-green-600/20 border border-green-600/30 rounded-lg flex items-center"
+          >
+            <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
+            <p className="text-green-300 text-sm">
+              {isEditing ? 'dApp updated successfully!' : 'dApp created successfully!'}
+            </p>
+            <button
+              onClick={() => setSaveSuccess(false)}
+              className="ml-auto text-green-400 hover:text-green-300"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
 
         {/* Success Message */}
         {saveSuccess && (
