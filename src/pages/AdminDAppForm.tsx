@@ -300,6 +300,17 @@ const AdminDAppForm: React.FC = () => {
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      await saveDApp();
+    } catch (error) {
+      console.error('Error in handleSubmit:', error);
+      // Error is already handled in saveDApp, no need to do anything here
+    }
+  };
+
   const saveDApp = async (isAutoSave = false) => {
     if (!isAutoSave && !validateForm()) {
       return;
@@ -362,7 +373,7 @@ const AdminDAppForm: React.FC = () => {
         console.error('Error saving dApp:', error.message || 'Failed to save dApp');
       }
       setError(error.message || 'Failed to save dApp. Please try again.');
-      throw error;
+      // Don't re-throw the error - this was causing the issue
     } finally {
       setSaving(false);
     }
@@ -440,7 +451,7 @@ const AdminDAppForm: React.FC = () => {
               {showPreview ? 'Hide Preview' : 'Preview'}
             </button>
             <button
-              onClick={() => saveDApp()}
+              onClick={handleSubmit}
               disabled={saving}
               className="flex items-center px-6 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 text-white rounded-lg transition-colors"
             >
