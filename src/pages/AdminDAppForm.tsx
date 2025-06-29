@@ -189,20 +189,13 @@ const AdminDAppForm: React.FC = () => {
     try {
       await saveDApp(true);
       console.log('Auto-save successful');
-      setTimeout(() => setAutoSaveStatus(null), 2000); 
-      return true;
-      setTimeout(() => setAutoSaveStatus(null), 2000); 
-      return true;
-      return true;
+      setAutoSaveStatus('saved');
+      setTimeout(() => setAutoSaveStatus(null), 2000);
       return true;
     } catch (error) {
       console.error('Auto-save failed:', error);
-      console.error('Auto-save failed:', error);
       setAutoSaveStatus('error');
-      setTimeout(() => setAutoSaveStatus(null), 3000); 
-      return false;
-      return false;
-      return false;
+      setTimeout(() => setAutoSaveStatus(null), 3000);
       return false;
     }
   };
@@ -315,9 +308,7 @@ const AdminDAppForm: React.FC = () => {
     setSaving(true);
     setError(null);
     setSaveSuccess(false);
-    setSaveSuccess(false);
-    setSaveSuccess(false);
-    setSaveSuccess(false);
+    
     try {
       // Prepare data for saving
       const dataToSave = {
@@ -338,8 +329,6 @@ const AdminDAppForm: React.FC = () => {
       
       if (isEditing) {
         console.log('Updating dApp with data:', dataToSave);
-        console.log('Updating dApp with data:', dataToSave);
-        console.log('Updating dApp with data:', dataToSave);
         const { error } = await supabase
           .from('dapps')
           .update(dataToSave)
@@ -348,8 +337,6 @@ const AdminDAppForm: React.FC = () => {
         if (error) throw error;
         console.log('dApp updated successfully');
       } else {
-        console.log('Creating new dApp with data:', dataToSave);
-        console.log('Creating new dApp with data:', dataToSave);
         console.log('Creating new dApp with data:', dataToSave);
         const { error } = await supabase
           .from('dapps')
@@ -363,30 +350,7 @@ const AdminDAppForm: React.FC = () => {
         setIsDirty(false);
         setSaveSuccess(true);
         
-        // Delay navigation to show success message
-        setTimeout(() => {
-          navigate('/admin/dapps');
-        }, 2000);
-        
-        // Delay navigation to show success message
-        setTimeout(() => {
-          console.log('Navigating to /admin/dapps');
-          navigate('/admin/dapps');
-        }, 2000);
-        
-        // Temporarily log success instead of navigating to isolate the navigation error
-        console.log('dApp saved successfully, delaying navigation for debugging');
-        
-        // Delay navigation to show success message
-        setTimeout(() => {
-          console.log('Navigating to /admin/dapps');
-          navigate('/admin/dapps');
-        }, 2000);
-        
-        // Temporarily log success instead of navigating to isolate the navigation error
-        console.log('dApp saved successfully, delaying navigation for debugging');
-        
-        // Delay navigation to show success message
+        // Delay navigation to show success message - SINGLE navigation call
         setTimeout(() => {
           navigate('/admin/dapps');
         }, 2000);
@@ -397,9 +361,6 @@ const AdminDAppForm: React.FC = () => {
       } else {
         console.error('Error saving dApp:', error.message || 'Failed to save dApp');
       }
-      console.log('Save error details:', error);
-      console.log('Save error details:', error);
-      console.log('Save error details:', error);
       setError(error.message || 'Failed to save dApp. Please try again.');
       throw error;
     } finally {
@@ -497,66 +458,6 @@ const AdminDAppForm: React.FC = () => {
             </button>
           </div>
         </div>
-
-        {/* Success Message */}
-        {saveSuccess && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6 p-4 bg-green-600/20 border border-green-600/30 rounded-lg flex items-center"
-          >
-            <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
-            <p className="text-green-300 text-sm">
-              {isEditing ? 'dApp updated successfully!' : 'dApp created successfully!'}
-            </p>
-            <button
-              onClick={() => setSaveSuccess(false)}
-              className="ml-auto text-green-400 hover:text-green-300"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </motion.div>
-        )}
-
-        {/* Success Message */}
-        {saveSuccess && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6 p-4 bg-green-600/20 border border-green-600/30 rounded-lg flex items-center"
-          >
-            <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
-            <p className="text-green-300 text-sm">
-              {isEditing ? 'dApp updated successfully!' : 'dApp created successfully!'}
-            </p>
-            <button
-              onClick={() => setSaveSuccess(false)}
-              className="ml-auto text-green-400 hover:text-green-300"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </motion.div>
-        )}
-
-        {/* Success Message */}
-        {saveSuccess && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6 p-4 bg-green-600/20 border border-green-600/30 rounded-lg flex items-center"
-          >
-            <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
-            <p className="text-green-300 text-sm">
-              {isEditing ? 'dApp updated successfully!' : 'dApp created successfully!'}
-            </p>
-            <button
-              onClick={() => setSaveSuccess(false)}
-              className="ml-auto text-green-400 hover:text-green-300"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </motion.div>
-        )}
 
         {/* Success Message */}
         {saveSuccess && (
