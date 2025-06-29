@@ -209,13 +209,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                     >
                       <Link
                         to={`/category/${category.slug}`}
-                        className={`text-xs px-2 py-1 rounded-full transition-colors ${loading ? 'bg-gray-800' : 
+                        className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all duration-200 group ${loading ? 'bg-gray-800' : 
                           isActive
                             ? 'bg-purple-600/20 text-purple-300 border border-purple-600/30'
                             : 'text-gray-300 hover:text-white hover:bg-gray-800'
                         }`}
                         onClick={() => {
-                        {loading ? '...' : item.count}
                           if (window.innerWidth < 1024) {
                             onToggle();
                           }
