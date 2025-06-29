@@ -40,8 +40,6 @@ interface DApp {
   };
   sub_category: string;
   blockchains: string[];
-  rating?: number;
-  user_count?: string;
   is_new?: boolean;
   is_featured?: boolean;
   live_url: string;
@@ -175,9 +173,6 @@ const DAppSpotlight: React.FC = () => {
         sub_category: dappData.sub_category,
         subCategory: dappData.sub_category, // For backward compatibility
         blockchains: dappData.blockchains || [],
-        rating: dappData.rating || 0,
-        user_count: dappData.user_count,
-        userCount: dappData.user_count || '0', // For backward compatibility
         is_new: dappData.is_new,
         is_featured: dappData.is_featured,
         live_url: dappData.live_url,
