@@ -35,8 +35,6 @@ interface DAppFormData {
   logo_url: string;
   thumbnail_url: string;
   category_id: string;
-  sub_category: string;
-  blockchains: string[];
   is_new: boolean;
   is_featured: boolean;
   live_url: string;
@@ -70,8 +68,6 @@ const AdminDAppForm: React.FC = () => {
     logo_url: '',
     thumbnail_url: '',
     category_id: '',
-    sub_category: '',
-    blockchains: [],
     is_new: false,
     is_featured: false,
     live_url: '',
@@ -83,6 +79,7 @@ const AdminDAppForm: React.FC = () => {
   
   // UI state
   const [loading, setLoading] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
@@ -161,8 +158,6 @@ const AdminDAppForm: React.FC = () => {
           logo_url: data.logo_url || '',
           thumbnail_url: data.thumbnail_url || '',
           category_id: data.category_id || '',
-          sub_category: data.sub_category || '',
-          blockchains: data.blockchains || [],
           is_new: data.is_new || false,
           is_featured: data.is_featured || false,
           live_url: data.live_url || '',
@@ -190,12 +185,16 @@ const AdminDAppForm: React.FC = () => {
     setAutoSaveStatus('saving');
     try {
       await saveDApp(true);
+      console.log('Auto-save successful');
       setAutoSaveStatus('saved');
       setTimeout(() => setAutoSaveStatus(null), 2000);
       return true;
+      return true;
     } catch (error) {
+      console.error('Auto-save failed:', error);
       setAutoSaveStatus('error');
       setTimeout(() => setAutoSaveStatus(null), 3000);
+      return false;
       return false;
     }
   };
@@ -308,6 +307,7 @@ const AdminDAppForm: React.FC = () => {
     setSaving(true);
     setError(null);
     setSaveSuccess(false);
+    setSaveSuccess(false);
     try {
       // Prepare data for saving
       const dataToSave = {
@@ -317,8 +317,6 @@ const AdminDAppForm: React.FC = () => {
         logo_url: formData.logo_url.trim() || null,
         thumbnail_url: formData.thumbnail_url.trim() || null,
         category_id: formData.category_id || null,
-        sub_category: formData.sub_category.trim(),
-        blockchains: formData.blockchains || [],
         is_new: formData.is_new,
         is_featured: formData.is_featured,
         live_url: formData.live_url.trim(),
@@ -330,6 +328,7 @@ const AdminDAppForm: React.FC = () => {
       
       if (isEditing) {
         console.log('Updating dApp with data:', dataToSave);
+        console.log('Updating dApp with data:', dataToSave);
         console.log('Updating dApp:', dataToSave);
         const { error } = await supabase
           .from('dapps')
@@ -339,6 +338,7 @@ const AdminDAppForm: React.FC = () => {
         if (error) throw error;
         console.log('dApp updated successfully');
       } else {
+        console.log('Creating new dApp with data:', dataToSave);
         console.log('Creating new dApp with data:', dataToSave);
         console.log('Creating dApp:', dataToSave);
         const { error } = await supabase
@@ -358,6 +358,15 @@ const AdminDAppForm: React.FC = () => {
         
         // Delay navigation to show success message
         setTimeout(() => {
+          console.log('Navigating to /admin/dapps');
+          navigate('/admin/dapps');
+        }, 2000);
+        
+        // Temporarily log success instead of navigating to isolate the navigation error
+        console.log('dApp saved successfully, delaying navigation for debugging');
+        
+        // Delay navigation to show success message
+        setTimeout(() => {
           navigate('/admin/dapps');
         }, 2000);
       }
@@ -367,6 +376,7 @@ const AdminDAppForm: React.FC = () => {
       } else {
         console.error('Error saving dApp:', error.message || 'Failed to save dApp');
       }
+      console.log('Save error details:', error);
       console.log('Save error details:', error);
       setError(error.message || 'Failed to save dApp. Please try again.');
       throw error;
@@ -465,6 +475,26 @@ const AdminDAppForm: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* Success Message */}
+        {saveSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-green-600/20 border border-green-600/30 rounded-lg flex items-center"
+          >
+            <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
+            <p className="text-green-300 text-sm">
+              {isEditing ? 'dApp updated successfully!' : 'dApp created successfully!'}
+            </p>
+            <button
+              onClick={() => setSaveSuccess(false)}
+              className="ml-auto text-green-400 hover:text-green-300"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
 
         {/* Success Message */}
         {saveSuccess && (
