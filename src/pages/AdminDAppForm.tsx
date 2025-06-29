@@ -315,6 +315,7 @@ const AdminDAppForm: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Form submitted manually");
     saveDApp();
   };
 
@@ -346,6 +347,7 @@ const AdminDAppForm: React.FC = () => {
         console.log('Safety timeout triggered - resetting saving state');
         setSaving(false);
         setError('Operation timed out. Please try again.');
+        setSaveStep(null);
       }
     }, 15000); // 15 second safety timeout
     
@@ -376,32 +378,59 @@ const AdminDAppForm: React.FC = () => {
       setSaveStep('saving-to-database');
       console.log('Step 4: Saving to Supabase');
       
-      if (isEditing) {
-        console.log('Updating dApp with ID:', id);
-        const { error } = await supabase
-          .from('dapps')
-          .update(dataToSave)
-          .eq('id', id);
+      // First try direct RPC function call which bypasses RLS
+      try {
+        setSaveStep('attempt-rpc-function');
         
-        if (error) {
-          console.error('Supabase update error:', error);
-          throw new Error(`Update failed: ${error.message}`);
+        // Try using the RPC function if available
+        const rpcResponse = await supabase.rpc('admin_save_dapp', {
+          p_dapp_data: dataToSave,
+          p_operation: isEditing ? 'UPDATE' : 'INSERT'
+        });
+        
+        console.log('RPC function response:', rpcResponse);
+        
+        if (rpcResponse.error) {
+          console.warn('RPC function failed, falling back to standard method:', rpcResponse.error);
+          throw new Error('RPC function failed: ' + rpcResponse.error.message);
         }
         
-        console.log('Update successful');
-      } else {
-        console.log('Creating new dApp');
-        const { data, error } = await supabase
-          .from('dapps')
-          .insert([dataToSave])
-          .select();
+        console.log('Save successful via RPC function');
+      } catch (rpcError) {
+        console.log('Falling back to standard insert/update method');
         
-        if (error) {
-          console.error('Supabase insert error:', error);
-          throw new Error(`Insert failed: ${error.message}`);
+        // Try standard Supabase methods as fallback
+        if (isEditing) {
+          console.log('Updating dApp with ID:', id);
+          setSaveStep('update-via-supabase');
+          
+          const { error: updateError } = await supabase
+            .from('dapps')
+            .update(dataToSave)
+            .eq('id', id);
+          
+          if (updateError) {
+            console.error('Supabase update error:', updateError);
+            throw new Error(`Update failed: ${updateError.message}`);
+          }
+          
+          console.log('Update successful');
+        } else {
+          console.log('Creating new dApp');
+          setSaveStep('insert-via-supabase');
+          
+          const { data: insertData, error: insertError } = await supabase
+            .from('dapps')
+            .insert([dataToSave])
+            .select();
+          
+          if (insertError) {
+            console.error('Supabase insert error:', insertError);
+            throw new Error(`Insert failed: ${insertError.message}`);
+          }
+          
+          console.log('Insert successful:', insertData?.[0]?.id || 'No ID returned');
         }
-        
-        console.log('Insert successful:', data?.[0]?.id || 'No ID returned');
       }
       
       // Step 5: Handle success
