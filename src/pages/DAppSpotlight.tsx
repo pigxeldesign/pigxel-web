@@ -608,12 +608,12 @@ const DAppSpotlight: React.FC = () => {
                 </div>
                 <Link 
                   to={`/ai-comparison/${dapp.id}`}
-                  className="flex items-center px-4 sm:px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors text-sm sm:text-base group"
+                  className="flex items-center px-4 sm:px-6 py-3 bg-transparent border-2 border-blue-500 text-blue-400 hover:bg-blue-600/10 hover:text-blue-300 rounded-lg font-medium transition-colors text-sm sm:text-base group"
                 >
                   <img 
                     src="/ChatGPT_Image_29_Jun_2025__15.05.43-removebg-preview.png" 
                     alt="" 
-                    className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform"
+                    className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform opacity-90 group-hover:opacity-100"
                   />
                   AI Comparison Flow
                 </Link>
