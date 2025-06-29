@@ -81,21 +81,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('AuthProvider: Auth state changed:', event, session?.user?.email || 'No user');
       
-      setLoading(true);
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        console.log('AuthProvider: Fetching profile for user:', session.user.email);
-        await fetchProfile(session.user.id);
-      } else {
-        console.log('AuthProvider: No user, clearing profile');
+      try {
+        setLoading(true);
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          console.log('AuthProvider: Fetching profile for user:', session.user.email);
+          await fetchProfile(session.user.id);
+        } else {
+          console.log('AuthProvider: No user, clearing profile');
+          setProfile(null);
+        }
+        
+        console.log('Auth state changed. User:', session?.user, 'Profile:', profile, 'Is Admin:', isAdmin);
+      } catch (error) {
+        console.error('AuthProvider: Error during auth state change:', error);
+        // Ensure we still clear the profile on error
         setProfile(null);
+      } finally {
+        setLoading(false);
+        console.log('AuthProvider: Auth state change complete');
       }
-      
-      console.log('Auth state changed. User:', session?.user, 'Profile:', profile, 'Is Admin:', isAdmin);
-      setLoading(false);
-      console.log('AuthProvider: Auth state change complete');
     });
 
     return () => {
