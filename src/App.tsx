@@ -30,7 +30,7 @@ function App() {
         <div className="min-h-screen bg-gray-900">
           {/* Bolt.new Badge */}
           <motion.div 
-            className="fixed bottom-4 right-4 z-40 w-16 h-16 opacity-70 hover:opacity-100 transition-opacity duration-300"
+            className="fixed bottom-4 left-4 z-40 w-16 h-16 opacity-70 hover:opacity-100 transition-opacity duration-300"
             whileHover={{ rotate: 360 }}
             transition={{ duration: 1 }}
           >
