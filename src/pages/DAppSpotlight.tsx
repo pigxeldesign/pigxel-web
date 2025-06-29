@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import FlowDetailModal from '../components/FlowDetailModal';
 import { supabase } from '../lib/supabase';
+import ComingSoonModal from '../components/ComingSoonModal';
 
 interface DApp {
   id: string;
@@ -92,6 +93,7 @@ const DAppSpotlight: React.FC = () => {
   const [selectedFlow, setSelectedFlow] = useState<Flow | null>(null);
   const [selectedScreenIndex, setSelectedScreenIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isComingSoonModalOpen, setIsComingSoonModalOpen] = useState(false);
 
   useEffect(() => {
     // Fetch dApp data from Supabase
@@ -247,6 +249,10 @@ const DAppSpotlight: React.FC = () => {
     setIsModalOpen(false);
     setSelectedFlow(null);
     setSelectedScreenIndex(0);
+  };
+
+  const handleAIComparisonClick = () => {
+    setIsComingSoonModalOpen(true);
   };
 
   const formatDate = (dateString: string) => {
@@ -568,7 +574,10 @@ const DAppSpotlight: React.FC = () => {
                     )}
 
                     {/* Flow Description */}
-                    <span className="flex items-center gap-2 justify-end cursor-pointer mt-3 sm:mt-4">
+                    <span 
+                      className="flex items-center gap-2 justify-end cursor-pointer mt-3 sm:mt-4"
+                      onClick={handleAIComparisonClick}
+                    >
                       <p className="text-gray-400 text-xs sm:text-sm flex-1">{flow.description}</p>
                       <img
                         src="/ChatGPT_Image_29_Jun_2025__15.05.43-removebg-preview.png"
@@ -615,8 +624,8 @@ const DAppSpotlight: React.FC = () => {
                     Compare this dApp with similar alternatives using our AI-powered analysis tool.
                   </p>
                 </div>
-                <Link 
-                  to={`/ai-comparison/${dapp.id}`}
+                <button 
+                  onClick={handleAIComparisonClick}
                   className="flex items-center px-4 sm:px-6 py-3 bg-transparent border-2 border-blue-500 text-blue-400 hover:bg-blue-600/10 hover:text-blue-300 rounded-lg font-medium transition-colors text-sm sm:text-base group"
                 >
                   <img 
@@ -625,7 +634,7 @@ const DAppSpotlight: React.FC = () => {
                     className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform opacity-90 group-hover:opacity-100"
                   />
                   AI Comparison Flow
-                </Link>
+                </button>
               </div>
             </div>
           </motion.div>
@@ -648,6 +657,12 @@ const DAppSpotlight: React.FC = () => {
         onClose={closeModal}
         flow={selectedFlow}
         initialScreenIndex={selectedScreenIndex}
+      />
+      
+      {/* Coming Soon Modal */}
+      <ComingSoonModal 
+        isOpen={isComingSoonModalOpen}
+        onClose={() => setIsComingSoonModalOpen(false)}
       />
     </div>
   );
