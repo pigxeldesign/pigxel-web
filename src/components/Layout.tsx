@@ -35,7 +35,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <Sidebar isCollapsed={isSidebarCollapsed} onToggle={toggleSidebar} />
         <main 
           className={`flex-1 transition-all duration-300 ${
-            isSidebarCollapsed ? 'lg:ml-0' : 'lg:ml-64'
+            isSidebarCollapsed ? 'lg:ml-0' : 'lg:ml-70'
           }`}
         >
           {children}
