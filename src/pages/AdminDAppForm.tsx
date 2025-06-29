@@ -60,8 +60,9 @@ interface ValidationErrors {
 const AdminDAppForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const isEditing = Boolean(id);
   const navigationAttempted = useRef(false);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isEditing = Boolean(id);
   
   // Form state
   const [formData, setFormData] = useState<DAppFormData>({
@@ -92,6 +93,7 @@ const AdminDAppForm: React.FC = () => {
   const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'error' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveStep, setSaveStep] = useState<string | null>(null);
   
   // Available options
   const blockchainOptions = [
@@ -105,9 +107,16 @@ const AdminDAppForm: React.FC = () => {
     if (isEditing) {
       loadDAppData();
     }
+    
+    // Cleanup any timeouts on unmount
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
   }, [id]);
 
-  // Auto-save functionality
+  // Auto-save functionality for editing
   useEffect(() => {
     if (isDirty && isEditing) {
       const timer = setTimeout(() => {
@@ -115,7 +124,7 @@ const AdminDAppForm: React.FC = () => {
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [formData, isDirty]);
+  }, [formData, isDirty, isEditing]);
 
   const loadCategories = async () => {
     try {
@@ -125,15 +134,15 @@ const AdminDAppForm: React.FC = () => {
         .select('id, slug, title, sub_categories')
         .order('title');
       
-      if (error) throw error;
-      console.log('Categories loaded:', data);
+      if (error) {
+        console.error('Error loading categories:', error);
+        throw error;
+      }
+      
+      console.log('Categories loaded:', data?.length || 0);
       setCategories(data || []);
     } catch (error: any) {
-      if (!isProduction()) {
-        console.error('Error loading categories:', error);
-      } else {
-        console.error('Error loading categories:', error.message || 'Failed to load categories');
-      }
+      console.error('Error loading categories:', error);
       setError('Failed to load categories. Please try again.');
     }
   };
@@ -151,7 +160,10 @@ const AdminDAppForm: React.FC = () => {
         .eq('id', id)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading dApp data:', error);
+        throw error;
+      }
       
       if (data) {
         console.log('dApp data loaded:', data);
@@ -172,13 +184,11 @@ const AdminDAppForm: React.FC = () => {
           documentation_url: data.documentation_url || '',
           discord_url: data.discord_url || ''
         });
+      } else {
+        setError('dApp not found');
       }
     } catch (error: any) {
-      if (!isProduction()) {
-        console.error('Error loading dApp:', error);
-      } else {
-        console.error('Error loading dApp:', error.message || 'Failed to load dApp data');
-      }
+      console.error('Error loading dApp:', error);
       setError('Failed to load dApp data. Please try again.');
     } finally {
       setLoading(false);
@@ -303,30 +313,47 @@ const AdminDAppForm: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    try {
-      await saveDApp();
-    } catch (error) {
-      console.error('Error in handleSubmit:', error);
-      // Error is already handled in saveDApp, no need to do anything here
-    }
+    saveDApp();
   };
 
   const saveDApp = async (isAutoSave = false) => {
-    // First validate the form - don't set saving state until validation passes
+    // Step 1: Validate form
+    setSaveStep('validating');
+    console.log('Step 1: Validating form');
+    
     if (!isAutoSave && !validateForm()) {
+      console.log('Validation failed');
+      setSaveStep(null);
       return;
     }
     
-    // Now that validation has passed, set the saving state
+    // Step 2: Prepare UI for saving
+    setSaveStep('preparing');
+    console.log('Step 2: Preparing UI for saving');
     setSaving(true);
     setError(null);
     setSaveSuccess(false);
     
+    // Create a safety timeout to ensure we don't get stuck in saving state
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    saveTimeoutRef.current = setTimeout(() => {
+      if (saving) {
+        console.log('Safety timeout triggered - resetting saving state');
+        setSaving(false);
+        setError('Operation timed out. Please try again.');
+      }
+    }, 15000); // 15 second safety timeout
+    
     try {
-      // Prepare data for saving
+      // Step 3: Prepare data
+      setSaveStep('preparing-data');
+      console.log('Step 3: Preparing data');
+      
       const dataToSave = {
         name: formData.name.trim(),
         description: formData.description.trim(),
@@ -345,71 +372,97 @@ const AdminDAppForm: React.FC = () => {
         discord_url: formData.discord_url.trim() || null
       };
       
+      // Step 4: Save to Supabase
+      setSaveStep('saving-to-database');
+      console.log('Step 4: Saving to Supabase');
+      
       if (isEditing) {
-        console.log('Updating dApp with data:', dataToSave);
-        const { data, error } = await supabase
+        console.log('Updating dApp with ID:', id);
+        const { error } = await supabase
           .from('dapps')
           .update(dataToSave)
-          .eq('id', id)
-          .select();
-        
-        console.log('Update response:', { data, error });
+          .eq('id', id);
         
         if (error) {
           console.error('Supabase update error:', error);
-          throw error;
+          throw new Error(`Update failed: ${error.message}`);
         }
         
-        console.log('dApp updated successfully');
+        console.log('Update successful');
       } else {
-        console.log('Creating new dApp with data:', dataToSave);
+        console.log('Creating new dApp');
         const { data, error } = await supabase
           .from('dapps')
           .insert([dataToSave])
           .select();
         
-        console.log('Insert response:', { data, error });
-        
         if (error) {
           console.error('Supabase insert error:', error);
-          throw error;
+          throw new Error(`Insert failed: ${error.message}`);
         }
         
-        console.log('dApp created successfully:', data);
+        console.log('Insert successful:', data?.[0]?.id || 'No ID returned');
       }
+      
+      // Step 5: Handle success
+      setSaveStep('success');
+      console.log('Step 5: Save successful');
       
       if (!isAutoSave) {
         setIsDirty(false);
         setSaveSuccess(true);
         
-        // Prevent multiple navigation attempts
+        // If safety timeout is still active, clear it
+        if (saveTimeoutRef.current) {
+          clearTimeout(saveTimeoutRef.current);
+          saveTimeoutRef.current = null;
+        }
+        
+        // Navigate after a short delay
         if (!navigationAttempted.current) {
           navigationAttempted.current = true;
           
-          // Delay navigation to show success message - SINGLE navigation call
+          console.log('Scheduling navigation to /admin/dapps in 2 seconds');
           setTimeout(() => {
-            console.log('Attempting navigation to /admin/dapps');
+            console.log('Attempting to navigate to /admin/dapps now');
+            
             try {
               navigate('/admin/dapps');
+              console.log('Navigation successful');
             } catch (navError) {
               console.error('Navigation error:', navError);
-              // If navigation fails, reset the flag so we can try again
-              navigationAttempted.current = false;
+              // In case of a navigation error, try a different approach
+              window.location.href = '/admin/dapps';
             }
           }, 2000);
         }
+      } else {
+        // For auto-save, just mark as saved
+        console.log('Auto-save successful');
       }
     } catch (error: any) {
-      if (!isProduction()) {
-        console.error('Error saving dApp:', error);
-      } else {
-        console.error('Error saving dApp:', error.message || 'Failed to save dApp');
+      // Step 6: Handle errors
+      setSaveStep('error');
+      console.error('Save operation failed:', error);
+      
+      setError(typeof error === 'string' ? error : 
+               error.message || 'Failed to save dApp. Please try again.');
+      
+      // If safety timeout is still active, clear it
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
       }
-      setError(error.message || 'Failed to save dApp. Please try again.');
-      // Don't re-throw the error - this was causing the issue
     } finally {
-      console.log('Save operation completed, setting saving to false');
-      setSaving(false);
+      // Step 7: Clean up regardless of outcome
+      setSaveStep('cleanup');
+      console.log('Step 7: Cleanup - setting saving state to false');
+      
+      // Set saving to false in a way that ensures it always happens
+      requestAnimationFrame(() => {
+        setSaving(false);
+        console.log('Saving state set to false');
+      });
     }
   };
 
@@ -472,6 +525,13 @@ const AdminDAppForm: React.FC = () => {
                   <span className="text-red-400">Save failed</span>
                 </>
               )}
+            </div>
+          )}
+          
+          {/* Save Step Indicator (for debugging) */}
+          {saveStep && (
+            <div className="text-xs text-gray-500">
+              {saveStep}
             </div>
           )}
           
@@ -546,7 +606,7 @@ const AdminDAppForm: React.FC = () => {
           {/* Main Form */}
           <div className="lg:col-span-2 space-y-8">
             {/* Basic Information */}
-            <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
+            <form onSubmit={handleSubmit} className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
               <h2 className="text-xl font-bold text-white mb-6">Basic Information</h2>
               
               <div className="space-y-6">
@@ -652,7 +712,7 @@ const AdminDAppForm: React.FC = () => {
                   )}
                 </div>
               </div>
-            </div>
+            </form>
 
             {/* Media Assets */}
             <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
@@ -711,11 +771,11 @@ const AdminDAppForm: React.FC = () => {
                       <p className="mt-1 text-sm text-red-400">{validationErrors.thumbnail_url}</p>
                     )}
                     {formData.thumbnail_url && (
-                      <div className="relative">
+                      <div className="mt-2">
                         <img
-                         src={isValidSafeUrl(formData.thumbnail_url) ? formData.thumbnail_url : ''}
+                          src={isValidSafeUrl(formData.thumbnail_url) ? formData.thumbnail_url : ''}
                           alt="Thumbnail preview"
-                          className="w-full h-32 object-cover rounded-lg border border-gray-600"
+                          className="w-full h-24 object-cover rounded border border-gray-600"
                           onError={(e) => {
                             e.currentTarget.style.display = 'none';
                           }}
@@ -933,8 +993,6 @@ const AdminDAppForm: React.FC = () => {
                 </div>
               </div>
             </div>
-
-            {/* Additional Information */}
           </div>
 
           {/* Sidebar */}
@@ -985,6 +1043,20 @@ const AdminDAppForm: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {/* Debug Info (only during development) */}
+            {!isProduction() && (
+              <div className="bg-red-900/20 border border-red-700/30 rounded-xl p-4">
+                <h3 className="text-sm font-semibold text-red-300 mb-2">Debug Information</h3>
+                <div className="space-y-1 text-xs text-red-400">
+                  <div>Save Step: {saveStep || 'none'}</div>
+                  <div>Saving: {saving ? 'true' : 'false'}</div>
+                  <div>Is Dirty: {isDirty ? 'true' : 'false'}</div>
+                  <div>Navigation Attempted: {navigationAttempted.current ? 'true' : 'false'}</div>
+                  <div>Validation Errors: {Object.keys(validationErrors).length}</div>
+                </div>
+              </div>
+            )}
 
             {/* Validation Summary */}
             {Object.keys(validationErrors).length > 0 && (
