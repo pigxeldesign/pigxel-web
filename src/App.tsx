@@ -36,7 +36,7 @@ function App() {
           >
             <a href="https://bolt.new" target="_blank" rel="noopener noreferrer">
               <img
-                src="/image.png"
+                src="/white_circle_360x360.png"
                 alt="Powered by Bolt.new"
                 className="w-full h-full object-contain"
               />
