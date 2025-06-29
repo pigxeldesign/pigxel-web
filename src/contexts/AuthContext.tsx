@@ -81,12 +81,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('AuthProvider: Auth state changed:', event, session?.user?.email || 'No user');
       
-      // Don't process events during initial load
-      if (initializing) {
-        console.log('AuthProvider: Skipping event during initialization');
-        return;
-      }
-      
       setLoading(true);
       setSession(session);
       setUser(session?.user ?? null);
