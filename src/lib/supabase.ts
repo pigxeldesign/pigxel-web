@@ -155,11 +155,51 @@ export async function checkAuthStatus() {
  */
 export async function directInsertDApp(dappData: any) {
   try {
-    const { data, error } = await supabase.rpc('direct_insert_dapp', {
+    // First attempt with RPC function
+    const { data, error } = await supabase.rpc('simple_insert_dapp', {
       p_dapp_data: dappData
     });
-    return { data, error };
+    
+    if (!error) {
+      return { data, error: null };
+    }
+    
+    console.error('simple_insert_dapp failed, falling back to direct insert:', error);
+    
+    // Fallback to direct insert
+    const { data: insertData, error: insertError } = await supabase
+      .from('dapps')
+      .insert([{
+        name: dappData.name,
+        description: dappData.description,
+        problem_solved: dappData.problem_solved,
+        logo_url: dappData.logo_url || null,
+        thumbnail_url: dappData.thumbnail_url || null,
+        category_id: dappData.category_id || null,
+        sub_category: dappData.sub_category || '',
+        blockchains: Array.isArray(dappData.blockchains) ? dappData.blockchains : [],
+        is_new: Boolean(dappData.is_new),
+        is_featured: Boolean(dappData.is_featured),
+        live_url: dappData.live_url
+      }])
+      .select('id')
+      .single();
+      
+    if (insertError) {
+      console.error('Direct insert also failed:', insertError);
+      return { data: null, error: insertError };
+    }
+    
+    return { 
+      data: { 
+        success: true, 
+        id: insertData.id,
+        message: 'dApp created using direct insert fallback'
+      }, 
+      error: null 
+    };
   } catch (error) {
+    console.error('All dApp insert methods failed:', error);
     return { data: null, error };
   }
 }
