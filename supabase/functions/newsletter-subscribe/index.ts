@@ -1,5 +1,4 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,7 +15,7 @@ interface RateLimitCheck {
   count: number;
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -40,7 +39,7 @@ serve(async (req) => {
     // Get client IP and user agent for rate limiting
     const clientIP = req.headers.get('x-forwarded-for') || 
                     req.headers.get('x-real-ip') || 
-                    'unknown'
+                    '127.0.0.1'
     const userAgent = req.headers.get('user-agent') || 'unknown'
 
     // Server-side validation
@@ -86,10 +85,16 @@ serve(async (req) => {
     // Rate limiting: Check if IP has submitted more than 5 times in the last hour
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
     
+    // Convert IP to proper format for inet type, handle 'unknown' case
+    let ipForQuery = clientIP
+    if (clientIP === 'unknown' || !clientIP) {
+      ipForQuery = '127.0.0.1'
+    }
+    
     const { data: rateLimitData, error: rateLimitError } = await supabase
       .from('newsletter_subscribers')
       .select('id', { count: 'exact' })
-      .eq('ip_address', clientIP)
+      .eq('ip_address', ipForQuery)
       .gte('created_at', oneHourAgo)
 
     if (rateLimitError) {
@@ -143,7 +148,7 @@ serve(async (req) => {
             is_active: true, 
             subscribed_at: new Date().toISOString(),
             source,
-            ip_address: clientIP,
+            ip_address: ipForQuery,
             user_agent: userAgent
           })
           .eq('id', existingSubscriber.id)
@@ -177,7 +182,7 @@ serve(async (req) => {
       .insert([{
         email: email.toLowerCase(),
         source,
-        ip_address: clientIP,
+        ip_address: ipForQuery,
         user_agent: userAgent
       }])
 
