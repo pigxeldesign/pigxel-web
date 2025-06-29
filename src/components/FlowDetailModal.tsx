@@ -44,22 +44,81 @@ const FlowDetailModal: React.FC<FlowDetailModalProps> = ({
 }) => {
   const [currentScreenIndex, setCurrentScreenIndex] = useState(initialScreenIndex);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [autoPlayInterval, setAutoPlayInterval] = useState<NodeJS.Timeout | null>(null);
 
   if (!flow) return null;
 
   const currentScreen = flow.screens[currentScreenIndex];
 
+  // Auto-play functionality
+  const startAutoPlay = () => {
+    if (autoPlayInterval) {
+      clearInterval(autoPlayInterval);
+    }
+    
+    setIsPlaying(true);
+    setCurrentScreenIndex(0); // Start from first screen
+    
+    const interval = setInterval(() => {
+      setCurrentScreenIndex(prevIndex => {
+        const nextIndex = prevIndex + 1;
+        if (nextIndex >= flow.screens.length) {
+          // Reached the end, stop auto-play
+          setIsPlaying(false);
+          clearInterval(interval);
+          setAutoPlayInterval(null);
+          return 0; // Reset to first screen
+        }
+        return nextIndex;
+      });
+    }, 2000); // 2 seconds per screen
+    
+    setAutoPlayInterval(interval);
+  };
+
+  const stopAutoPlay = () => {
+    if (autoPlayInterval) {
+      clearInterval(autoPlayInterval);
+      setAutoPlayInterval(null);
+    }
+    setIsPlaying(false);
+  };
+
+  const resetFlow = () => {
+    stopAutoPlay();
+    setCurrentScreenIndex(0);
+  };
+
+  // Clean up interval when modal closes
+  React.useEffect(() => {
+    if (!isOpen) {
+      stopAutoPlay();
+      setCurrentScreenIndex(initialScreenIndex);
+    }
+  }, [isOpen, initialScreenIndex]);
+
+  // Clean up interval on unmount
+  React.useEffect(() => {
+    return () => {
+      if (autoPlayInterval) {
+        clearInterval(autoPlayInterval);
+      }
+    };
+  }, [autoPlayInterval]);
   const nextScreen = () => {
+    if (isPlaying) return; // Don't allow manual navigation during auto-play
     setCurrentScreenIndex((prev) => 
       prev < flow.screens.length - 1 ? prev + 1 : prev
     );
   };
 
   const prevScreen = () => {
+    if (isPlaying) return; // Don't allow manual navigation during auto-play
     setCurrentScreenIndex((prev) => prev > 0 ? prev - 1 : prev);
   };
 
   const goToScreen = (index: number) => {
+    if (isPlaying) return; // Don't allow manual navigation during auto-play
     setCurrentScreenIndex(index);
   };
 
@@ -78,13 +137,16 @@ const FlowDetailModal: React.FC<FlowDetailModalProps> = ({
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setIsPlaying(!isPlaying)}
+                onClick={isPlaying ? stopAutoPlay : startAutoPlay}
+                disabled={flow.screens.length === 0}
                 className="flex items-center px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm"
               >
                 {isPlaying ? <Pause className="w-4 h-4 mr-1" /> : <Play className="w-4 h-4 mr-1" />}
                 {isPlaying ? 'Pause' : 'Play'}
               </button>
               <button className="p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors">
+                onClick={resetFlow}
+                disabled={isPlaying}
                 <RotateCcw className="w-4 h-4" />
               </button>
               <button className="p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors">
@@ -110,7 +172,16 @@ const FlowDetailModal: React.FC<FlowDetailModalProps> = ({
           {/* Screen Counter */}
           <div className="flex items-center justify-between text-sm text-gray-400">
             <span>Screen {currentScreenIndex + 1} of {flow.screens.length}</span>
-            <span>{flow.duration} total</span>
+            <span>
+              {isPlaying ? (
+                <span className="text-purple-400 flex items-center">
+                  <div className="w-2 h-2 bg-purple-400 rounded-full mr-2 animate-pulse" />
+                  Auto-playing...
+                </span>
+              ) : (
+                `${flow.duration} total`
+              )}
+            </span>
           </div>
         </div>
 
@@ -131,7 +202,7 @@ const FlowDetailModal: React.FC<FlowDetailModalProps> = ({
               />
               
               {/* Navigation Arrows */}
-              {currentScreenIndex > 0 && (
+              {currentScreenIndex > 0 && !isPlaying && (
                 <button
                   onClick={prevScreen}
                   className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center transition-colors"
@@ -140,7 +211,7 @@ const FlowDetailModal: React.FC<FlowDetailModalProps> = ({
                 </button>
               )}
               
-              {currentScreenIndex < flow.screens.length - 1 && (
+              {currentScreenIndex < flow.screens.length - 1 && !isPlaying && (
                 <button
                   onClick={nextScreen}
                   className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center transition-colors"
@@ -155,6 +226,12 @@ const FlowDetailModal: React.FC<FlowDetailModalProps> = ({
                 {currentScreen.description && (
                   <p className="text-gray-300 text-sm">{currentScreen.description}</p>
                 )}
+                {isPlaying && (
+                  <div className="mt-2 flex items-center text-purple-300 text-sm">
+                    <div className="w-3 h-3 border-2 border-purple-300 border-t-transparent rounded-full animate-spin mr-2" />
+                    Auto-playing (2s per screen)
+                  </div>
+                )}
               </div>
             </motion.div>
           </div>
@@ -167,10 +244,13 @@ const FlowDetailModal: React.FC<FlowDetailModalProps> = ({
               <button
                 key={screen.id}
                 onClick={() => goToScreen(index)}
+                disabled={isPlaying}
                 className={`flex-shrink-0 relative w-20 h-14 rounded-lg overflow-hidden border-2 transition-all ${
                   index === currentScreenIndex 
                     ? 'border-purple-500 ring-2 ring-purple-500/30' 
-                    : 'border-gray-600 hover:border-gray-500'
+                    : isPlaying 
+                      ? 'border-gray-600 opacity-50 cursor-not-allowed' 
+                      : 'border-gray-600 hover:border-gray-500'
                 }`}
               >
                 <img
@@ -184,6 +264,9 @@ const FlowDetailModal: React.FC<FlowDetailModalProps> = ({
                     {index + 1}
                   </span>
                 </div>
+                {isPlaying && index === currentScreenIndex && (
+                  <div className="absolute inset-0 border-2 border-purple-400 rounded-lg animate-pulse" />
+                )}
               </button>
             ))}
           </div>
