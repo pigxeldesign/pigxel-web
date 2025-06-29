@@ -25,8 +25,8 @@ import { motion } from 'framer-motion';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
+    <Router>
+      <AuthProvider>
         <div className="min-h-screen bg-gray-900">
           {/* Bolt.new Badge */}
           <motion.div 
@@ -37,7 +37,7 @@ function App() {
             <a href="https://bolt.new" target="_blank" rel="noopener noreferrer">
               <img 
                 src="/white_circle_360x360 copy.png" 
-                alt="Powered by Bolt.new" 
+                alt="Powered by Bolt.new"
                 className="w-full h-full object-contain" 
               />
             </a>
@@ -165,8 +165,8 @@ function App() {
             } />
           </Routes>
         </div>
-      </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </Router>
   );
 }
 
