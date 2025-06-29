@@ -114,7 +114,7 @@ const CategoryListing: React.FC = () => {
   // Mock data with thumbnails - in real app, this would come from Supabase
   const mockDApps: DApp[] = [
     {
-      id: '1',
+      id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
       name: 'MetaMask',
       description: 'A crypto wallet & gateway to blockchain apps. Start exploring blockchain applications in seconds.',
       problemSolved: 'Simplifies Web3 onboarding and wallet management for beginners',
@@ -128,7 +128,7 @@ const CategoryListing: React.FC = () => {
       isFeatured: true
     },
     {
-      id: '2',
+      id: 'b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
       name: 'Coinbase Wallet',
       description: 'Your key to the decentralized web. Coinbase Wallet is a self-custody wallet that gives you complete control.',
       problemSolved: 'Provides secure self-custody with user-friendly interface',
@@ -142,7 +142,7 @@ const CategoryListing: React.FC = () => {
       isNew: true
     },
     {
-      id: '3',
+      id: 'c2eebc99-9c0b-4ef8-bb6d-6bb9bd380a33',
       name: 'Rabbithole',
       description: 'Learn to use crypto protocols by completing on-chain tasks and earning rewards.',
       problemSolved: 'Gamifies learning Web3 protocols through hands-on experience',
@@ -156,7 +156,7 @@ const CategoryListing: React.FC = () => {
       isFeatured: true
     },
     {
-      id: '4',
+      id: 'd3eebc99-9c0b-4ef8-bb6d-6bb9bd380a44',
       name: 'Buildspace',
       description: 'Learn by building cool stuff. Join thousands of developers building the future of the internet.',
       problemSolved: 'Provides structured learning paths for Web3 development',
@@ -170,7 +170,7 @@ const CategoryListing: React.FC = () => {
       isNew: true
     },
     {
-      id: '5',
+      id: 'e4eebc99-9c0b-4ef8-bb6d-6bb9bd380a55',
       name: 'Uniswap',
       description: 'Swap, earn, and build on the leading decentralized crypto trading protocol.',
       problemSolved: 'Enables permissionless token trading without intermediaries',
@@ -184,7 +184,7 @@ const CategoryListing: React.FC = () => {
       isFeatured: true
     },
     {
-      id: '6',
+      id: 'f5eebc99-9c0b-4ef8-bb6d-6bb9bd380a66',
       name: 'Aave',
       description: 'Earn interest, borrow assets, and build applications on the largest decentralized lending protocol.',
       problemSolved: 'Provides decentralized lending and borrowing without traditional banks',
@@ -198,7 +198,7 @@ const CategoryListing: React.FC = () => {
       isFeatured: true
     },
     {
-      id: '7',
+      id: 'a6eebc99-9c0b-4ef8-bb6d-6bb9bd380a77',
       name: 'OpenSea',
       description: 'The world\'s first and largest digital marketplace for crypto collectibles and non-fungible tokens.',
       problemSolved: 'Democratizes access to NFT trading and discovery',
@@ -212,7 +212,7 @@ const CategoryListing: React.FC = () => {
       isFeatured: true
     },
     {
-      id: '8',
+      id: 'b7eebc99-9c0b-4ef8-bb6d-6bb9bd380a88',
       name: 'Foundation',
       description: 'A platform where artists and collectors can create, discover, and collect digital art NFTs.',
       problemSolved: 'Empowers artists to monetize digital art through NFTs',

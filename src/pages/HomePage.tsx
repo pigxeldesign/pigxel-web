@@ -52,7 +52,7 @@ const HomePage: React.FC = () => {
 
   const featuredDApps = [
     {
-      id: '1',
+      id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
       name: 'MetaMask',
       problemSolved: 'Simplifies Web3 onboarding and wallet management for beginners',
       logo: '🦊',
@@ -64,7 +64,7 @@ const HomePage: React.FC = () => {
       isFeatured: true
     },
     {
-      id: '2',
+      id: 'b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
       name: 'Coinbase Wallet',
       problemSolved: 'Provides secure self-custody with user-friendly interface',
       logo: '🔷',
@@ -76,7 +76,7 @@ const HomePage: React.FC = () => {
       isNew: true
     },
     {
-      id: '3',
+      id: 'c2eebc99-9c0b-4ef8-bb6d-6bb9bd380a33',
       name: 'Rabbithole',
       problemSolved: 'Gamifies learning Web3 protocols through hands-on experience',
       logo: '🐰',
@@ -88,7 +88,7 @@ const HomePage: React.FC = () => {
       isFeatured: true
     },
     {
-      id: '4',
+      id: 'd3eebc99-9c0b-4ef8-bb6d-6bb9bd380a44',
       name: 'Buildspace',
       problemSolved: 'Provides structured learning paths for Web3 development',
       logo: '🚀',
@@ -100,7 +100,7 @@ const HomePage: React.FC = () => {
       isNew: true
     },
     {
-      id: '5',
+      id: 'e4eebc99-9c0b-4ef8-bb6d-6bb9bd380a55',
       name: 'Uniswap',
       problemSolved: 'Enables permissionless token trading without intermediaries',
       logo: '🦄',
@@ -112,7 +112,7 @@ const HomePage: React.FC = () => {
       isFeatured: true
     },
     {
-      id: '6',
+      id: 'f5eebc99-9c0b-4ef8-bb6d-6bb9bd380a66',
       name: 'Aave',
       problemSolved: 'Provides decentralized lending and borrowing without traditional banks',
       logo: '👻',
@@ -124,7 +124,7 @@ const HomePage: React.FC = () => {
       isFeatured: true
     },
     {
-      id: '7',
+      id: 'a6eebc99-9c0b-4ef8-bb6d-6bb9bd380a77',
       name: 'OpenSea',
       problemSolved: 'Democratizes access to NFT trading and discovery',
       logo: '🌊',
@@ -136,7 +136,7 @@ const HomePage: React.FC = () => {
       isFeatured: true
     },
     {
-      id: '8',
+      id: 'b7eebc99-9c0b-4ef8-bb6d-6bb9bd380a88',
       name: 'Foundation',
       problemSolved: 'Empowers artists to monetize digital art through NFTs',
       logo: '🎨',
