@@ -98,7 +98,7 @@ const AllCategoriesPage: React.FC = () => {
         .from('dapps')
         .select(`
           *,
-          categories!inner(id, title, slug)
+          categories(id, title, slug)
         `)
         .order('updated_at', { ascending: false });
       
@@ -130,6 +130,7 @@ const AllCategoriesPage: React.FC = () => {
       }));
 
       setDApps(transformedDApps);
+      console.log('Loaded dApps:', transformedDApps);
     } catch (err: any) {
       if (!isProduction()) {
         console.error('Error loading data:', err);
