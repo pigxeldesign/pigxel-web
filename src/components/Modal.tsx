@@ -119,7 +119,7 @@ const Modal: React.FC<ModalProps> = ({
           {!title && (
             <button
               onClick={onClose}
-              className="absolute top-3 right-3 z-20 p-2 text-gray-400 hover:text-white hover:bg-gray-800/90 rounded-lg transition-colors backdrop-blur-sm shadow-lg border border-gray-700/50"
+              className="absolute top-4 right-4 z-10 p-2 text-gray-400 hover:text-white hover:bg-gray-800/80 rounded-lg transition-colors backdrop-blur-sm"
               aria-label="Close modal"
             >
               <X className="w-5 h-5" />
@@ -127,7 +127,7 @@ const Modal: React.FC<ModalProps> = ({
           )}
 
           {/* Content */}
-          <div className={`${title ? '' : 'p-0'} max-h-[80vh] overflow-auto ${!title ? 'pt-12' : ''}`}>
+          <div className={`${title ? '' : 'p-0'} max-h-[80vh] overflow-auto`}>
             {children}
           </div>
         </motion.div>
