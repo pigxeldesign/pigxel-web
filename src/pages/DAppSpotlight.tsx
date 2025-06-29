@@ -23,6 +23,7 @@ import {
 import FlowDetailModal from '../components/FlowDetailModal';
 import { supabase } from '../lib/supabase';
 import ComingSoonModal from '../components/ComingSoonModal';
+import { isValidSafeUrl, isProduction } from '../lib/supabase';
 
 interface DApp {
   id: string;
@@ -218,7 +219,11 @@ const DAppSpotlight: React.FC = () => {
       setCurrentSlides(initialSlides);
       
     } catch (err: any) {
-      console.error('Error fetching dApp data:', err);
+      if (!isProduction()) {
+        console.error('Error fetching dApp data:', err);
+      } else {
+        console.error('Error fetching dApp data:', err.message || 'Failed to load dApp data');
+      }
       setError(err.message || 'Failed to load dApp data');
     } finally {
       setLoading(false);
@@ -337,7 +342,14 @@ const DAppSpotlight: React.FC = () => {
               <div className="flex items-start gap-6 flex-1">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center text-2xl sm:text-3xl flex-shrink-0 overflow-hidden">
                   {dapp.logo_url ? (
-                    <img src={dapp.logo_url} alt={dapp.name} className="w-full h-full object-cover" />
+                    <img 
+                      src={isValidSafeUrl(dapp.logo_url) ? dapp.logo_url : ''} 
+                      alt={dapp.name} 
+                      className="w-full h-full object-cover" 
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
                   ) : (
                     '📱'
                   )}
@@ -383,7 +395,7 @@ const DAppSpotlight: React.FC = () => {
               {/* Action Buttons and Links */}
               <div className="w-full lg:w-auto flex flex-col gap-3 lg:min-w-[200px]">
                 <a
-                  href={dapp.live_url}
+                  href={isValidSafeUrl(dapp.live_url) ? dapp.live_url : '#'}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center px-4 sm:px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors text-sm sm:text-base"
@@ -395,8 +407,8 @@ const DAppSpotlight: React.FC = () => {
                 {/* Links & Community Icons */}
                 <div className="flex items-center justify-center gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-gray-700">
                   {dapp.github_url && (
-                    <a
-                      href={dapp.github_url}
+                    <a 
+                      href={isValidSafeUrl(dapp.github_url) ? dapp.github_url : '#'}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-1.5 sm:p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
@@ -407,7 +419,7 @@ const DAppSpotlight: React.FC = () => {
                   )}
                   {dapp.twitter_url && (
                     <a
-                      href={dapp.twitter_url}
+                      href={isValidSafeUrl(dapp.twitter_url) ? dapp.twitter_url : '#'}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-1.5 sm:p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
@@ -418,7 +430,7 @@ const DAppSpotlight: React.FC = () => {
                   )}
                   {dapp.documentation_url && (
                     <a
-                      href={dapp.documentation_url}
+                      href={isValidSafeUrl(dapp.documentation_url) ? dapp.documentation_url : '#'}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-1.5 sm:p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
@@ -429,7 +441,7 @@ const DAppSpotlight: React.FC = () => {
                   )}
                   {dapp.discord_url && (
                     <a
-                      href={dapp.discord_url}
+                      href={isValidSafeUrl(dapp.discord_url) ? dapp.discord_url : '#'}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-1.5 sm:p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
@@ -439,7 +451,7 @@ const DAppSpotlight: React.FC = () => {
                     </a>
                   )}
                   <a
-                    href={dapp.live_url}
+                    href={isValidSafeUrl(dapp.live_url) ? dapp.live_url : '#'}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-1.5 sm:p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
@@ -538,7 +550,7 @@ const DAppSpotlight: React.FC = () => {
                               >
                                 <div className="relative aspect-[4/3] rounded-md sm:rounded-lg overflow-hidden border border-gray-600 group-hover:border-purple-500 transition-colors">
                                   <img
-                                    src={screen.thumbnail_url}
+                                    src={isValidSafeUrl(screen.thumbnail_url) ? screen.thumbnail_url : ''}
                                     alt={screen.title}
                                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                     onError={(e) => {

@@ -10,6 +10,7 @@ import {
   X
 } from 'lucide-react';
 import Modal from './Modal';
+import { isValidSafeUrl } from '../lib/supabase';
 
 interface FlowScreen {
   id: string;
@@ -198,10 +199,14 @@ const FlowDetailModal: React.FC<FlowDetailModalProps> = ({
               transition={{ duration: 0.3 }}
               className="relative w-full h-full rounded-xl overflow-hidden border border-gray-600 shadow-2xl"
             >
-              <img
-                src={currentScreen.thumbnail}
+              <img 
+                src={isValidSafeUrl(currentScreen.thumbnail) ? currentScreen.thumbnail : ''}
                 alt={currentScreen.title}
                 className="w-full h-full object-contain bg-gray-900"
+                onError={(e) => {
+                  // Fallback image if the thumbnail fails to load
+                  e.currentTarget.src = 'https://images.pexels.com/photos/1181263/pexels-photo-1181263.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop';
+                }}
               />
               
               {/* Navigation Arrows */}
@@ -257,9 +262,13 @@ const FlowDetailModal: React.FC<FlowDetailModalProps> = ({
                 }`}
               >
                 <img
-                  src={screen.thumbnail}
+                  src={isValidSafeUrl(screen.thumbnail) ? screen.thumbnail : ''}
                   alt={screen.title}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // Fallback image if the thumbnail fails to load
+                    e.currentTarget.src = 'https://images.pexels.com/photos/1181263/pexels-photo-1181263.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop';
+                  }}
                 />
                 <div className="absolute inset-0 bg-black/20" />
                 <div className="absolute bottom-0.5 left-0.5 right-0.5 text-center">
