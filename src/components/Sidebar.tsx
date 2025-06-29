@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Star, Zap, Filter, TrendingUp, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { Home, Star, Zap, Filter, TrendingUp, ChevronLeft, ChevronRight, Search, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 
@@ -15,53 +15,88 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
   const [newCount, setNewCount] = useState<number>(0);
   const [categoriesCount, setCategoriesCount] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const [connectionError, setConnectionError] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchCounts = async () => {
       setLoading(true);
+      setConnectionError(false);
       try {
-        // Get featured dApps count
-        const { count: featuredCount, error: featuredError } = await supabase
+        // Test connection first with a simple query
+        const { error: connectionTest } = await supabase
           .from('dapps')
-          .select('*', { count: 'exact', head: true })
-          .eq('is_featured', true);
-        
-        if (featuredError) throw featuredError;
-        setFeaturedCount(featuredCount || 0);
-        
-        // Get new dApps count
-        const { count: newCount, error: newError } = await supabase
-          .from('dapps')
-          .select('*', { count: 'exact', head: true })
-          .eq('is_new', true);
-        
-        if (newError) throw newError;
-        setNewCount(newCount || 0);
-        
-        // Get categories with their dApp counts
-        const { data: categories, error: categoriesError } = await supabase
-          .from('categories')
-          .select('id, slug');
-        
-        if (categoriesError) throw categoriesError;
-        
-        // For each category, get the count of dApps
-        const categoryCountsMap: Record<string, number> = {};
-        
-        for (const category of categories || []) {
-          const { count, error } = await supabase
+          .select('id', { count: 'exact', head: true })
+          .limit(1);
+
+        if (connectionTest) {
+          throw new Error(`Connection test failed: ${connectionTest.message}`);
+        }
+
+        // If connection test passes, proceed with data fetching
+        const [featuredResult, newResult, categoriesResult] = await Promise.allSettled([
+          supabase
             .from('dapps')
             .select('*', { count: 'exact', head: true })
-            .eq('category_id', category.id);
-          
-          if (!error) {
-            categoryCountsMap[category.slug] = count || 0;
-          }
+            .eq('is_featured', true),
+          supabase
+            .from('dapps')
+            .select('*', { count: 'exact', head: true })
+            .eq('is_new', true),
+          supabase
+            .from('categories')
+            .select('id, slug')
+        ]);
+
+        // Handle featured count
+        if (featuredResult.status === 'fulfilled' && !featuredResult.value.error) {
+          setFeaturedCount(featuredResult.value.count || 0);
         }
-        
-        setCategoriesCount(categoryCountsMap);
+
+        // Handle new count
+        if (newResult.status === 'fulfilled' && !newResult.value.error) {
+          setNewCount(newResult.value.count || 0);
+        }
+
+        // Handle categories
+        if (categoriesResult.status === 'fulfilled' && !categoriesResult.value.error) {
+          const categories = categoriesResult.value.data || [];
+          const categoryCountsMap: Record<string, number> = {};
+          
+          // Fetch category counts in parallel
+          const categoryCountPromises = categories.map(async (category) => {
+            try {
+              const { count, error } = await supabase
+                .from('dapps')
+                .select('*', { count: 'exact', head: true })
+                .eq('category_id', category.id);
+              
+              if (!error) {
+                categoryCountsMap[category.slug] = count || 0;
+              }
+            } catch (err) {
+              console.warn(`Failed to fetch count for category ${category.slug}:`, err);
+              categoryCountsMap[category.slug] = 0;
+            }
+          });
+
+          await Promise.allSettled(categoryCountPromises);
+          setCategoriesCount(categoryCountsMap);
+        }
       } catch (error) {
         console.error('Error fetching counts:', error);
+        setConnectionError(true);
+        
+        // Set fallback values when connection fails
+        setFeaturedCount(0);
+        setNewCount(0);
+        setCategoriesCount({
+          'getting-started': 0,
+          'digital-assets': 0,
+          'communities': 0,
+          'creative-publishing': 0,
+          'data-infrastructure': 0,
+          'real-world-apps': 0
+        });
       } finally {
         setLoading(false);
       }
@@ -69,6 +104,98 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
     
     fetchCounts();
   }, []);
+
+  // Retry connection function
+  const retryConnection = () => {
+    setLoading(true);
+    setConnectionError(false);
+    // Re-trigger the useEffect by updating a dependency
+    const fetchCounts = async () => {
+      setLoading(true);
+      setConnectionError(false);
+      try {
+        // Test connection first with a simple query
+        const { error: connectionTest } = await supabase
+          .from('dapps')
+          .select('id', { count: 'exact', head: true })
+          .limit(1);
+
+        if (connectionTest) {
+          throw new Error(`Connection test failed: ${connectionTest.message}`);
+        }
+
+        // If connection test passes, proceed with data fetching
+        const [featuredResult, newResult, categoriesResult] = await Promise.allSettled([
+          supabase
+            .from('dapps')
+            .select('*', { count: 'exact', head: true })
+            .eq('is_featured', true),
+          supabase
+            .from('dapps')
+            .select('*', { count: 'exact', head: true })
+            .eq('is_new', true),
+          supabase
+            .from('categories')
+            .select('id, slug')
+        ]);
+
+        // Handle featured count
+        if (featuredResult.status === 'fulfilled' && !featuredResult.value.error) {
+          setFeaturedCount(featuredResult.value.count || 0);
+        }
+
+        // Handle new count
+        if (newResult.status === 'fulfilled' && !newResult.value.error) {
+          setNewCount(newResult.value.count || 0);
+        }
+
+        // Handle categories
+        if (categoriesResult.status === 'fulfilled' && !categoriesResult.value.error) {
+          const categories = categoriesResult.value.data || [];
+          const categoryCountsMap: Record<string, number> = {};
+          
+          // Fetch category counts in parallel
+          const categoryCountPromises = categories.map(async (category) => {
+            try {
+              const { count, error } = await supabase
+                .from('dapps')
+                .select('*', { count: 'exact', head: true })
+                .eq('category_id', category.id);
+              
+              if (!error) {
+                categoryCountsMap[category.slug] = count || 0;
+              }
+            } catch (err) {
+              console.warn(`Failed to fetch count for category ${category.slug}:`, err);
+              categoryCountsMap[category.slug] = 0;
+            }
+          });
+
+          await Promise.allSettled(categoryCountPromises);
+          setCategoriesCount(categoryCountsMap);
+        }
+      } catch (error) {
+        console.error('Error fetching counts:', error);
+        setConnectionError(true);
+        
+        // Set fallback values when connection fails
+        setFeaturedCount(0);
+        setNewCount(0);
+        setCategoriesCount({
+          'getting-started': 0,
+          'digital-assets': 0,
+          'communities': 0,
+          'creative-publishing': 0,
+          'data-infrastructure': 0,
+          'real-world-apps': 0
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchCounts();
+  };
 
   const navItems = [
     { icon: Home, label: 'Home', path: '/', active: location.pathname === '/' && location.pathname !== '/navigator' },
@@ -128,6 +255,30 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
         }`}
       >
         <div className="w-64 h-full overflow-y-auto overscroll-contain">
+          {/* Connection Error Banner */}
+          {connectionError && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mx-4 mt-4 p-3 bg-red-900/50 border border-red-700 rounded-lg"
+            >
+              <div className="flex items-center text-red-300 text-sm">
+                <AlertCircle className="w-4 h-4 mr-2 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="font-medium">Connection Error</p>
+                  <p className="text-xs text-red-400 mt-1">Unable to connect to database</p>
+                </div>
+                <button
+                  onClick={retryConnection}
+                  className="ml-2 px-2 py-1 bg-red-800 hover:bg-red-700 rounded text-xs transition-colors"
+                  disabled={loading}
+                >
+                  {loading ? '...' : 'Retry'}
+                </button>
+              </div>
+            </motion.div>
+          )}
+
           {/* Toggle Button */}
           <div className="flex justify-end p-4 lg:hidden">
             <button
@@ -175,10 +326,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                           className={`text-xs px-2 py-1 rounded-full transition-colors ${
                             isActive
                               ? 'bg-white/20 text-white'
-                              : 'bg-gray-700 text-gray-300 group-hover:bg-gray-600'
+                              : connectionError 
+                                ? 'bg-red-900/50 text-red-400' 
+                                : 'bg-gray-700 text-gray-300 group-hover:bg-gray-600'
                           }`}
                         >
-                          {item.count}
+                          {connectionError ? '!' : item.count}
                         </motion.span>
                       )}
                     </Link>
@@ -212,7 +365,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                         className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all duration-200 group ${loading ? 'bg-gray-800' : 
                           isActive
                             ? 'bg-purple-600/20 text-purple-300 border border-purple-600/30'
-                            : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                            : connectionError
+                              ? 'text-red-300 hover:text-red-200 hover:bg-red-900/20'
+                              : 'text-gray-300 hover:text-white hover:bg-gray-800'
                         }`}
                         onClick={() => {
                           if (window.innerWidth < 1024) {
@@ -225,10 +380,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
                           className={`text-xs transition-colors ${loading ? 'text-gray-600' : 
+                            connectionError ? 'text-red-400' :
                             isActive ? 'text-purple-400' : 'text-gray-500 group-hover:text-gray-400'
                           }`}
                         >
-                          {loading ? '...' : category.count}
+                          {loading ? '...' : connectionError ? '!' : category.count}
                         </motion.span>
                       </Link>
                     </motion.div>
