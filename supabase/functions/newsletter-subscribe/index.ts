@@ -11,8 +11,38 @@ interface SubscribeRequest {
   source?: string;
 }
 
-interface RateLimitCheck {
-  count: number;
+// Function to validate and normalize IP address for PostgreSQL inet type
+function normalizeIPAddress(ip: string | null): string {
+  if (!ip || ip === 'unknown' || ip === '::1') {
+    return '127.0.0.1'
+  }
+  
+  // Handle IPv6 mapped IPv4 addresses
+  if (ip.startsWith('::ffff:')) {
+    ip = ip.substring(7)
+  }
+  
+  // Basic IPv4 validation
+  const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/
+  if (ipv4Regex.test(ip)) {
+    const parts = ip.split('.')
+    const validParts = parts.every(part => {
+      const num = parseInt(part, 10)
+      return num >= 0 && num <= 255
+    })
+    if (validParts) {
+      return ip
+    }
+  }
+  
+  // Basic IPv6 validation (simplified)
+  const ipv6Regex = /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/
+  if (ipv6Regex.test(ip)) {
+    return ip
+  }
+  
+  // If validation fails, return localhost
+  return '127.0.0.1'
 }
 
 Deno.serve(async (req) => {
@@ -37,9 +67,13 @@ Deno.serve(async (req) => {
     const { email, source = 'website' }: SubscribeRequest = await req.json()
     
     // Get client IP and user agent for rate limiting
-    const clientIP = req.headers.get('x-forwarded-for') || 
-                    req.headers.get('x-real-ip') || 
-                    '127.0.0.1'
+    const rawClientIP = req.headers.get('x-forwarded-for') || 
+                       req.headers.get('x-real-ip') || 
+                       req.headers.get('cf-connecting-ip') ||
+                       '127.0.0.1'
+    
+    // Handle comma-separated IPs from x-forwarded-for
+    const clientIP = normalizeIPAddress(rawClientIP.split(',')[0].trim())
     const userAgent = req.headers.get('user-agent') || 'unknown'
 
     // Server-side validation
@@ -85,16 +119,10 @@ Deno.serve(async (req) => {
     // Rate limiting: Check if IP has submitted more than 5 times in the last hour
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
     
-    // Convert IP to proper format for inet type, handle 'unknown' case
-    let ipForQuery = clientIP
-    if (clientIP === 'unknown' || !clientIP) {
-      ipForQuery = '127.0.0.1'
-    }
-    
     const { data: rateLimitData, error: rateLimitError } = await supabase
       .from('newsletter_subscribers')
       .select('id', { count: 'exact' })
-      .eq('ip_address', ipForQuery)
+      .eq('ip_address', clientIP)
       .gte('created_at', oneHourAgo)
 
     if (rateLimitError) {
@@ -148,7 +176,7 @@ Deno.serve(async (req) => {
             is_active: true, 
             subscribed_at: new Date().toISOString(),
             source,
-            ip_address: ipForQuery,
+            ip_address: clientIP,
             user_agent: userAgent
           })
           .eq('id', existingSubscriber.id)
@@ -182,7 +210,7 @@ Deno.serve(async (req) => {
       .insert([{
         email: email.toLowerCase(),
         source,
-        ip_address: ipForQuery,
+        ip_address: clientIP,
         user_agent: userAgent
       }])
 
