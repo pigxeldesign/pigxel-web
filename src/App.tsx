@@ -19,6 +19,8 @@ import AdminMediaLibrary from './pages/AdminMediaLibrary';
 import AdminIntegrationsManagement from './pages/AdminIntegrationsManagement';
 import Web3NavigatorPage from './pages/Web3NavigatorPage';
 import AllCategoriesPage from './pages/AllCategoriesPage';
+import FeaturedPage from './pages/FeaturedPage';
+import NewPage from './pages/NewPage';
 
 function App() {
   return (
@@ -137,6 +139,8 @@ function App() {
                   <Route path="/search" element={<SearchResults />} />
                   <Route path="/navigator" element={<Web3NavigatorPage />} />
                   <Route path="/categories" element={<AllCategoriesPage />} />
+                  <Route path="/featured" element={<FeaturedPage />} />
+                  <Route path="/new" element={<NewPage />} />
                   <Route path="/category/:slug" element={<CategoryListing />} />
                   <Route path="/dapp/:id" element={<DAppSpotlight />} />
                   <Route path="/flow/:id" element={<FlowViewer />} />
