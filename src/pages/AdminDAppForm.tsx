@@ -100,6 +100,18 @@ const AdminDAppForm: React.FC = () => {
     'Solana', 'Cardano', 'Polkadot', 'Cosmos', 'Near', 'Fantom'
   ];
 
+  // Timeout constants
+  const OPERATION_TIMEOUT = 15000; // 15 seconds timeout for database operations
+
+  // Create a timeout promise
+  const createTimeout = (ms: number, message: string) => {
+    return new Promise((_, reject) => {
+      setTimeout(() => {
+        reject(new Error(`Operation timed out after ${ms}ms: ${message}`));
+      }, ms);
+    });
+  };
+
   // Helper to log debug messages with timestamps
   const logDebug = (message: string, data?: any) => {
     const timestamp = new Date().toLocaleTimeString('en-US', { 
@@ -356,7 +368,10 @@ const AdminDAppForm: React.FC = () => {
     
     try {
       logDebug(`Save attempt ${attempt}: Calling directTableInsert`, dataToSave);
-      const { data, error } = await directTableInsert(dataToSave);
+      const { data, error } = await Promise.race([
+        directTableInsert(dataToSave),
+        createTimeout(OPERATION_TIMEOUT, 'Direct table insert operation timeout')
+      ]);
       
       if (error) throw error;
       
@@ -398,7 +413,10 @@ const AdminDAppForm: React.FC = () => {
     
     try {
       logDebug(`Save attempt ${attempt}: Calling simple_insert_dapp RPC`, dataToSave);
-      const { data, error } = await simpleInsertDApp(dataToSave);
+      const { data, error } = await Promise.race([
+        simpleInsertDApp(dataToSave),
+        createTimeout(OPERATION_TIMEOUT, 'Simple RPC operation timeout')
+      ]);
       
       if (error) throw error;
       
@@ -444,7 +462,10 @@ const AdminDAppForm: React.FC = () => {
     
     try {
       logDebug(`Save attempt ${attempt}: Calling directInsertDApp helper`, dataToSave);
-      const { data, error } = await directInsertDApp(dataToSave);
+      const { data, error } = await Promise.race([
+        directInsertDApp(dataToSave),
+        createTimeout(OPERATION_TIMEOUT, 'Direct insert DApp operation timeout')
+      ]);
       
       if (error) throw error;
       
@@ -487,10 +508,10 @@ const AdminDAppForm: React.FC = () => {
       
       if (isEditing) {
         logDebug(`Save attempt ${attempt}: Updating existing dApp with ID ${id}`, cleanData);
-        const { error } = await supabase
-          .from('dapps')
-          .update(cleanData)
-          .eq('id', id);
+        const { error } = await Promise.race([
+          supabase.from('dapps').update(cleanData).eq('id', id),
+          createTimeout(OPERATION_TIMEOUT, 'Update operation timeout')
+        ]);
         
         if (error) throw error;
         
@@ -498,11 +519,10 @@ const AdminDAppForm: React.FC = () => {
         return { success: true, id };
       } else {
         logDebug(`Save attempt ${attempt}: Inserting new dApp`, cleanData);
-        const { data, error } = await supabase
-          .from('dapps')
-          .insert([cleanData])
-          .select('id')
-          .single();
+        const { data, error } = await Promise.race([
+          supabase.from('dapps').insert([cleanData]).select('id').single(),
+          createTimeout(OPERATION_TIMEOUT, 'Insert operation timeout')
+        ]);
         
         if (error) throw error;
         
@@ -700,6 +720,21 @@ const AdminDAppForm: React.FC = () => {
             >
               <X className="w-4 h-4" />
             </button>
+          </motion.div>
+        )}
+
+        {/* Success Message */}
+        {saveSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-green-600/20 border border-green-600/30 rounded-lg flex items-center"
+          >
+            <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
+            <p className="text-green-300 text-sm">
+              {isEditing ? 'dApp updated successfully!' : 'New dApp created successfully!'}
+              <span className="ml-1">Redirecting to dApp management...</span>
+            </p>
           </motion.div>
         )}
 
