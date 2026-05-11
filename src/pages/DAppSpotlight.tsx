@@ -573,7 +573,7 @@ const DAppSpotlight: React.FC = () => {
                     >
                       <p className="text-gray-400 text-xs sm:text-sm flex-1">{flow.description}</p>
                       <img
-                        src="/ChatGPT_Image_29_Jun_2025__15.05.43-removebg-preview.png"
+                        src="/web3-navigator.png"
                         alt="AI Comparison Flow"
                         width={20}
                         height={20}
@@ -622,7 +622,7 @@ const DAppSpotlight: React.FC = () => {
                   className="flex items-center px-4 sm:px-6 py-3 bg-transparent border-2 border-blue-500 text-blue-400 hover:bg-blue-600/10 hover:text-blue-300 rounded-lg font-medium transition-colors text-sm sm:text-base group"
                 >
                   <img 
-                    src="/ChatGPT_Image_29_Jun_2025__15.05.43-removebg-preview.png" 
+                    src="/web3-navigator.png" 
                     alt="" 
                     className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform opacity-90 group-hover:opacity-100"
                   />

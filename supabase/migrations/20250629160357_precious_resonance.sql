@@ -10,6 +10,9 @@
      - No security changes
 */
 
+-- First, drop the view that depends on the columns we want to remove
+DROP VIEW IF EXISTS dapp_with_categories;
+
 -- Drop rating column if it exists
 DO $$
 BEGIN
@@ -33,8 +36,6 @@ BEGIN
 END $$;
 
 -- Recreate the dapp_with_categories view to reflect the updated schema
-DROP VIEW IF EXISTS dapp_with_categories;
-
 CREATE VIEW dapp_with_categories AS
 SELECT
   d.id,

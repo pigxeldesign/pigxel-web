@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Search, Menu, X, User, LogOut, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
-
+import { useNavigate } from 'react-router-dom';
 interface HeaderProps {
   onToggleSidebar: () => void;
   isSidebarOpen: boolean;
@@ -12,6 +12,7 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, isSidebarOpen }) => {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const navigate = useNavigate();
   const { user, profile, isAdmin, signOut, loading } = useAuth();
 
   const handleSignOut = async () => {
@@ -41,12 +42,14 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, isSidebarOpen }) => {
               {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
             <div className="flex items-center ml-2 lg:ml-0 min-w-0">
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">W3</span>
-              </div>
+              <img 
+                src="/pigxel-design.png" 
+                alt="Pigxel Design Logo" 
+                className="w-8 h-8 object-contain rounded-lg"
+              />
               <span className="ml-2 text-lg sm:text-xl font-bold text-white truncate">
-                <span className="hidden sm:inline">Web3 Directory</span>
-                <span className="sm:hidden">Web3</span>
+                <span className="hidden sm:inline">Pigxel Design</span>
+                <span className="sm:hidden">Pigxel</span>
               </span>
             </div>
           </div>
@@ -147,11 +150,10 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, isSidebarOpen }) => {
               </div>
             ) : (
               <button
-                onClick={() => window.location.href = '/admin/login'}
+                onClick={() => navigate('/user/login')}
                 className="px-3 sm:px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors text-sm sm:text-base"
               >
-                <span className="hidden sm:inline">Admin Login</span>
-                <span className="sm:hidden">Login</span>
+                Login
               </button>
             )}
           </div>

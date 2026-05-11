@@ -203,9 +203,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
       icon: () => (
         <div className="w-5 h-5 flex items-center justify-center">
           <img 
-            src="/ChatGPT_Image_29_Jun_2025__15.05.43-removebg-preview.png" 
-            alt="" 
-            className="w-5 h-5 object-contain"
+            src="/web3-navigator.png" 
+            alt="Web3 Navigator Logo" 
+            className="w-5 h-5 object-contain rounded"
           />
         </div>
       ), 

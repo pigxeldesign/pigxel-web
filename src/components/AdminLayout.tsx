@@ -151,10 +151,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 {isMobileSidebarOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
               <div className="flex items-center ml-2 lg:ml-0">
-                <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">W3</span>
-                </div>
-                <span className="ml-2 text-xl font-bold text-white">Admin Dashboard</span>
+                <img 
+                  src="/pigxel-design.png" 
+                  alt="Pigxel Design Logo" 
+                  className="w-8 h-8 object-contain rounded-lg"
+                />
+                <span className="ml-2 text-xl font-bold text-white">Pigxel Admin</span>
               </div>
             </div>
 

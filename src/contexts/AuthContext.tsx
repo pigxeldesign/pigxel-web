@@ -9,6 +9,7 @@ interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signInWithGoogle: () => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
 
@@ -155,31 +156,48 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const fetchProfile = async (userId: string) => {
     try {
+      setLoading(true);
       console.log('AuthProvider: Fetching profile for user ID:', userId);
-      const { data, error } = await supabase
+      
+      // Add a timeout to prevent indefinite hanging
+      const fetchPromise = supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
+        
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
+      );
+
+      const response = await Promise.race([fetchPromise, timeoutPromise]) as any;
+      const { data, error } = response;
 
       if (error) {
         if (!isProduction()) {
           console.error('AuthProvider: Error fetching profile:', error);
-          console.log('AuthProvider: Profile fetch error details:', {
-            code: error.code,
-            message: error.message,
-            details: error.details,
-            hint: error.hint
-          });
-        } else {
-          console.error('AuthProvider: Error fetching profile:', error.message);
         }
+        
         if (error.code === 'PGRST116') {
-          console.log('AuthProvider: Profile not found, will be created by trigger');
+          console.log('AuthProvider: Profile not found. Attempting auto-recovery...');
+          
+          // Try to insert the missing profile using RLS
+          const { data: newProfile, error: insertError } = await supabase
+            .from('profiles')
+            .insert([{ id: userId }])
+            .select()
+            .single();
+            
+          if (!insertError && newProfile) {
+            console.log('AuthProvider: Profile recovered successfully!');
+            setProfile(newProfile);
+            return;
+          }
+          console.error('AuthProvider: Auto-recovery failed:', insertError);
         }
         setProfile(null);
       } else {
-        console.log('AuthProvider: Profile fetched successfully:', data.email, data.user_type);
+        console.log('AuthProvider: Profile fetched successfully');
         setProfile(data);
       }
     } catch (error) {
@@ -189,6 +207,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.error('AuthProvider: Unexpected error fetching profile. Please try again.');
       }
       setProfile(null);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -219,6 +239,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.error('AuthProvider: Unexpected sign in error:', error);
       } else {
         console.error('AuthProvider: Unexpected sign in error. Please try again.');
+      }
+      return { error };
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    console.log('AuthProvider: Starting Google sign in');
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        }
+      });
+      
+      if (error) {
+        if (!isProduction()) {
+          console.error('AuthProvider: Google sign in error:', error);
+        } else {
+          console.error('AuthProvider: Google sign in error:', error.message);
+        }
+      }
+      return { error };
+    } catch (error) {
+      if (!isProduction()) {
+        console.error('AuthProvider: Unexpected Google sign in error:', error);
+      } else {
+        console.error('AuthProvider: Unexpected Google sign in error. Please try again.');
       }
       return { error };
     }
@@ -279,6 +327,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     loading,
     isAdmin,
     signIn,
+    signInWithGoogle,
     signOut,
   };
 

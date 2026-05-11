@@ -23,3 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# AI & Local Scratch Files
+scratch/
+.agents/
+skills-lock.json
+
+# Bolt/Stackblitz
+.bolt/

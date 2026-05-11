@@ -136,7 +136,7 @@ const ComingSoonModal: React.FC<ComingSoonModalProps> = ({ isOpen, onClose }) =>
         <div className="text-center pt-4 pb-2">
           <div className="w-16 h-16 mx-auto mb-4 relative">
             <img 
-              src="/ChatGPT_Image_29_Jun_2025__15.05.43-removebg-preview.png" 
+              src="/web3-navigator.png" 
               alt="AI" 
               className="w-full h-full object-contain"
             />
