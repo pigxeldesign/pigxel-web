@@ -2,6 +2,8 @@
 
 > The "Mobbin for Web3" — A semantically structured design repository for human builders and autonomous AI coding agents.
 
+### Website: https://pigxel.xyz/
+
 ### Overview
 
 While AI coding tools have advanced rapidly, their UI/UX output remains terrible because they lack high-quality, domain-specific design data. **Pigxel Design** solves this by providing a semantically structured repository of real-world Web3 user flows and UI patterns. 
